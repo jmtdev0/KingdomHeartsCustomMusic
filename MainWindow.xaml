@@ -17,11 +17,23 @@
                    FontSize="24" FontWeight="Bold"
                    Margin="0 0 0 20"/>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel x:Name="WorldListPanel" Orientation="Vertical">
-                <!-- Aquí se generarán dinámicamente las entradas por mundo -->
-            </StackPanel>
-        </ScrollViewer>
+        <TabControl 
+                    x:Name="tabControl"
+                    Grid.Row="1"
+                    Background="#FF2D2D30"
+                    BorderBrush="Gray"
+                    FontSize="14">
+            <TabItem Header="Kingdom Hearts I">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="WorldListPanelKH1" Orientation="Vertical" Margin="10"/>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Kingdom Hearts II">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="WorldListPanelKH2" Orientation="Vertical" Margin="10"/>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
 
         <Button Grid.Row="2" Content="✨ Generate Patch"
                 Height="50" FontSize="16" Margin="0 20 0 0"

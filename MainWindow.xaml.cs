@@ -14,33 +14,45 @@ namespace KingdomHeartsCustomMusic
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<(TrackInfo Track, TextBox TextBox)> _trackBindings = new();
+        private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH1 = new();
+        private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH2 = new();
 
         public MainWindow()
         {
             InitializeComponent();
-            LoadTracksFromExcel();
+            LoadTracks();
         }
 
-        private void LoadTracksFromExcel()
+        private void LoadTracks()
         {
             try
             {
-                string excelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "resources/All Games Track List - KH1.xlsx");
-                var tracks = LoadTrackList(excelPath);
+                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-                foreach (var track in tracks)
-                {
-                    AddTrackRow(track);
-                }
+                string excelKH1 = Path.Combine(baseDir, "resources", "All Games Track List - KH1.xlsx");
+                string excelKH2 = Path.Combine(baseDir, "resources", "All Games Track List - KH2.xlsx");
+
+                var tracksKH1 = TrackListLoader.LoadTrackList(excelKH1);
+                //var tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
+
+                foreach (var track in tracksKH1)
+                    AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1);
+
+                //foreach (var track in tracksKH2)
+                //    AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading track list: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error loading track lists:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void AddTrackRow(TrackInfo track)
+        private bool TabIsKh1()
+        {
+            return ((TabControl)LogicalTreeHelper.FindLogicalNode(this, "tabControl"))?.SelectedIndex == 0;
+        }
+
+        private void AddTrackRow(TrackInfo track, StackPanel containerPanel, List<(TrackInfo, TextBox)> bindingList)
         {
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 5) };
 
@@ -70,7 +82,7 @@ namespace KingdomHeartsCustomMusic
             {
                 var dialog = new OpenFileDialog
                 {
-                    Filter = "WAV files (*.wav)|*.wav"
+                    Filter = "Audio files (*.wav;*.mp3)|*.wav;*.mp3"
                 };
                 if (dialog.ShowDialog() == true)
                     textbox.Text = dialog.FileName;
@@ -79,9 +91,9 @@ namespace KingdomHeartsCustomMusic
             row.Children.Add(label);
             row.Children.Add(textbox);
             row.Children.Add(button);
-            WorldListPanel.Children.Add(row);
 
-            _trackBindings.Add((track, textbox));
+            containerPanel.Children.Add(row);
+            bindingList.Add((track, textbox));
         }
 
         private void GeneratePatchButton_Click(object sender, RoutedEventArgs e)
@@ -110,46 +122,55 @@ namespace KingdomHeartsCustomMusic
             if (File.Exists(patchZip)) File.Delete(patchZip);
             if (File.Exists(patchFinal)) File.Delete(patchFinal);
 
+            // 🧠 Detectar pestaña activa y usar la lista correspondiente
+            var selectedTracks = TabIsKh1() ? _trackBindingsKH1 : _trackBindingsKH2;
             var includedTracks = new List<TrackInfo>();
 
-            foreach (var (track, textbox) in _trackBindings)
+            foreach (var (track, textbox) in selectedTracks)
             {
-                string originalWavPath = textbox.Text;
-                if (string.IsNullOrWhiteSpace(originalWavPath) || !File.Exists(originalWavPath))
+                string originalPath = textbox.Text;
+                if (string.IsNullOrWhiteSpace(originalPath) || !File.Exists(originalPath))
                     continue;
+
+                string extension = Path.GetExtension(originalPath).ToLower();
+                string workingPath = originalPath;
+
+                // Si es MP3, convertirlo a WAV temporal
+                if (extension == ".mp3")
+                {
+                    string tempDir = Path.Combine(Path.GetTempPath(), "KHCustomMusic");
+                    Directory.CreateDirectory(tempDir);
+                    workingPath = AudioConverter.ConvertMp3ToWav(originalPath, tempDir);
+                }
 
                 try
                 {
-                    // Copiar el WAV a la carpeta de ejecución de SingleEncoder
-                    string wavFileName = Path.GetFileName(originalWavPath);
+                    // Copiar WAV a la carpeta de ejecución
+                    string wavFileName = Path.GetFileName(workingPath);
                     string tempWavPath = Path.Combine(encoderDir, wavFileName);
-                    File.Copy(originalWavPath, tempWavPath, overwrite: true);
+                    File.Copy(workingPath, tempWavPath, overwrite: true);
 
-                    // Ejecutar SingleEncoder con el archivo copiado
                     var psi = new ProcessStartInfo
                     {
                         FileName = encoderExe,
                         Arguments = $"\"{scdTemplate}\" \"{tempWavPath}\" 10 -fl",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true,
+                        UseShellExecute = false, // 👈 ahora sí, ya no se necesita redirección
+                        CreateNoWindow = false,
                         WorkingDirectory = encoderDir
                     };
 
                     using (var proc = Process.Start(psi))
                     {
                         proc.WaitForExit();
+
                         if (proc.ExitCode != 0)
                         {
-                            string error = proc.StandardError.ReadToEnd();
-                            MessageBox.Show($"Failed to encode '{track.Description}':\n{error}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show($"Failed to encode '{track.Description}': process exited with code {proc.ExitCode}.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                             File.Delete(tempWavPath);
                             continue;
                         }
                     }
 
-                    // Copiar el archivo generado al destino
                     string baseName = $"music{track.Number}";
                     string targetScdPath = Path.Combine(
                         patchBasePath,
@@ -168,7 +189,11 @@ namespace KingdomHeartsCustomMusic
 
                     includedTracks.Add(track);
 
-                    // Limpieza del .wav y .ogg intermedios
+                    // Limpieza de temporales
+
+                    if (workingPath != originalPath && File.Exists(workingPath))
+                        File.Delete(workingPath);
+
                     File.Delete(tempWavPath);
                     string tempOggPath = Path.Combine(encoderDir, Path.GetFileNameWithoutExtension(tempWavPath) + ".ogg");
                     if (File.Exists(tempOggPath)) File.Delete(tempOggPath);
@@ -177,7 +202,6 @@ namespace KingdomHeartsCustomMusic
                 {
                     MessageBox.Show($"Failed to process track '{track.Description}':\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-
             }
 
             if (includedTracks.Count == 0)
@@ -186,7 +210,6 @@ namespace KingdomHeartsCustomMusic
                 return;
             }
 
-            // Crear archivo .kh1pcpatch
             ZipFile.CreateFromDirectory(patchBasePath, patchZip);
             File.Move(patchZip, patchFinal);
 
@@ -195,6 +218,9 @@ namespace KingdomHeartsCustomMusic
 
             MessageBox.Show(summary, "Patch created successfully", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+
+
+
 
 
     }
