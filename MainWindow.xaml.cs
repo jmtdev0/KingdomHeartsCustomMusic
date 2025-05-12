@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using static KingdomHeartsCustomMusic.utils.TrackListLoader;
 
 namespace KingdomHeartsCustomMusic
@@ -33,13 +34,13 @@ namespace KingdomHeartsCustomMusic
                 string excelKH2 = Path.Combine(baseDir, "resources", "All Games Track List - KH2.xlsx");
 
                 var tracksKH1 = TrackListLoader.LoadTrackList(excelKH1);
-                //var tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
+                var tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
 
                 foreach (var track in tracksKH1)
                     AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1);
 
-                //foreach (var track in tracksKH2)
-                //    AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2);
+                foreach (var track in tracksKH2)
+                    AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2);
             }
             catch (Exception ex)
             {
@@ -47,10 +48,6 @@ namespace KingdomHeartsCustomMusic
             }
         }
 
-        private bool TabIsKh1()
-        {
-            return ((TabControl)LogicalTreeHelper.FindLogicalNode(this, "tabControl"))?.SelectedIndex == 0;
-        }
 
         private void AddTrackRow(TrackInfo track, StackPanel containerPanel, List<(TrackInfo, TextBox)> bindingList)
         {
@@ -58,6 +55,7 @@ namespace KingdomHeartsCustomMusic
 
             var label = new TextBlock
             {
+                Foreground = Brushes.White,
                 Text = track.Description,
                 Width = 250,
                 VerticalAlignment = VerticalAlignment.Center
@@ -98,125 +96,59 @@ namespace KingdomHeartsCustomMusic
 
         private void GeneratePatchButton_Click(object sender, RoutedEventArgs e)
         {
+            // Paths declaration, initialization and checks
+
+            // Get which game is selected
+            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString() == "Kingdom Hearts I";
+
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
 
             string encoderDir = Path.Combine(projectRoot, "utils", "SingleEncoder");
             string encoderExe = Path.Combine(encoderDir, "SingleEncoder.exe");
             string encoderOutput = Path.Combine(encoderDir, "output");
             string scdTemplate = Path.Combine(encoderDir, "original.scd");
+            string patchBasePath = Path.Combine(encoderDir, "patches");
 
-            string patchBasePath = Path.Combine(projectRoot, "patches");
-            string patchZip = Path.Combine(projectRoot, "KHCustomPatch.zip");
-            string patchFinal = Path.Combine(projectRoot, "KHCustomPatch.kh1pcpatch");
+            // Recoger nombre personalizado del patch (si hay)
+            string? patchNameInput = PatchNameTextBox.Text?.Trim();
+            bool hasCustomName = !string.IsNullOrEmpty(patchNameInput);
 
-            if (!File.Exists(encoderExe) || !File.Exists(scdTemplate))
-            {
-                MessageBox.Show("SingleEncoder.exe or original.scd not found.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            // Asegurar carpeta de salida
+            string outputDir = Path.Combine(projectRoot, "patches");
+            Directory.CreateDirectory(outputDir);
 
-            if (Directory.Exists(patchBasePath))
-                Directory.Delete(patchBasePath, true);
-            Directory.CreateDirectory(patchBasePath);
+            string? baseFileName = hasCustomName
+                ? patchNameInput
+                : (isKH1 ? "KHCustomPatch" : "KHCustomPatch");
 
-            if (File.Exists(patchZip)) File.Delete(patchZip);
-            if (File.Exists(patchFinal)) File.Delete(patchFinal);
+            string patchZip = Path.Combine(projectRoot, "KHCustomPatch.zip"); // Temporal, se sobreescribe
+            string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{(isKH1 ? "kh1pcpatch" : "kh2pcpatch")}");
 
-            // 🧠 Detectar pestaña activa y usar la lista correspondiente
-            var selectedTracks = TabIsKh1() ? _trackBindingsKH1 : _trackBindingsKH2;
-            var includedTracks = new List<TrackInfo>();
+            // Track processing
 
-            foreach (var (track, textbox) in selectedTracks)
-            {
-                string originalPath = textbox.Text;
-                if (string.IsNullOrWhiteSpace(originalPath) || !File.Exists(originalPath))
-                    continue;
+            var currentTrackBindings = isKH1 
+                ? _trackBindingsKH1
+                : _trackBindingsKH2;
 
-                string extension = Path.GetExtension(originalPath).ToLower();
-                string workingPath = originalPath;
-
-                // Si es MP3, convertirlo a WAV temporal
-                if (extension == ".mp3")
-                {
-                    string tempDir = Path.Combine(Path.GetTempPath(), "KHCustomMusic");
-                    Directory.CreateDirectory(tempDir);
-                    workingPath = AudioConverter.ConvertMp3ToWav(originalPath, tempDir);
-                }
-
-                try
-                {
-                    // Copiar WAV a la carpeta de ejecución
-                    string wavFileName = Path.GetFileName(workingPath);
-                    string tempWavPath = Path.Combine(encoderDir, wavFileName);
-                    File.Copy(workingPath, tempWavPath, overwrite: true);
-
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = encoderExe,
-                        Arguments = $"\"{scdTemplate}\" \"{tempWavPath}\" 10 -fl",
-                        UseShellExecute = false, // 👈 ahora sí, ya no se necesita redirección
-                        CreateNoWindow = false,
-                        WorkingDirectory = encoderDir
-                    };
-
-                    using (var proc = Process.Start(psi))
-                    {
-                        proc.WaitForExit();
-
-                        if (proc.ExitCode != 0)
-                        {
-                            MessageBox.Show($"Failed to encode '{track.Description}': process exited with code {proc.ExitCode}.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                            File.Delete(tempWavPath);
-                            continue;
-                        }
-                    }
-
-                    string baseName = $"music{track.Number}";
-                    string targetScdPath = Path.Combine(
-                        patchBasePath,
-                        track.Location,
-                        track.Folder,
-                        baseName + ".dat",
-                        baseName + ".win32.scd"
-                    );
-
-                    string generatedScd = Path.Combine(encoderOutput, "original.scd");
-                    if (!File.Exists(generatedScd))
-                        throw new FileNotFoundException("SingleEncoder did not produce the expected output file.", generatedScd);
-
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetScdPath)!);
-                    File.Copy(generatedScd, targetScdPath, overwrite: true);
-
-                    includedTracks.Add(track);
-
-                    // Limpieza de temporales
-
-                    if (workingPath != originalPath && File.Exists(workingPath))
-                        File.Delete(workingPath);
-
-                    File.Delete(tempWavPath);
-                    string tempOggPath = Path.Combine(encoderDir, Path.GetFileNameWithoutExtension(tempWavPath) + ".ogg");
-                    if (File.Exists(tempOggPath)) File.Delete(tempOggPath);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Failed to process track '{track.Description}':\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
+            var includedTracks = PatchTrackProcessor.ProcessTracks(
+                currentTrackBindings
+                    .Select(t => (t.Track, t.TextBox.Text))
+                    .ToList(),
+                encoderExe,
+                encoderDir,
+                scdTemplate,
+                patchBasePath
+            );
 
             if (includedTracks.Count == 0)
             {
-                MessageBox.Show("No tracks selected. Please select at least one WAV file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            ZipFile.CreateFromDirectory(patchBasePath, patchZip);
-            File.Move(patchZip, patchFinal);
+            // Patch creation and packaging
 
-            string summary = $"Patch created with {includedTracks.Count} track(s):\n" +
-                             string.Join("\n", includedTracks.Select(t => $"- {t.Description}"));
-
-            MessageBox.Show(summary, "Patch created successfully", MessageBoxButton.OK, MessageBoxImage.Information);
+            PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
         }
 
 
