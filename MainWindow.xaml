@@ -17,17 +17,45 @@
                    FontSize="24" FontWeight="Bold"
                    Margin="0 0 0 20"/>
 
-        <TabControl 
-                    x:Name="MainTabControl"
+        <TabControl x:Name="MainTabControl"
                     Grid.Row="1"
                     Background="#FF2D2D30"
                     BorderBrush="Gray"
                     FontSize="14">
+
             <TabItem Header="Kingdom Hearts I">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel x:Name="WorldListPanelKH1" Orientation="Vertical" Margin="10"/>
+                    <StackPanel Margin="10">
+
+                        <!-- Botón general -->
+                        <Button Content="🎶 Buscar canción para las seleccionadas"
+                        Margin="0 0 0 10"
+                        HorizontalAlignment="Left"
+                        Click="AssignToSelectedButton_Click"
+                        Background="#FF007ACC"
+                        Foreground="White"
+                        BorderBrush="Transparent"
+                        Padding="10 5"
+                        Cursor="Hand"
+                        ToolTip="Select a single audio file and assign it to all checked tracks."
+                        />
+
+                        <!-- CheckBox "Select All" -->
+                        <CheckBox x:Name="SelectAllCheckBox"
+                        Content="Select All"
+                        HorizontalAlignment="Left"
+                        Margin="0 0 0 10"
+                        Checked="SelectAllCheckBox_Checked"
+                        Unchecked="SelectAllCheckBox_Unchecked"
+                        ToolTip="Select or deselect all tracks"/>
+
+                        <!-- Lista de pistas (rellenada desde C#) -->
+                        <StackPanel x:Name="WorldListPanelKH1" Orientation="Vertical"/>
+                    </StackPanel>
                 </ScrollViewer>
             </TabItem>
+
+
             <TabItem Header="Kingdom Hearts II">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel x:Name="WorldListPanelKH2" Orientation="Vertical" Margin="10"/>
@@ -35,20 +63,26 @@
             </TabItem>
         </TabControl>
 
-        <StackPanel Grid.Row="2" Margin="0 20 0 0" HorizontalAlignment="Center">
-            <TextBlock Text="Patch name:" FontSize="14" Margin="0 0 0 5" HorizontalAlignment="Left"/>
-            <TextBox x:Name="PatchNameTextBox" Width="200" Height="30"
-             Background="White" Foreground="Black"
-             BorderBrush="Gray" BorderThickness="1"
-             Padding="5" Margin="0 0 0 10"
-             HorizontalAlignment="Left"/>
+        <!-- TextBox para nombre del patch -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0 20 0 0">
+            <TextBlock Text="Nombre del patch:"
+                       VerticalAlignment="Center"
+                       Margin="0 0 10 0"/>
+            <TextBox x:Name="PatchNameTextBox"
+                     Width="200"
+                     VerticalAlignment="Center"
+                     Margin="0 0 20 0"
+                     Background="#FF1E1E1E"
+                     Foreground="White"
+                     BorderBrush="Gray"/>
             <Button Content="✨ Generate Patch"
-            Height="50" FontSize="16"
-            Background="#FF007ACC" Foreground="White"
-            BorderBrush="Transparent"
-            Padding="20 5"
-            Cursor="Hand"
-            Click="GeneratePatchButton_Click"/>
+                    Height="40"
+                    Width="160"
+                    Background="#FF007ACC"
+                    Foreground="White"
+                    BorderBrush="Transparent"
+                    Click="GeneratePatchButton_Click"
+                    Cursor="Hand"/>
         </StackPanel>
     </Grid>
 </Window>

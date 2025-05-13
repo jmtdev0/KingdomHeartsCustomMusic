@@ -17,68 +17,98 @@ namespace KingdomHeartsCustomMusic.utils
         {
             var includedTracks = new List<TrackInfo>();
 
-            foreach (var (track, filePath) in trackBindings)
+            // 1. Agrupar por archivo de audio
+            var trackGroups = trackBindings
+                .Where(tb => !string.IsNullOrWhiteSpace(tb.FilePath) && File.Exists(tb.FilePath))
+                .GroupBy(tb => tb.FilePath)
+                .ToDictionary(g => g.Key, g => g.Select(tb => tb.Track).ToList());
+
+            // 2. Para cada audio distinto: generar SCD una única vez
+            var generatedScds = new Dictionary<string, string>(); // filePath -> path SCD generado
+
+            foreach (var kvp in trackGroups)
             {
-                if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
-                    continue;
+                string filePath = kvp.Key;
+                List<TrackInfo> tracks = kvp.Value;
 
                 try
                 {
+                    // Convertir a WAV si hace falta
                     string tempWavPath = WavProcessingHelper.EnsureWavFormat(filePath);
                     int totalSamples = WavSampleAnalyzer.GetTotalSamples(tempWavPath);
 
-                    // Copiar el WAV al directorio del encoder
-                    string baseName = $"music{track.PcNumber}";
-                    string encoderWavPath = Path.Combine(encoderDir, baseName + ".wav");
+                    // Copiar al directorio del encoder
+                    string encoderWavPath = Path.Combine(encoderDir, "music.wav");
                     File.Copy(tempWavPath, encoderWavPath, overwrite: true);
 
                     RunSingleEncoder(encoderExe, encoderDir, scdTemplate, encoderWavPath, totalSamples);
 
-                    // Ruta de salida del SCD generado
-                    string sourceScdPath = Path.Combine(encoderDir, "output", "original.scd");
+                    // Guardar el SCD generado
+                    string generatedScdPath = Path.Combine(encoderDir, "output", "original.scd");
 
-                    // Copiar a BGM si aplica
-                    if (!string.IsNullOrWhiteSpace(track.LocationBgm))
-                    {
-                        string bgmScdPath = Path.Combine(
-                            patchBasePath,
-                            track.LocationBgm,
-                            "remastered",
-                            "amusic",
-                            baseName + ".bgm",
-                            baseName + ".win32.scd"
-                        );
+                    // Lo movemos a una ruta temporal identificable por hash o nombre
+                    string hash = Path.GetFileNameWithoutExtension(filePath).GetHashCode().ToString("X");
+                    string renamedScd = Path.Combine(encoderDir, "output", $"generated_{hash}.scd");
+                    File.Copy(generatedScdPath, renamedScd, overwrite: true);
 
-                        Directory.CreateDirectory(Path.GetDirectoryName(bgmScdPath)!);
-                        File.Copy(sourceScdPath, bgmScdPath, overwrite: true);
-                    }
+                    generatedScds[filePath] = renamedScd;
 
-                    // Copiar a DAT si aplica
-                    if (!string.IsNullOrWhiteSpace(track.LocationDat))
-                    {
-                        string datScdPath = Path.Combine(
-                            patchBasePath,
-                            track.LocationDat,
-                            "remastered",
-                            "amusic",
-                            baseName + ".dat",
-                            baseName + ".win32.scd"
-                        );
-
-                        Directory.CreateDirectory(Path.GetDirectoryName(datScdPath)!);
-                        File.Copy(sourceScdPath, datScdPath, overwrite: true);
-                    }
-
-                    includedTracks.Add(track);
-
+                    // Limpieza
                     File.Delete(tempWavPath);
                     File.Delete(encoderWavPath);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to process track '{track.Description}':\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Failed to encode file '{filePath}':\n{ex.Message}", "Encoding Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+
+            // 3. Para cada pista: copiar el SCD generado en su ruta correspondiente
+            foreach (var (track, filePath) in trackBindings)
+            {
+                if (string.IsNullOrWhiteSpace(filePath) || !generatedScds.TryGetValue(filePath, out string sourceScd))
+                    continue;
+
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(track.LocationDat))
+                    {
+                        string datPath = Path.Combine(
+                            patchBasePath,
+                            track.LocationDat,
+                            "remastered",
+                            "amusic",
+                            $"music{track.PcNumber}.dat",
+                            $"music{track.PcNumber}.win32.scd"
+                        );
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(datPath)!);
+                        File.Copy(sourceScd, datPath, overwrite: true);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(track.LocationBgm))
+                    {
+                        string bgmPath = Path.Combine(
+                            patchBasePath,
+                            track.LocationBgm,
+                            "remastered",
+                            "amusic",
+                            $"music{track.PcNumber}.bgm",
+                            $"music{track.PcNumber}.win32.scd"
+                        );
+
+                        Directory.CreateDirectory(Path.GetDirectoryName(bgmPath)!);
+                        File.Copy(sourceScd, bgmPath, overwrite: true);
+                    }
+
+                    includedTracks.Add(track);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to copy SCD for track '{track.Description}':\n{ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+
 
             return includedTracks;
         }

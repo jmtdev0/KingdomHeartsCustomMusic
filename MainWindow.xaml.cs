@@ -17,12 +17,16 @@ namespace KingdomHeartsCustomMusic
     {
         private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH1 = new();
         private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH2 = new();
+        private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH1 = new();
+        private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH2 = new();
 
         public MainWindow()
         {
             InitializeComponent();
             LoadTracks();
         }
+
+        #region XAML initialization
 
         private void LoadTracks()
         {
@@ -37,10 +41,10 @@ namespace KingdomHeartsCustomMusic
                 var tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
 
                 foreach (var track in tracksKH1)
-                    AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1);
+                    AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1, _trackCheckboxesKH1);
 
                 foreach (var track in tracksKH2)
-                    AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2);
+                    AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2, _trackCheckboxesKH2);
             }
             catch (Exception ex)
             {
@@ -48,10 +52,21 @@ namespace KingdomHeartsCustomMusic
             }
         }
 
-
-        private void AddTrackRow(TrackInfo track, StackPanel containerPanel, List<(TrackInfo, TextBox)> bindingList)
+        private void AddTrackRow(
+            TrackInfo track,
+            StackPanel containerPanel,
+            List<(TrackInfo, TextBox)> bindingList,
+            Dictionary<TrackInfo, CheckBox> selectionMap)
         {
             var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 5) };
+
+            var checkBox = new CheckBox
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+
+            selectionMap[track] = checkBox;
 
             var label = new TextBlock
             {
@@ -86,12 +101,69 @@ namespace KingdomHeartsCustomMusic
                     textbox.Text = dialog.FileName;
             };
 
+            row.Children.Add(checkBox);
             row.Children.Add(label);
             row.Children.Add(textbox);
             row.Children.Add(button);
 
             containerPanel.Children.Add(row);
             bindingList.Add((track, textbox));
+        }
+
+        #endregion
+
+        #region Button events
+
+        private void SelectAllCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            // Seleccionar todos los checkboxes
+            foreach (var checkbox in _trackCheckboxesKH1.Values)
+            {
+                checkbox.IsChecked = true;
+            }
+        }
+
+        private void SelectAllCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Deseleccionar todos los checkboxes
+            foreach (var checkbox in _trackCheckboxesKH1.Values)
+            {
+                checkbox.IsChecked = false;
+            }
+        }
+
+
+        private void AssignToSelectedButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = "Audio files (*.wav;*.mp3)|*.wav;*.mp3"
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            string selectedFile = dialog.FileName;
+
+            // Verificamos en qué tab estamos
+            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString() == "Kingdom Hearts I";
+
+            var bindings = isKH1 ? _trackBindingsKH1 : _trackBindingsKH2;
+            var checkboxes = isKH1 ? _trackCheckboxesKH1 : _trackCheckboxesKH2;
+
+            foreach (var (track, textbox) in bindings)
+            {
+                if (checkboxes.TryGetValue(track, out var checkbox) && checkbox.IsChecked == true)
+                {
+                    textbox.Text = selectedFile;
+                }
+            }
+
+            // Deseleccionar todos los checkbox después de aplicar
+            foreach (var checkbox in checkboxes.Values)
+            {
+                checkbox.IsChecked = false;
+            }
         }
 
         private void GeneratePatchButton_Click(object sender, RoutedEventArgs e)
@@ -126,7 +198,7 @@ namespace KingdomHeartsCustomMusic
 
             // Track processing
 
-            var currentTrackBindings = isKH1 
+            var currentTrackBindings = isKH1
                 ? _trackBindingsKH1
                 : _trackBindingsKH2;
 
@@ -150,6 +222,10 @@ namespace KingdomHeartsCustomMusic
 
             PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
         }
+
+        #endregion
+
+
 
 
 
