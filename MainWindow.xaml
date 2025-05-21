@@ -13,10 +13,54 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="🎵 Kingdom Hearts Music Patcher"
-                   FontSize="24" FontWeight="Bold"
-                   Margin="0 0 0 20"/>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
+            <!-- 🧩 Encabezado: título + botones de configuración -->
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 🎵 Título -->
+                <TextBlock Grid.Column="0"
+                   Text="🎵 Kingdom Hearts Music Patcher"
+                   FontSize="24" FontWeight="Bold"
+                   VerticalAlignment="Center"/>
+
+                <!-- 💾 Botón Guardar Config -->
+                <Button Grid.Column="1"
+                Content="💾 Save Config"
+                Margin="10 0 0 0"
+                Click="SaveConfigButton_Click"
+                Background="#FF007ACC"
+                Foreground="White"
+                BorderBrush="Transparent"
+                Padding="10 5"
+                Cursor="Hand"
+                ToolTip="Save current song assignments"/>
+
+                <!-- 📂 Botón Cargar Config -->
+                <Button Grid.Column="2"
+                Content="📂 Load Config"
+                Margin="10 0 0 0"
+                Click="LoadConfigButton_Click"
+                Background="#FF007ACC"
+                Foreground="White"
+                BorderBrush="Transparent"
+                Padding="10 5"
+                Cursor="Hand"
+                ToolTip="Load previously saved assignments"/>
+            </Grid>
+
+        </Grid>
+        
         <TabControl x:Name="MainTabControl"
                     Grid.Row="1"
                     Background="#FF2D2D30"

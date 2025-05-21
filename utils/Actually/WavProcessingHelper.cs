@@ -8,18 +8,13 @@ namespace KingdomHeartsCustomMusic.utils
         public static string EnsureWavFormat(string inputPath)
         {
             string ext = Path.GetExtension(inputPath).ToLowerInvariant();
-            if (ext == ".wav")
+            return ext switch
             {
-                return inputPath;
-            }
-            else if (ext == ".mp3")
-            {
-                return ConvertMp3ToWav(inputPath);
-            }
-            else
-            {
-                throw new InvalidOperationException("Unsupported file format. Only WAV and MP3 are accepted.");
-            }
+                ".wav" => inputPath,
+                ".mp3" => ConvertMp3ToWav(inputPath),
+                ".mp4" => ConvertMp4ToWav(inputPath),
+                _ => throw new InvalidOperationException("Unsupported file format. Only WAV, MP3 and MP4 are accepted.")
+            };
         }
 
         private static string ConvertMp3ToWav(string mp3Path)
@@ -31,6 +26,19 @@ namespace KingdomHeartsCustomMusic.utils
             using (var wavWriter = new WaveFileWriter(wavPath, pcmStream.WaveFormat))
             {
                 pcmStream.CopyTo(wavWriter);
+            }
+
+            return wavPath;
+        }
+
+        private static string ConvertMp4ToWav(string mp4Path)
+        {
+            string wavPath = Path.ChangeExtension(Path.GetTempFileName(), ".wav");
+
+            using (var reader = new MediaFoundationReader(mp4Path))
+            using (var wavWriter = new WaveFileWriter(wavPath, reader.WaveFormat))
+            {
+                reader.CopyTo(wavWriter);
             }
 
             return wavPath;

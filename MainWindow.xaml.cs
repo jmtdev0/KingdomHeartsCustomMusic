@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -79,8 +80,7 @@ namespace KingdomHeartsCustomMusic
             var textbox = new TextBox
             {
                 Width = 350,
-                Margin = new Thickness(10, 0, 10, 0),
-                IsReadOnly = true
+                Margin = new Thickness(10, 0, 10, 0)
             };
 
             var button = new Button
@@ -95,7 +95,7 @@ namespace KingdomHeartsCustomMusic
             {
                 var dialog = new OpenFileDialog
                 {
-                    Filter = "Audio files (*.wav;*.mp3)|*.wav;*.mp3"
+                    Filter = "Audio filias (*.wav;*.mp3;*.mp4)|*.wav;*.mp3;*.mp4"
                 };
                 if (dialog.ShowDialog() == true)
                     textbox.Text = dialog.FileName;
@@ -114,6 +114,94 @@ namespace KingdomHeartsCustomMusic
 
         #region Button events
 
+        private void SaveConfigButton_Click(object sender, RoutedEventArgs e)
+        {
+            var config = new RoutesConfig
+            {
+                Tracks = new Dictionary<string, Dictionary<string, string>>
+                {
+                    ["kh1"] = _trackBindingsKH1
+                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.TextBox.Text))
+                        .ToDictionary(kvp => kvp.Track.PcNumber.ToString(), kvp => kvp.TextBox.Text),
+
+                    ["kh2"] = _trackBindingsKH2
+                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.TextBox.Text))
+                        .ToDictionary(kvp => kvp.Track.PcNumber.ToString(), kvp => kvp.TextBox.Text)
+                }
+            };
+
+            var dialog = new SaveFileDialog
+            {
+                Title = "Save Configuration",
+                Filter = "Config Files (*.json)|*.json",
+                DefaultExt = ".json",
+                FileName = "kh_music_config"
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(dialog.FileName, json);
+                MessageBox.Show("Configuración guardada correctamente.", "Guardado", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        private void ApplyLoadedConfig(Dictionary<string, Dictionary<string, string>> config)
+        {
+            if (config.TryGetValue("kh1", out var kh1Config))
+            {
+                foreach (var (pcNumber, filePath) in kh1Config)
+                {
+                    var binding = _trackBindingsKH1.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
+                    if (binding.TextBox != null)
+                    {
+                        binding.TextBox.Text = filePath;
+                    }
+                }
+            }
+
+            if (config.TryGetValue("kh2", out var kh2Config))
+            {
+                foreach (var (pcNumber, filePath) in kh2Config)
+                {
+                    var binding = _trackBindingsKH2.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
+                    if (binding.TextBox != null)
+                    {
+                        binding.TextBox.Text = filePath;
+                    }
+                }
+            }
+        }
+
+        private void LoadConfigButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Title = "Load Configuration",
+                Filter = "Config Files (*.json)|*.json",
+                DefaultExt = ".json"
+            };
+
+            if (dialog.ShowDialog() != true)
+                return;
+
+            try
+            {
+                string json = File.ReadAllText(dialog.FileName);
+                var config = JsonSerializer.Deserialize<RoutesConfig>(json);
+
+                if (config?.Tracks != null)
+                {
+                    ApplyLoadedConfig(config.Tracks);
+                    MessageBox.Show("Configuración cargada correctamente.", "Cargado", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error cargando configuración:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
         private void SelectAllCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             // Seleccionar todos los checkboxes
@@ -131,7 +219,6 @@ namespace KingdomHeartsCustomMusic
                 checkbox.IsChecked = false;
             }
         }
-
 
         private void AssignToSelectedButton_Click(object sender, RoutedEventArgs e)
         {
