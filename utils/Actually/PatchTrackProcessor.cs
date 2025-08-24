@@ -17,14 +17,14 @@ namespace KingdomHeartsCustomMusic.utils
         {
             var includedTracks = new List<TrackInfo>();
 
-            // 1. Agrupar por archivo de audio
+            // 1. Group by audio file
             var trackGroups = trackBindings
                 .Where(tb => !string.IsNullOrWhiteSpace(tb.FilePath) && File.Exists(tb.FilePath))
                 .GroupBy(tb => tb.FilePath)
                 .ToDictionary(g => g.Key, g => g.Select(tb => tb.Track).ToList());
 
-            // 2. Para cada audio distinto: generar SCD una única vez
-            var generatedScds = new Dictionary<string, string>(); // filePath -> path SCD generado
+            // 2. For each distinct audio: generate SCD only once
+            var generatedScds = new Dictionary<string, string>(); // filePath -> generated SCD path
 
             foreach (var kvp in trackGroups)
             {
@@ -33,27 +33,27 @@ namespace KingdomHeartsCustomMusic.utils
 
                 try
                 {
-                    // Convertir a WAV si hace falta
+                    // Convert to WAV if needed
                     string tempWavPath = WavProcessingHelper.EnsureWavFormat(filePath);
                     int totalSamples = WavSampleAnalyzer.GetTotalSamples(tempWavPath);
 
-                    // Copiar al directorio del encoder
+                    // Copy to encoder directory
                     string encoderWavPath = Path.Combine(encoderDir, "music.wav");
                     File.Copy(tempWavPath, encoderWavPath, overwrite: true);
 
                     RunSingleEncoder(encoderExe, encoderDir, scdTemplate, encoderWavPath, totalSamples);
 
-                    // Guardar el SCD generado
+                    // Save the generated SCD
                     string generatedScdPath = Path.Combine(encoderDir, "output", "original.scd");
 
-                    // Lo movemos a una ruta temporal identificable por hash o nombre
+                    // Move it to a temporary path identifiable by hash or name
                     string hash = Path.GetFileNameWithoutExtension(filePath).GetHashCode().ToString("X");
                     string renamedScd = Path.Combine(encoderDir, "output", $"generated_{hash}.scd");
                     File.Copy(generatedScdPath, renamedScd, overwrite: true);
 
                     generatedScds[filePath] = renamedScd;
 
-                    // Limpieza
+                    // Cleanup
                     File.Delete(tempWavPath);
                     File.Delete(encoderWavPath);
                 }
@@ -63,7 +63,7 @@ namespace KingdomHeartsCustomMusic.utils
                 }
             }
 
-            // 3. Para cada pista: copiar el SCD generado en su ruta correspondiente
+            // 3. For each track: copy the generated SCD to its corresponding path
             foreach (var (track, filePath) in trackBindings)
             {
                 if (string.IsNullOrWhiteSpace(filePath) || !generatedScds.TryGetValue(filePath, out string sourceScd))

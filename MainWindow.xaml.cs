@@ -59,46 +59,104 @@ namespace KingdomHeartsCustomMusic
             List<(TrackInfo, TextBox)> bindingList,
             Dictionary<TrackInfo, CheckBox> selectionMap)
         {
-            var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 5) };
+            // Create a modern styled border container for each track
+            var trackBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(37, 37, 38)), // #FF252526
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(15, 12, 15, 12),
+                Margin = new Thickness(0, 0, 0, 8)
+            };
 
+            var row = new Grid();
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) }); // Checkbox
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(300) }); // Track name
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Path textbox
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) }); // Browse button
+
+            // Checkbox with modern styling
             var checkBox = new CheckBox
             {
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 10, 0)
+                Margin = new Thickness(0, 0, 15, 0),
+                Foreground = Brushes.White
             };
-
+            Grid.SetColumn(checkBox, 0);
             selectionMap[track] = checkBox;
 
+            // Track description with better typography
             var label = new TextBlock
             {
                 Foreground = Brushes.White,
                 Text = track.Description,
-                Width = 250,
-                VerticalAlignment = VerticalAlignment.Center
+                VerticalAlignment = VerticalAlignment.Center,
+                FontSize = 12,
+                FontWeight = FontWeights.Medium,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 15, 0)
             };
+            Grid.SetColumn(label, 1);
 
+            // Modern styled textbox
             var textbox = new TextBox
             {
-                Width = 350,
-                Margin = new Thickness(10, 0, 10, 0)
+                Margin = new Thickness(0, 0, 15, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)), // #FF2D2D30
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)), // #FF404040
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(8, 6, 8, 6),
+                FontSize = 11
             };
+            Grid.SetColumn(textbox, 2);
 
+            // Modern styled browse button
             var button = new Button
             {
-                Content = "Browse...",
-                Background = System.Windows.Media.Brushes.Gray,
-                Foreground = System.Windows.Media.Brushes.White,
-                Padding = new Thickness(10, 2, 10, 2)
+                Content = "📁 Browse",
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)), // #FF2D2D30
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)), // #FF404040
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(12, 6, 12, 6),
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Cursor = System.Windows.Input.Cursors.Hand
+            };
+            Grid.SetColumn(button, 3);
+
+            // Add hover effects to the button
+            button.MouseEnter += (s, e) => {
+                button.Background = new SolidColorBrush(Color.FromRgb(64, 64, 64));
+            };
+            button.MouseLeave += (s, e) => {
+                button.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
             };
 
             button.Click += (s, e) =>
             {
                 var dialog = new OpenFileDialog
                 {
-                    Filter = "Audio filias (*.wav;*.mp3;*.mp4)|*.wav;*.mp3;*.mp4"
+                    Filter = "Audio files (*.wav;*.mp3;*.mp4)|*.wav;*.mp3;*.mp4",
+                    Title = "Select Audio File"
                 };
                 if (dialog.ShowDialog() == true)
+                {
                     textbox.Text = dialog.FileName;
+                    // Add a subtle visual feedback
+                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204)); // #FF007ACC
+                }
+            };
+
+            // Add focus effects to textbox
+            textbox.GotFocus += (s, e) => {
+                textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204)); // #FF007ACC
+                textbox.BorderThickness = new Thickness(2);
+            };
+            textbox.LostFocus += (s, e) => {
+                textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)); // #FF404040
+                textbox.BorderThickness = new Thickness(1);
             };
 
             row.Children.Add(checkBox);
@@ -106,7 +164,8 @@ namespace KingdomHeartsCustomMusic
             row.Children.Add(textbox);
             row.Children.Add(button);
 
-            containerPanel.Children.Add(row);
+            trackBorder.Child = row;
+            containerPanel.Children.Add(trackBorder);
             bindingList.Add((track, textbox));
         }
 
@@ -142,7 +201,7 @@ namespace KingdomHeartsCustomMusic
             {
                 string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(dialog.FileName, json);
-                MessageBox.Show("Configuración guardada correctamente.", "Guardado", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("✅ Configuration saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
         private void ApplyLoadedConfig(Dictionary<string, Dictionary<string, string>> config)
@@ -155,6 +214,8 @@ namespace KingdomHeartsCustomMusic
                     if (binding.TextBox != null)
                     {
                         binding.TextBox.Text = filePath;
+                        // Add visual feedback for loaded files
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
                     }
                 }
             }
@@ -167,6 +228,8 @@ namespace KingdomHeartsCustomMusic
                     if (binding.TextBox != null)
                     {
                         binding.TextBox.Text = filePath;
+                        // Add visual feedback for loaded files
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
                     }
                 }
             }
@@ -192,19 +255,19 @@ namespace KingdomHeartsCustomMusic
                 if (config?.Tracks != null)
                 {
                     ApplyLoadedConfig(config.Tracks);
-                    MessageBox.Show("Configuración cargada correctamente.", "Cargado", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("✅ Configuration loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error cargando configuración:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"❌ Error loading configuration:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
 
         private void SelectAllCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            // Seleccionar todos los checkboxes
+            // Select all checkboxes
             foreach (var checkbox in _trackCheckboxesKH1.Values)
             {
                 checkbox.IsChecked = true;
@@ -213,7 +276,7 @@ namespace KingdomHeartsCustomMusic
 
         private void SelectAllCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            // Deseleccionar todos los checkboxes
+            // Deselect all checkboxes
             foreach (var checkbox in _trackCheckboxesKH1.Values)
             {
                 checkbox.IsChecked = false;
@@ -224,7 +287,8 @@ namespace KingdomHeartsCustomMusic
         {
             var dialog = new OpenFileDialog
             {
-                Filter = "Audio files (*.wav;*.mp3)|*.wav;*.mp3"
+                Filter = "Audio files (*.wav;*.mp3)|*.wav;*.mp3",
+                Title = "Select Audio File for Multiple Tracks"
             };
 
             if (dialog.ShowDialog() != true)
@@ -232,24 +296,33 @@ namespace KingdomHeartsCustomMusic
 
             string selectedFile = dialog.FileName;
 
-            // Verificamos en qué tab estamos
-            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString() == "Kingdom Hearts I";
+            // Check which tab we are on
+            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
 
             var bindings = isKH1 ? _trackBindingsKH1 : _trackBindingsKH2;
             var checkboxes = isKH1 ? _trackCheckboxesKH1 : _trackCheckboxesKH2;
 
+            int assignedCount = 0;
             foreach (var (track, textbox) in bindings)
             {
                 if (checkboxes.TryGetValue(track, out var checkbox) && checkbox.IsChecked == true)
                 {
                     textbox.Text = selectedFile;
+                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                    assignedCount++;
                 }
             }
 
-            // Deseleccionar todos los checkbox después de aplicar
+            // Deselect all checkboxes after applying
             foreach (var checkbox in checkboxes.Values)
             {
                 checkbox.IsChecked = false;
+            }
+
+            // Show feedback message
+            if (assignedCount > 0)
+            {
+                MessageBox.Show($"🎵 Audio file assigned to {assignedCount} track(s)!", "Assignment Complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -258,9 +331,9 @@ namespace KingdomHeartsCustomMusic
             // Paths declaration, initialization and checks
 
             // Get which game is selected
-            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString() == "Kingdom Hearts I";
+            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
 
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\.."));
+            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\.."));
 
             string encoderDir = Path.Combine(projectRoot, "utils", "SingleEncoder");
             string encoderExe = Path.Combine(encoderDir, "SingleEncoder.exe");
@@ -268,11 +341,11 @@ namespace KingdomHeartsCustomMusic
             string scdTemplate = Path.Combine(encoderDir, "original.scd");
             string patchBasePath = Path.Combine(encoderDir, "patches");
 
-            // Recoger nombre personalizado del patch (si hay)
+            // Get custom patch name (if any)
             string? patchNameInput = PatchNameTextBox.Text?.Trim();
             bool hasCustomName = !string.IsNullOrEmpty(patchNameInput);
 
-            // Asegurar carpeta de salida
+            // Ensure output folder
             string outputDir = Path.Combine(projectRoot, "patches");
             Directory.CreateDirectory(outputDir);
 
@@ -280,7 +353,7 @@ namespace KingdomHeartsCustomMusic
                 ? patchNameInput
                 : (isKH1 ? "KHCustomPatch" : "KHCustomPatch");
 
-            string patchZip = Path.Combine(projectRoot, "KHCustomPatch.zip"); // Temporal, se sobreescribe
+            string patchZip = Path.Combine(projectRoot, "KHCustomPatch.zip"); // Temporary, gets overwritten
             string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{(isKH1 ? "kh1pcpatch" : "kh2pcpatch")}");
 
             // Track processing
@@ -301,23 +374,14 @@ namespace KingdomHeartsCustomMusic
 
             if (includedTracks.Count == 0)
             {
-                MessageBox.Show("No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("⚠️ No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             // Patch creation and packaging
-
             PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
         }
 
         #endregion
-
-
-
-
-
-
-
     }
-
 }

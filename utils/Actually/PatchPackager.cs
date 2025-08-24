@@ -9,25 +9,40 @@ namespace KingdomHeartsCustomMusic.utils
     {
         public static void CreateFinalPatch(string patchBasePath, string patchZipPath, string patchFinalPath, List<TrackInfo> includedTracks)
         {
-            // Asegurarse de que el directorio "patches" existe
+            // Ensure the "patches" directory exists
             string patchesDir = Path.GetDirectoryName(patchFinalPath)!;
             Directory.CreateDirectory(patchesDir);
 
-            // Crear el archivo zip desde el contenido del patch
+            // Create the zip file from the patch content
             ZipFile.CreateFromDirectory(patchBasePath, patchZipPath);
 
-            // Renombrar el .zip a .kh1pcpatch
+            // Rename the .zip to .kh1pcpatch/.kh2pcpatch
             if (File.Exists(patchFinalPath))
-                File.Delete(patchFinalPath); // Evita excepciones si el archivo ya existe
+                File.Delete(patchFinalPath); // Avoid exceptions if the file already exists
 
             File.Move(patchZipPath, patchFinalPath);
 
-            // Eliminar carpeta temporal que contenía el contenido del patch
+            // Delete temporary folder that contained the patch content
             Directory.Delete(patchBasePath, recursive: true);
 
-            MessageBox.Show($"🎉 Patch created successfully with {includedTracks.Count} tracks!\n\nPath:\n{patchFinalPath}",
-                            "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+            // Get file size for display
+            var fileInfo = new FileInfo(patchFinalPath);
+            string fileSize = fileInfo.Length > 1024 * 1024 
+                ? $"{fileInfo.Length / (1024.0 * 1024.0):F1} MB"
+                : $"{fileInfo.Length / 1024.0:F1} KB";
 
+            string gameVersion = patchFinalPath.Contains("kh1pcpatch") ? "Kingdom Hearts I" : "Kingdom Hearts II";
+
+            MessageBox.Show(
+                $"🎉 Patch Created Successfully!\n\n" +
+                $"✨ Game: {gameVersion}\n" +
+                $"🎵 Tracks included: {includedTracks.Count}\n" +
+                $"📦 File size: {fileSize}\n" +
+                $"📁 Location: {patchFinalPath}\n\n" +
+                $"Your custom music patch is ready to use! 🎮",
+                "Patch Generation Complete", 
+                MessageBoxButton.OK, 
+                MessageBoxImage.Information);
+        }
     }
 }
