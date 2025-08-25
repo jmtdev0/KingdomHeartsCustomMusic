@@ -7,23 +7,41 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 
-    <!-- Package into a single EXE file -->
-    <PublishSingleFile>true</PublishSingleFile>
+    <!-- Application Information -->
+    <AssemblyTitle>Kingdom Hearts Custom Music</AssemblyTitle>
+    <AssemblyDescription>Custom music patch generator for Kingdom Hearts games</AssemblyDescription>
+    <AssemblyCompany>jmtdev0</AssemblyCompany>
+    <AssemblyProduct>Kingdom Hearts Custom Music</AssemblyProduct>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+
+    <!-- Single File Publishing Configuration -->
+    <PublishSingleFile>false</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <PublishTrimmed>false</PublishTrimmed>
-    <!-- You can try true later -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
-
-    <!-- Necessary to include resources folder -->
-    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    
+    <!-- Optimization -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <PublishReadyToRunShowWarnings>true</PublishReadyToRunShowWarnings>
+    
+    <!-- Application Icon (if you have one) -->
+    <!-- <ApplicationIcon>icon.ico</ApplicationIcon> -->
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="resources\All Games Track List - KH1.xlsx" />
     <None Remove="resources\All Games Track List - KH2.xlsx" />
+    <None Remove="utils\SingleEncoder\original.scd" />
+    <None Remove="utils\SingleEncoder\SingleEncoder.exe" />
+    <None Remove="utils\SingleEncoder\SingleEncoder.dll" />
+    <None Remove="utils\SingleEncoder\SingleEncoder.runtimeconfig.json" />
+    <None Remove="utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe" />
+    <None Remove="utils\SingleEncoder\tools\oggenc\oggenc.exe" />
   </ItemGroup>
 
+  <!-- Resources that need to be included in the distribution -->
   <ItemGroup>
     <Content Include="resources\All Games Track List - KH1.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -31,8 +49,44 @@
     <Content Include="resources\All Games Track List - KH2.xlsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    
+    <!-- SingleEncoder and dependencies -->
+    <Content Include="utils\SingleEncoder\original.scd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="utils\SingleEncoder\SingleEncoder.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="utils\SingleEncoder\SingleEncoder.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="utils\SingleEncoder\SingleEncoder.runtimeconfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    
+    <!-- External tools -->
+    <Content Include="utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="utils\SingleEncoder\tools\oggenc\oggenc.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    
+    <!-- Include all files in tools directories -->
+    <Content Include="utils\SingleEncoder\tools\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>utils\SingleEncoder\tools\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
+  <!-- Exclude KHPCPatchManager-Code from compilation -->
+  <ItemGroup>
+    <Compile Remove="KHPCPatchManager-Code\**" />
+    <EmbeddedResource Remove="KHPCPatchManager-Code\**" />
+    <None Remove="KHPCPatchManager-Code\**" />
+  </ItemGroup>
+
+  <!-- Package References -->
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="NAudio" Version="2.2.1" />

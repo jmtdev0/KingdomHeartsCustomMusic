@@ -161,17 +161,18 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Title -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="⚔️" FontSize="32" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                    <TextBlock Text="🏰🤍" FontSize="32" VerticalAlignment="Center" Margin="0,0,15,0"/>
                     <StackPanel>
                         <TextBlock Text="Kingdom Hearts Music Patcher" 
                                    FontSize="28" 
                                    FontWeight="Bold"
                                    Foreground="#FF007ACC"/>
-                        <TextBlock Text="Transform your KH experience with custom music" 
+                        <TextBlock Text="With all due respect to Yoko Shimomura." 
                                    FontSize="13" 
                                    Foreground="#FFAAAAAA"
                                    Margin="0,2,0,0"/>
@@ -192,6 +193,13 @@
                         Click="LoadConfigButton_Click"
                         Style="{StaticResource SecondaryButtonStyle}"
                         ToolTip="Load previously saved assignments"/>
+
+                <Button Grid.Column="3"
+                        Content="📋 View Logs"
+                        Margin="10,0,0,0"
+                        Click="ViewLogsButton_Click"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        ToolTip="Open the folder containing application logs"/>
             </Grid>
 
             <!-- Separator Line -->
@@ -206,7 +214,7 @@
                     Grid.Row="1"
                     Style="{StaticResource ModernTabControlStyle}">
 
-            <TabItem Header="🏰 Kingdom Hearts I" Style="{StaticResource ModernTabItemStyle}">
+            <TabItem Header="Kingdom Hearts I" Style="{StaticResource ModernTabItemStyle}">
                 <Border Background="#FF252526" CornerRadius="0,8,8,8" Padding="20">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
@@ -230,7 +238,7 @@
                                         </Grid.ColumnDefinitions>
                                         
                                         <Button Grid.Column="0"
-                                                Content="🎶 Assign Song to Selected Tracks"
+                                                Content="🎶 Assign Song to All Selected Tracks"
                                                 HorizontalAlignment="Left"
                                                 Click="AssignToSelectedButton_Click"
                                                 Style="{StaticResource ModernButtonStyle}"
@@ -266,7 +274,7 @@
                 </Border>
             </TabItem>
 
-            <TabItem Header="👑 Kingdom Hearts II" Style="{StaticResource ModernTabItemStyle}">
+            <TabItem Header="Kingdom Hearts II" Style="{StaticResource ModernTabItemStyle}">
                 <Border Background="#FF252526" CornerRadius="0,8,8,8" Padding="20">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Border Background="#FF2D2D30" CornerRadius="8" Padding="20">
@@ -296,6 +304,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Patch Name Input -->
@@ -311,14 +320,24 @@
                              ToolTip="Enter a custom name for your patch"/>
                 </StackPanel>
 
-                <!-- Generate Patch Button -->
+                <!-- Apply Existing Patch Button -->
                 <Button Grid.Column="2"
+                        Content="📂 Select &amp; Apply Patch"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Click="ApplyPatchButton_Click"
+                        FontSize="14"
+                        Padding="15,12"
+                        Margin="0,0,10,0"
+                        ToolTip="Select a patch file and game installation folder to apply an existing Kingdom Hearts patch"/>
+
+                <!-- Generate Patch Button -->
+                <Button Grid.Column="3"
                         Content="✨ Generate Music Patch"
                         Style="{StaticResource ModernButtonStyle}"
                         Click="GeneratePatchButton_Click"
                         FontSize="14"
                         Padding="20,12"
-                        ToolTip="Create your custom Kingdom Hearts music patch"/>
+                        ToolTip="Create your custom Kingdom Hearts music patch from the selected tracks"/>
             </Grid>
         </Border>
     </Grid>

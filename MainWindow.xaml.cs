@@ -9,6 +9,15 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using static KingdomHeartsCustomMusic.utils.TrackListLoader;
 
+// Aliases para evitar conflictos de namespace
+using WpfMessageBox = System.Windows.MessageBox;
+using WpfTextBox = System.Windows.Controls.TextBox;
+using WpfCheckBox = System.Windows.Controls.CheckBox;
+using WpfButton = System.Windows.Controls.Button;
+using WpfColor = System.Windows.Media.Color;
+using WpfBrushes = System.Windows.Media.Brushes;
+using WinFormsMessageBox = System.Windows.Forms.MessageBox;
+
 namespace KingdomHeartsCustomMusic
 {
     /// <summary>
@@ -16,10 +25,11 @@ namespace KingdomHeartsCustomMusic
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH1 = new();
-        private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH2 = new();
-        private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH1 = new();
-        private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH2 = new();
+        // Main lists for track bindings
+        private readonly List<(TrackInfo Track, WpfTextBox TextBox)> _trackBindingsKH1 = new();
+        private readonly List<(TrackInfo Track, WpfTextBox TextBox)> _trackBindingsKH2 = new();
+        private readonly Dictionary<TrackInfo, WpfCheckBox> _trackCheckboxesKH1 = new();
+        private readonly Dictionary<TrackInfo, WpfCheckBox> _trackCheckboxesKH2 = new();
 
         public MainWindow()
         {
@@ -33,10 +43,36 @@ namespace KingdomHeartsCustomMusic
         {
             try
             {
+                // Use application directory instead of AppDomain.CurrentDomain.BaseDirectory for distributed executable
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
                 string excelKH1 = Path.Combine(baseDir, "resources", "All Games Track List - KH1.xlsx");
                 string excelKH2 = Path.Combine(baseDir, "resources", "All Games Track List - KH2.xlsx");
+
+                // Verify files exist before trying to load them
+                if (!File.Exists(excelKH1))
+                {
+                    MessageBox.Show(
+                        $"❌ KH1 track list not found!\n\n" +
+                        $"Expected location: {excelKH1}\n\n" +
+                        $"Please ensure the resources folder is in the same directory as the executable.",
+                        "Missing Track List",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+
+                if (!File.Exists(excelKH2))
+                {
+                    MessageBox.Show(
+                        $"❌ KH2 track list not found!\n\n" +
+                        $"Expected location: {excelKH2}\n\n" +
+                        $"Please ensure the resources folder is in the same directory as the executable.",
+                        "Missing Track List",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
 
                 var tracksKH1 = TrackListLoader.LoadTrackList(excelKH1);
                 var tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
@@ -328,60 +364,346 @@ namespace KingdomHeartsCustomMusic
 
         private void GeneratePatchButton_Click(object sender, RoutedEventArgs e)
         {
-            // Paths declaration, initialization and checks
-
-            // Get which game is selected
-            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
-
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\.."));
-
-            string encoderDir = Path.Combine(projectRoot, "utils", "SingleEncoder");
-            string encoderExe = Path.Combine(encoderDir, "SingleEncoder.exe");
-            string encoderOutput = Path.Combine(encoderDir, "output");
-            string scdTemplate = Path.Combine(encoderDir, "original.scd");
-            string patchBasePath = Path.Combine(encoderDir, "patches");
-
-            // Get custom patch name (if any)
-            string? patchNameInput = PatchNameTextBox.Text?.Trim();
-            bool hasCustomName = !string.IsNullOrEmpty(patchNameInput);
-
-            // Ensure output folder
-            string outputDir = Path.Combine(projectRoot, "patches");
-            Directory.CreateDirectory(outputDir);
-
-            string? baseFileName = hasCustomName
-                ? patchNameInput
-                : (isKH1 ? "KHCustomPatch" : "KHCustomPatch");
-
-            string patchZip = Path.Combine(projectRoot, "KHCustomPatch.zip"); // Temporary, gets overwritten
-            string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{(isKH1 ? "kh1pcpatch" : "kh2pcpatch")}");
-
-            // Track processing
-
-            var currentTrackBindings = isKH1
-                ? _trackBindingsKH1
-                : _trackBindingsKH2;
-
-            var includedTracks = PatchTrackProcessor.ProcessTracks(
-                currentTrackBindings
-                    .Select(t => (t.Track, t.TextBox.Text))
-                    .ToList(),
-                encoderExe,
-                encoderDir,
-                scdTemplate,
-                patchBasePath
-            );
-
-            if (includedTracks.Count == 0)
+            utils.ProgressWindow? progressWindow = null;
+            try
             {
-                MessageBox.Show("⚠️ No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+                // Initialize logging for patch generation
+                PatchLogger.InitializeLog("PatchGeneration");
+                PatchLogger.LogStep("Starting GeneratePatchButton_Click");
 
-            // Patch creation and packaging
-            PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
+                // Get which game is selected
+                bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
+                PatchLogger.Log($"Selected game: {(isKH1 ? "Kingdom Hearts I" : "Kingdom Hearts II")}");
+
+                // Use application directory as base, not project root when distributed
+                string appDir = AppDomain.CurrentDomain.BaseDirectory;
+                PatchLogger.Log($"Application directory: {appDir}");
+                
+                // For distributed executable, files should be in the same directory structure
+                string encoderDir = Path.Combine(appDir, "utils", "SingleEncoder");
+                string encoderExe = Path.Combine(encoderDir, "SingleEncoder.exe");
+                string scdTemplate = Path.Combine(encoderDir, "original.scd");
+                string patchBasePath = Path.Combine(encoderDir, "patches");
+
+                PatchLogger.Log($"Encoder directory: {encoderDir}");
+                PatchLogger.Log($"Encoder executable: {encoderExe}");
+                PatchLogger.Log($"SCD template: {scdTemplate}");
+                PatchLogger.Log($"Patch base path: {patchBasePath}");
+
+                // Validate that all required files exist
+                PatchLogger.LogStep("Validating required files");
+
+                if (!Directory.Exists(encoderDir))
+                {
+                    PatchLogger.LogError($"SingleEncoder directory not found: {encoderDir}");
+                    return;
+                }
+
+                if (!File.Exists(encoderExe))
+                {
+                    PatchLogger.LogError($"SingleEncoder.exe not found: {encoderExe}");
+                    return;
+                }
+
+                if (!File.Exists(scdTemplate))
+                {
+                    PatchLogger.LogError($"SCD template not found: {scdTemplate}");
+                    return;
+                }
+
+                PatchLogger.Log("All required files validated successfully");
+
+                // Test SingleEncoder with a simple command to see if it's working
+                PatchLogger.LogStep("Testing SingleEncoder executable");
+
+                if (!TestSingleEncoder(encoderExe, encoderDir))
+                {
+                    PatchLogger.LogError("SingleEncoder test failed");
+                    return;
+                }
+
+                // Get custom patch name (if any)
+                string? patchNameInput = PatchNameTextBox.Text?.Trim();
+                bool hasCustomName = !string.IsNullOrEmpty(patchNameInput);
+                PatchLogger.Log($"Custom patch name: {(hasCustomName ? patchNameInput : "None")}");
+
+                // Ensure output folder exists
+                string outputDir = Path.Combine(appDir, "patches");
+                PatchLogger.Log($"Output directory: {outputDir}");
+                Directory.CreateDirectory(outputDir);
+
+                string? baseFileName = hasCustomName
+                    ? patchNameInput
+                    : (isKH1 ? "KHCustomPatch" : "KHCustomPatch");
+
+                string patchZip = Path.Combine(appDir, "KHCustomPatch.zip"); // Temporary, gets overwritten
+                string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{(isKH1 ? "kh1pcpatch" : "kh2pcpatch")}");
+
+                PatchLogger.Log($"Base filename: {baseFileName}");
+                PatchLogger.Log($"Temporary ZIP: {patchZip}");
+                PatchLogger.Log($"Final patch file: {patchFinal}");
+
+                // Track processing
+                var currentTrackBindings = isKH1
+                    ? _trackBindingsKH1
+                    : _trackBindingsKH2;
+
+                PatchLogger.LogStep("Analyzing selected tracks");
+
+                var selectedTracks = currentTrackBindings
+                    .Where(t => !string.IsNullOrWhiteSpace(t.TextBox.Text))
+                    .ToList();
+
+                PatchLogger.Log($"Total tracks in game: {currentTrackBindings.Count}");
+                PatchLogger.Log($"Selected tracks: {selectedTracks.Count}");
+
+                foreach (var (track, textBox) in selectedTracks.Take(10)) // Log first 10 selected tracks
+                {
+                    PatchLogger.Log($"  Track: {track.Description} -> {Path.GetFileName(textBox.Text)}");
+                }
+                if (selectedTracks.Count > 10)
+                {
+                    PatchLogger.Log($"  ... and {selectedTracks.Count - 10} more tracks");
+                }
+
+                if (selectedTracks.Count == 0)
+                {
+                    PatchLogger.Log("No tracks selected, showing warning to user");
+                    PatchLogger.FinalizeLog(false);
+                    MessageBox.Show("⚠️ No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Create and show progress window
+                progressWindow = new utils.ProgressWindow();
+                progressWindow.Owner = this;
+                progressWindow.Show();
+
+                // Initialize progress
+                progressWindow.UpdateProgress("🚀 Starting patch generation...", 0);
+
+                // Create progress reporters
+                var trackProgressReporter = new ProgressWindowTrackReporter(progressWindow);
+                IProgress<string> progress = new Progress<string>(message => 
+                {
+                    progressWindow.UpdateProgress(message, -1);
+                    PatchLogger.Log($"Progress: {message}");
+                });
+
+                // Ensure patches base directory exists
+                PatchLogger.LogStep("Creating patch base directory");
+                Directory.CreateDirectory(patchBasePath);
+
+                PatchLogger.LogStep("Starting track processing");
+
+                var includedTracks = PatchTrackProcessor.ProcessTracks(
+                    currentTrackBindings
+                        .Select(t => (t.Track, t.TextBox.Text))
+                        .ToList(),
+                    encoderExe,
+                    encoderDir,
+                    scdTemplate,
+                    patchBasePath,
+                    progress,
+                    trackProgressReporter
+                );
+
+                PatchLogger.Log($"Track processing completed. Included tracks: {includedTracks.Count}");
+
+                if (includedTracks.Count == 0)
+                {
+                    PatchLogger.Log("No tracks were processed successfully");
+                    PatchLogger.FinalizeLog(false);
+                    progressWindow?.Close();
+                    return;
+                }
+
+                // Hide track progress and show general progress
+                progressWindow.HideTrackProgress();
+                progressWindow.UpdateProgress("📦 Creating patch file...", 90);
+
+                // Patch creation and packaging
+                PatchLogger.LogStep("Starting patch packaging");
+
+                PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks, progress);
+
+                PatchLogger.LogStep("Patch generation completed successfully");
+                PatchLogger.FinalizeLog(true);
+
+                progressWindow.UpdateProgress("✅ Patch generation complete!", 100);
+                progressWindow?.Close();
+                progressWindow = null;
+
+                // Only show final completion message
+                MessageBox.Show(
+                    $"✅ Patch generated successfully!\n\n" +
+                    $"🎵 Tracks included: {includedTracks.Count}",
+                    "Patch Generation Complete",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                PatchLogger.LogError("Exception in GeneratePatchButton_Click", ex);
+                PatchLogger.FinalizeLog(false);
+                
+                progressWindow?.Close();
+            }
         }
 
+        private bool TestSingleEncoder(string encoderExe, string encoderDir)
+        {
+            try
+            {
+                PatchLogger.LogStep("Running SingleEncoder test");
+                
+                var psi = new ProcessStartInfo
+                {
+                    FileName = encoderExe,
+                    Arguments = "--help", // Most .NET console apps respond to --help
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = encoderDir,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                using (var proc = Process.Start(psi))
+                {
+                    if (proc == null)
+                    {
+                        PatchLogger.LogError("Could not start SingleEncoder test process");
+                        return false;
+                    }
+
+                    bool finished = proc.WaitForExit(10000); // 10 seconds for test
+                    
+                    if (!finished)
+                    {
+                        PatchLogger.LogError("SingleEncoder test timed out");
+                        proc.Kill();
+                        return false;
+                    }
+
+                    string output = proc.StandardOutput.ReadToEnd();
+                    string error = proc.StandardError.ReadToEnd();
+
+                    PatchLogger.Log($"SingleEncoder test exit code: {proc.ExitCode}");
+                    if (!string.IsNullOrEmpty(output))
+                    {
+                        PatchLogger.Log($"SingleEncoder test output: {output}");
+                    }
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        PatchLogger.Log($"SingleEncoder test error: {error}");
+                    }
+
+                    // For this test, we just want to make sure it runs without crashing
+                    // Exit codes -1, 0, or 1 are usually acceptable for help commands
+                    PatchLogger.Log("SingleEncoder test completed");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                PatchLogger.LogError("Exception in SingleEncoder test", ex);
+                return false;
+            }
+        }
         #endregion
+
+        private void ApplyPatchButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Path to KHPCPatchManager.exe in the root of the project
+                string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\.."));
+                string khpcPatchManagerPath = Path.Combine(projectRoot, "KHPCPatchManager.exe");
+
+                // Check if KHPCPatchManager.exe exists
+                if (!File.Exists(khpcPatchManagerPath))
+                {
+                    MessageBox.Show(
+                        $"❌ KHPCPatchManager.exe not found!\n\n" +
+                        $"Expected location: {khpcPatchManagerPath}\n\n" +
+                        $"Please ensure KHPCPatchManager.exe is in the root folder of the project.",
+                        "KHPCPatchManager Not Found",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+
+                // Launch KHPCPatchManager.exe
+                var processInfo = new ProcessStartInfo
+                {
+                    FileName = khpcPatchManagerPath,
+                    UseShellExecute = true,
+                    WorkingDirectory = projectRoot
+                };
+
+                Process.Start(processInfo);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"❌ Error launching KHPCPatchManager:\n\n{ex.Message}",
+                    "Launch Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void ViewLogsButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string logDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "KingdomHeartsCustomMusic", "Logs");
+                
+                if (!Directory.Exists(logDir))
+                {
+                    Directory.CreateDirectory(logDir);
+                }
+
+                // Open the logs folder in Windows Explorer
+                System.Diagnostics.Process.Start("explorer.exe", logDir);
+                
+                // Get the most recent log file for reference
+                var logFiles = Directory.GetFiles(logDir, "*.log", SearchOption.TopDirectoryOnly)
+                    .OrderByDescending(f => File.GetLastWriteTime(f))
+                    .ToArray();
+
+                string recentLogInfo = "";
+                if (logFiles.Length > 0)
+                {
+                    var recentLog = logFiles[0];
+                    var logInfo = new FileInfo(recentLog);
+                    recentLogInfo = $"\n\n📄 Most recent log:\n{Path.GetFileName(recentLog)}\n📅 {logInfo.LastWriteTime:yyyy-MM-dd HH:mm:ss}";
+                }
+
+                WpfMessageBox.Show(
+                    $"📂 Logs folder opened in Windows Explorer.\n\n" +
+                    $"Location: {logDir}\n" +
+                    $"📊 Total log files: {logFiles.Length}" +
+                    recentLogInfo + "\n\n" +
+                    $"Look for files named:\n" +
+                    $"• 'PatchApplication_PatchGeneration_*.log' for patch creation logs\n" +
+                    $"• 'PatchApplication_Interactive_*.log' for patch application logs\n\n" +
+                    $"These files contain detailed information about operations\n" +
+                    $"that can be shared for troubleshooting assistance.",
+                    "Application Logs",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                WpfMessageBox.Show(
+                    $"❌ Could not open logs folder:\n\n{ex.Message}\n\n" +
+                    $"You can manually navigate to:\n" +
+                    $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "KingdomHeartsCustomMusic", "Logs")}",
+                    "Error Opening Logs",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
     }
 }
