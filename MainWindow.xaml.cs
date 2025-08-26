@@ -20,11 +20,52 @@ namespace KingdomHeartsCustomMusic
         private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH2 = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH1 = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH2 = new();
+        private List<TrackInfo> _tracksKH1;
+        private List<TrackInfo> _tracksKH2;
 
         public MainWindow()
         {
             InitializeComponent();
             LoadTracks();
+
+            // Hacer que los ComboBox se desplieguen al hacer clic en cualquier parte
+            TrackSortComboBoxKH1.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
+            TrackSortComboBoxKH2.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
+
+            // Cambiar el texto del botón de generación de parche según la pestaña activa
+            MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
+            UpdateGeneratePatchButtonText();
+        }
+
+        private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Esperar a que el cambio de pestaña se complete antes de actualizar el texto
+            Dispatcher.BeginInvoke(new Action(UpdateGeneratePatchButtonText), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private void UpdateGeneratePatchButtonText()
+        {
+            if (GeneratePatchButton != null)
+            {
+                var selectedTab = MainTabControl.SelectedItem as TabItem;
+                if (selectedTab != null)
+                {
+                    if (selectedTab.Header.ToString().Equals("Kingdom Hearts I"))
+                        GeneratePatchButton.Content = "✨ Generate Music Patch (KH1)";
+                    else if (selectedTab.Header.ToString().Equals("Kingdom Hearts II"))
+                        GeneratePatchButton.Content = "✨ Generate Music Patch (KH2)";
+                }
+            }
+        }
+
+        private void ComboBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var combo = sender as ComboBox;
+            if (combo != null && !combo.IsDropDownOpen)
+            {
+                combo.IsDropDownOpen = true;
+                e.Handled = true;
+            }
         }
 
         #region XAML initialization
@@ -33,23 +74,57 @@ namespace KingdomHeartsCustomMusic
         {
             try
             {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                // Usar recursos embebidos para los archivos Excel
+                var (excelKH1, excelKH2) = EmbeddedResourceManager.GetTrackListPaths();
 
-                string excelKH1 = Path.Combine(baseDir, "resources", "All Games Track List - KH1.xlsx");
-                string excelKH2 = Path.Combine(baseDir, "resources", "All Games Track List - KH2.xlsx");
+                _tracksKH1 = TrackListLoader.LoadTrackList(excelKH1);
+                _tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
 
-                var tracksKH1 = TrackListLoader.LoadTrackList(excelKH1);
-                var tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
-
-                foreach (var track in tracksKH1)
-                    AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1, _trackCheckboxesKH1);
-
-                foreach (var track in tracksKH2)
-                    AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2, _trackCheckboxesKH2);
+                RenderTrackListKH1(_tracksKH1);
+                RenderTrackListKH2(_tracksKH2);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading track lists:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void RenderTrackListKH1(IEnumerable<TrackInfo> tracks)
+        {
+            // Guardar los valores actuales
+            var currentValues = _trackBindingsKH1.ToDictionary(b => b.Track.PcNumber, b => b.TextBox.Text);
+            WorldListPanelKH1.Children.Clear();
+            _trackBindingsKH1.Clear();
+            _trackCheckboxesKH1.Clear();
+            foreach (var track in tracks)
+            {
+                AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1, _trackCheckboxesKH1);
+                // Restaurar valor si existe
+                var binding = _trackBindingsKH1.Last();
+                if (currentValues.TryGetValue(track.PcNumber, out var value))
+                {
+                    binding.TextBox.Text = value;
+                    if (!string.IsNullOrWhiteSpace(value))
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                }
+            }
+        }
+        private void RenderTrackListKH2(IEnumerable<TrackInfo> tracks)
+        {
+            var currentValues = _trackBindingsKH2.ToDictionary(b => b.Track.PcNumber, b => b.TextBox.Text);
+            WorldListPanelKH2.Children.Clear();
+            _trackBindingsKH2.Clear();
+            _trackCheckboxesKH2.Clear();
+            foreach (var track in tracks)
+            {
+                AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2, _trackCheckboxesKH2);
+                var binding = _trackBindingsKH2.Last();
+                if (currentValues.TryGetValue(track.PcNumber, out var value))
+                {
+                    binding.TextBox.Text = value;
+                    if (!string.IsNullOrWhiteSpace(value))
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                }
             }
         }
 
@@ -328,58 +403,209 @@ namespace KingdomHeartsCustomMusic
 
         private void GeneratePatchButton_Click(object sender, RoutedEventArgs e)
         {
-            // Paths declaration, initialization and checks
-
-            // Get which game is selected
-            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
-
-            string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\.."));
-
-            string encoderDir = Path.Combine(projectRoot, "utils", "SingleEncoder");
-            string encoderExe = Path.Combine(encoderDir, "SingleEncoder.exe");
-            string encoderOutput = Path.Combine(encoderDir, "output");
-            string scdTemplate = Path.Combine(encoderDir, "original.scd");
-            string patchBasePath = Path.Combine(encoderDir, "patches");
-
-            // Get custom patch name (if any)
-            string? patchNameInput = PatchNameTextBox.Text?.Trim();
-            bool hasCustomName = !string.IsNullOrEmpty(patchNameInput);
-
-            // Ensure output folder
-            string outputDir = Path.Combine(projectRoot, "patches");
-            Directory.CreateDirectory(outputDir);
-
-            string? baseFileName = hasCustomName
-                ? patchNameInput
-                : (isKH1 ? "KHCustomPatch" : "KHCustomPatch");
-
-            string patchZip = Path.Combine(projectRoot, "KHCustomPatch.zip"); // Temporary, gets overwritten
-            string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{(isKH1 ? "kh1pcpatch" : "kh2pcpatch")}");
-
-            // Track processing
-
-            var currentTrackBindings = isKH1
-                ? _trackBindingsKH1
-                : _trackBindingsKH2;
-
-            var includedTracks = PatchTrackProcessor.ProcessTracks(
-                currentTrackBindings
-                    .Select(t => (t.Track, t.TextBox.Text))
-                    .ToList(),
-                encoderExe,
-                encoderDir,
-                scdTemplate,
-                patchBasePath
-            );
-
-            if (includedTracks.Count == 0)
+            try
             {
-                MessageBox.Show("⚠️ No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+                // Get which game is selected
+                bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
 
-            // Patch creation and packaging
-            PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
+                // Setup tools from embedded resources
+                string appDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                string tempToolsDir = Path.Combine(Path.GetTempPath(), "KingdomHeartsCustomMusic_Tools");
+                
+                var toolsSetup = EmbeddedResourceManager.SetupTools(tempToolsDir);
+
+                // Check if we have the minimum required tools
+                if (!toolsSetup.IsCompleteSetup)
+                {
+                    var missing = toolsSetup.GetMissingTools();
+                    var message = "❌ Missing required tools for patch generation!\n\n";
+                    
+                    if (missing.Contains("SingleEncoder.exe") || missing.Contains("original.scd"))
+                    {
+                        message += "🔴 Critical missing files:\n";
+                        foreach (var tool in missing.Where(t => t == "SingleEncoder.exe" || t == "original.scd"))
+                            message += $"  • {tool}\n";
+                        message += "\n";
+                    }
+                    
+                    if (missing.Any(t => t != "SingleEncoder.exe" && t != "original.scd"))
+                    {
+                        message += "⚠️ Optional missing files:\n";
+                        foreach (var tool in missing.Where(t => t != "SingleEncoder.exe" && t != "original.scd"))
+                            message += $"  • {tool}\n";
+                        message += "\n";
+                    }
+                    
+                    message += "📋 To complete setup:\n" +
+                              "1. Obtain the missing files from KHPCSoundTools\n" +
+                              "2. Place them in your project's utils/ folder\n" +
+                              "3. Rebuild the application\n\n" +
+                              "🔗 Get KHPCSoundTools from:\n" +
+                              "• https://github.com/OpenKH/KHPCSoundTools\n" +
+                              "• Kingdom Hearts modding community\n\n" +
+                              "💡 Once embedded, these tools will be included in your .exe!";
+                    
+                    MessageBox.Show(message, "Setup Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Use the extracted tools
+                string encoderDir = toolsSetup.EncoderDirectory;
+                string encoderExe = toolsSetup.SingleEncoderPath;
+                string scdTemplate = toolsSetup.OriginalScdPath;
+                string patchBasePath = Path.Combine(encoderDir, "patches");
+
+                // Get custom patch name (if any)
+                string? patchNameInput = PatchNameTextBox.Text?.Trim();
+                bool hasCustomName = !string.IsNullOrEmpty(patchNameInput);
+
+                // Ensure output folder exists in application directory (not temp)
+                string outputDir = Path.Combine(appDir, "patches");
+                Directory.CreateDirectory(outputDir);
+
+                string? baseFileName = hasCustomName
+                    ? patchNameInput
+                    : (isKH1 ? "KHCustomPatch" : "KHCustomPatch");
+
+                string patchZip = Path.Combine(appDir, "KHCustomPatch.zip"); // Temporary, gets overwritten
+                string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{(isKH1 ? "kh1pcpatch" : "kh2pcpatch")}");
+
+                // Track processing
+                var currentTrackBindings = isKH1
+                    ? _trackBindingsKH1
+                    : _trackBindingsKH2;
+
+                var selectedTracks = currentTrackBindings
+                    .Where(t => !string.IsNullOrWhiteSpace(t.TextBox.Text))
+                    .ToList();
+
+                if (selectedTracks.Count == 0)
+                {
+                    MessageBox.Show("⚠️ No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Ensure patches base directory exists
+                Directory.CreateDirectory(patchBasePath);
+
+                var includedTracks = PatchTrackProcessor.ProcessTracks(
+                    currentTrackBindings
+                        .Select(t => (t.Track, t.TextBox.Text))
+                        .ToList(),
+                    encoderExe,
+                    encoderDir,
+                    scdTemplate,
+                    patchBasePath
+                );
+
+                if (includedTracks.Count == 0)
+                {
+                    MessageBox.Show("❌ No tracks were processed successfully.\n\nPlease check that your audio files are valid and try again.", "Processing Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Patch creation and packaging
+                PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"❌ Error generating patch:\n\n{ex.Message}\n\n" +
+                    $"Please check:\n" +
+                    $"• All required files are present\n" +
+                    $"• Audio files are not corrupted\n" +
+                    $"• You have write permissions to the application folder",
+                    "Patch Generation Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void InstructionsButton_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new InstructionsWindow();
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
+        private void CreditsButton_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new CreditsWindow();
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
+        private void InstructionsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new InstructionsWindow();
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
+        private void CreditsMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new CreditsWindow();
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
+        private void ApplyPatchButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Setup tools from embedded resources
+                string tempToolsDir = Path.Combine(Path.GetTempPath(), "KingdomHeartsCustomMusic_Tools");
+                var toolsSetup = EmbeddedResourceManager.SetupTools(tempToolsDir);
+                
+                if (!toolsSetup.HasPatchManager)
+                {
+                    MessageBox.Show(
+                        $"❌ KHPCPatchManager.exe not available!\n\n" +
+                        $"This tool is not embedded in the current build.\n\n" +
+                        $"To enable patch application:\n" +
+                        $"1. Obtain KHPCPatchManager.exe\n" +
+                        $"2. Place it in your project's utils/ folder\n" +
+                        $"3. Rebuild the application\n\n" +
+                        $"The tool will then be embedded and available automatically.",
+                        "KHPCPatchManager Not Available",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+                
+                var psi = new ProcessStartInfo
+                {
+                    FileName = toolsSetup.PatchManagerPath,
+                    UseShellExecute = true,
+                    WorkingDirectory = Path.GetDirectoryName(toolsSetup.PatchManagerPath)
+                };
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"❌ Error launching KHPCPatchManager:\n\n{ex.Message}",
+                    "Launch Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void TrackSortComboBoxKH1_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_tracksKH1 == null) return;
+            if (TrackSortComboBoxKH1.SelectedIndex == 1)
+                RenderTrackListKH1(_tracksKH1.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
+            else
+                RenderTrackListKH1(_tracksKH1);
+        }
+        private void TrackSortComboBoxKH2_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_tracksKH2 == null) return;
+            if (TrackSortComboBoxKH2.SelectedIndex == 1)
+                RenderTrackListKH2(_tracksKH2.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
+            else
+                RenderTrackListKH2(_tracksKH2);
         }
 
         #endregion

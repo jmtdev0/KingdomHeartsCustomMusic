@@ -98,6 +98,75 @@
             </Setter>
         </Style>
 
+        <!-- Modern ComboBox Style -->
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#FF2D2D30"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FF404040"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="Border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="6"
+                                    MinHeight="36">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="32"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Margin="8,0,0,0"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Left"
+                                                      Content="{TemplateBinding SelectionBoxItem}"/>
+                                    <ToggleButton x:Name="DropDownToggle"
+                                                  Grid.Column="1"
+                                                  IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Focusable="False"
+                                                  ClickMode="Press"
+                                                  Background="Transparent"
+                                                  BorderThickness="0">
+                                        <Path Data="M 0 0 L 4 4 L 8 0 Z"
+                                              Fill="White"
+                                              Width="8" Height="4"
+                                              Margin="0,0,8,0"
+                                              VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                    </ToggleButton>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Border Background="#FF2D2D30" BorderBrush="#FF404040" BorderThickness="1" CornerRadius="6">
+                                    <ItemsPresenter/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#FF007ACC"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#FF606060"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Modern TabControl Style -->
         <Style x:Key="ModernTabControlStyle" TargetType="TabControl">
             <Setter Property="Background" Value="Transparent"/>
@@ -141,115 +210,160 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="25">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+    <DockPanel>
+        <!-- Menu Bar -->
+        <Menu DockPanel.Dock="Top" Background="#FF2D2D30" Foreground="White">
+            <MenuItem Header="Instructions" Click="InstructionsMenuItem_Click"/>
+            <MenuItem Header="Credits" Click="CreditsMenuItem_Click"/>
+        </Menu>
 
-        <!-- Header Section -->
-        <Grid Grid.Row="0" Margin="0,0,0,20">
+        <!-- Main Content -->
+        <Grid Margin="25" DockPanel.Dock="Bottom">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Title and Config Buttons -->
-            <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+            <!-- Header Section -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <!-- Title -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="⚔️" FontSize="32" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                    <StackPanel>
-                        <TextBlock Text="Kingdom Hearts Music Patcher" 
-                                   FontSize="28" 
-                                   FontWeight="Bold"
-                                   Foreground="#FF007ACC"/>
-                        <TextBlock Text="Transform your KH experience with custom music" 
-                                   FontSize="13" 
-                                   Foreground="#FFAAAAAA"
-                                   Margin="0,2,0,0"/>
-                    </StackPanel>
-                </StackPanel>
+                <!-- Title and Config Buttons -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                <!-- Config Buttons -->
-                <Button Grid.Column="1"
-                        Content="💾 Save Config"
-                        Margin="10,0,0,0"
-                        Click="SaveConfigButton_Click"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        ToolTip="Save current song assignments"/>
-
-                <Button Grid.Column="2"
-                        Content="📂 Load Config"
-                        Margin="10,0,0,0"
-                        Click="LoadConfigButton_Click"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        ToolTip="Load previously saved assignments"/>
-            </Grid>
-
-            <!-- Separator Line -->
-            <Border Grid.Row="1" 
-                    Height="1" 
-                    Background="#FF404040" 
-                    Margin="0,15,0,0"/>
-        </Grid>
-        
-        <!-- Main Content -->
-        <TabControl x:Name="MainTabControl"
-                    Grid.Row="1"
-                    Style="{StaticResource ModernTabControlStyle}">
-
-            <TabItem Header="🏰 Kingdom Hearts I" Style="{StaticResource ModernTabItemStyle}">
-                <Border Background="#FF252526" CornerRadius="0,8,8,8" Padding="20">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <!-- Title -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="🏰🤍" FontSize="32" VerticalAlignment="Center" Margin="0,0,15,0"/>
                         <StackPanel>
+                            <TextBlock Text="Kingdom Hearts Music Patcher" 
+                                       FontSize="28" 
+                                       FontWeight="Bold"
+                                       Foreground="#FF007ACC"/>
+                            <TextBlock Text="With all due respect to Yoko Shimomura." 
+                                       FontSize="13" 
+                                       Foreground="#FFAAAAAA"
+                                       Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
 
-                            <!-- Action Buttons Section -->
-                            <Border Background="#FF2D2D30" 
-                                    CornerRadius="8" 
-                                    Padding="20" 
-                                    Margin="0,0,0,20">
-                                <StackPanel>
-                                    <TextBlock Text="🎵 Quick Actions" 
-                                               FontSize="16" 
-                                               FontWeight="SemiBold" 
-                                               Margin="0,0,0,15"
-                                               Foreground="#FF007ACC"/>
-                                    
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        
-                                        <Button Grid.Column="0"
-                                                Content="🎶 Assign Song to Selected Tracks"
-                                                HorizontalAlignment="Left"
-                                                Click="AssignToSelectedButton_Click"
-                                                Style="{StaticResource ModernButtonStyle}"
-                                                ToolTip="Select a single audio file and assign it to all checked tracks"/>
-                                        
-                                        <CheckBox x:Name="SelectAllCheckBox"
-                                                  Grid.Column="1"
-                                                  Content="Select All Tracks"
-                                                  VerticalAlignment="Center"
-                                                  Checked="SelectAllCheckBox_Checked"
-                                                  Unchecked="SelectAllCheckBox_Unchecked"
-                                                  ToolTip="Select or deselect all tracks"
-                                                  Foreground="White"
-                                                  FontWeight="SemiBold"/>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
+                    <!-- Config Buttons -->
+                    <Button Grid.Column="1"
+                            Content="💾 Save Config"
+                            Margin="10,0,0,0"
+                            Click="SaveConfigButton_Click"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            ToolTip="Save current song assignments"/>
 
-                            <!-- Tracks Section -->
+                    <Button Grid.Column="2"
+                            Content="📂 Load Config"
+                            Margin="10,0,0,0"
+                            Click="LoadConfigButton_Click"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            ToolTip="Load previously saved assignments"/>
+                </Grid>
+
+                <!-- Separator Line -->
+                <Border Grid.Row="1" 
+                        Height="1" 
+                        Background="#FF404040" 
+                        Margin="0,15,0,0"/>
+            </Grid>
+            
+            <!-- Main Content -->
+            <TabControl x:Name="MainTabControl"
+                        Grid.Row="2"
+                        Style="{StaticResource ModernTabControlStyle}">
+
+                <TabItem Header="Kingdom Hearts I" Style="{StaticResource ModernTabItemStyle}">
+                    <Border Background="#FF252526" CornerRadius="0,8,8,8" Padding="20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+
+                                <!-- Action Buttons Section -->
+                                <Border Background="#FF2D2D30" 
+                                        CornerRadius="8" 
+                                        Padding="20" 
+                                        Margin="0,0,0,20">
+                                    <StackPanel>
+                                        <TextBlock Text="🎵 Quick Actions" 
+                                                   FontSize="16" 
+                                                   FontWeight="SemiBold" 
+                                                   Margin="0,0,0,15"
+                                                   Foreground="#FF007ACC"/>
+                                        
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <Button Grid.Column="0"
+                                                    Content="🎶 Assign Song to Selected Tracks"
+                                                    HorizontalAlignment="Left"
+                                                    Click="AssignToSelectedButton_Click"
+                                                    Style="{StaticResource ModernButtonStyle}"
+                                                    ToolTip="Select a single audio file and assign it to all checked tracks"/>
+                                            
+                                            <CheckBox x:Name="SelectAllCheckBox"
+                                                      Grid.Column="1"
+                                                      Content="Select All Tracks"
+                                                      VerticalAlignment="Center"
+                                                      Checked="SelectAllCheckBox_Checked"
+                                                      Unchecked="SelectAllCheckBox_Unchecked"
+                                                      ToolTip="Select or deselect all tracks"
+                                                      Foreground="White"
+                                                      FontWeight="SemiBold"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Tracks Section KH1 -->
+                                <Border Background="#FF2D2D30" CornerRadius="8" Padding="20">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="🎼 Music Tracks" 
+                                                       FontSize="16" 
+                                                       FontWeight="SemiBold" 
+                                                       Margin="0,0,0,15"
+                                                       Foreground="#FF007ACC"
+                                                       VerticalAlignment="Center"/>
+                                            <ComboBox x:Name="TrackSortComboBoxKH1"
+                                                      Grid.Column="1"
+                                                      Width="220"
+                                                      Margin="15,0,0,15"
+                                                      SelectedIndex="0"
+                                                      VerticalAlignment="Center"
+                                                      Style="{StaticResource ModernComboBoxStyle}"
+                                                      SelectionChanged="TrackSortComboBoxKH1_SelectionChanged">
+                                                <ComboBoxItem Content="Orden cronológico (Excel)"/>
+                                                <ComboBoxItem Content="Orden alfabético"/>
+                                            </ComboBox>
+                                        </Grid>
+                                        <StackPanel x:Name="WorldListPanelKH1" Orientation="Vertical"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+
+                <TabItem Header="Kingdom Hearts II" Style="{StaticResource ModernTabItemStyle}">
+                    <Border Background="#FF252526" CornerRadius="0,8,8,8" Padding="20">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <Border Background="#FF2D2D30" CornerRadius="8" Padding="20">
                                 <StackPanel>
                                     <TextBlock Text="🎼 Music Tracks" 
@@ -258,68 +372,78 @@
                                                Margin="0,0,0,15"
                                                Foreground="#FF007ACC"/>
                                     
-                                    <StackPanel x:Name="WorldListPanelKH1" Orientation="Vertical"/>
+                                    <!-- Sorting ComboBox -->
+                                    <ComboBox x:Name="TrackSortComboBoxKH2"
+                                              Width="220"
+                                              Margin="0,0,0,15"
+                                              SelectedIndex="0"
+                                              VerticalAlignment="Center"
+                                              Style="{StaticResource ModernComboBoxStyle}"
+                                              SelectionChanged="TrackSortComboBoxKH2_SelectionChanged">
+                                        <ComboBoxItem Content="Orden cronológico (Excel)"/>
+                                        <ComboBoxItem Content="Orden alfabético"/>
+                                    </ComboBox>
+
+                                    <StackPanel x:Name="WorldListPanelKH2" Orientation="Vertical"/>
                                 </StackPanel>
                             </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </Border>
-            </TabItem>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+            </TabControl>
 
-            <TabItem Header="👑 Kingdom Hearts II" Style="{StaticResource ModernTabItemStyle}">
-                <Border Background="#FF252526" CornerRadius="0,8,8,8" Padding="20">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <Border Background="#FF2D2D30" CornerRadius="8" Padding="20">
-                            <StackPanel>
-                                <TextBlock Text="🎼 Music Tracks" 
-                                           FontSize="16" 
-                                           FontWeight="SemiBold" 
-                                           Margin="0,0,0,15"
-                                           Foreground="#FF007ACC"/>
-                                
-                                <StackPanel x:Name="WorldListPanelKH2" Orientation="Vertical"/>
-                            </StackPanel>
-                        </Border>
-                    </ScrollViewer>
-                </Border>
-            </TabItem>
-        </TabControl>
+            <!-- Footer Section -->
+            <Border Grid.Row="3" 
+                    Background="#FF2D2D30" 
+                    CornerRadius="8" 
+                    Padding="20" 
+                    Margin="0,20,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-        <!-- Footer Section -->
-        <Border Grid.Row="2" 
-                Background="#FF2D2D30" 
-                CornerRadius="8" 
-                Padding="20" 
-                Margin="0,20,0,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                    <!-- Patch Name Input -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="📦 Patch Name:" 
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,15,0"
+                                   FontWeight="SemiBold"
+                                   FontSize="14"/>
+                        <TextBox x:Name="PatchNameTextBox"
+                                 Width="375"
+                                 Style="{StaticResource ModernTextBoxStyle}"
+                                 ToolTip="Enter a custom name for your patch"/>
+                    </StackPanel>
 
-                <!-- Patch Name Input -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="📦 Patch Name:" 
-                               VerticalAlignment="Center"
-                               Margin="0,0,15,0"
-                               FontWeight="SemiBold"
-                               FontSize="14"/>
-                    <TextBox x:Name="PatchNameTextBox"
-                             Width="250"
-                             Style="{StaticResource ModernTextBoxStyle}"
-                             ToolTip="Enter a custom name for your patch"/>
-                </StackPanel>
+                    <!-- Generate Patch Button -->
+                    <Button x:Name="GeneratePatchButton"
+                            Grid.Column="2"
+                            Content="✨ Generate Music Patch (KH1)"
+                            Style="{StaticResource ModernButtonStyle}"
+                            Click="GeneratePatchButton_Click"
+                            FontSize="14"
+                            Padding="20,12"
+                            ToolTip="Create your custom Kingdom Hearts music patch"/>
 
-                <!-- Generate Patch Button -->
-                <Button Grid.Column="2"
-                        Content="✨ Generate Music Patch"
-                        Style="{StaticResource ModernButtonStyle}"
-                        Click="GeneratePatchButton_Click"
-                        FontSize="14"
-                        Padding="20,12"
-                        ToolTip="Create your custom Kingdom Hearts music patch"/>
-            </Grid>
-        </Border>
-    </Grid>
+                    <!-- Apply Patch Button (Red) -->
+                    <Button Grid.Column="3"
+                            Content="🚀 Apply Patch"
+                            Background="#FFB71C1C"
+                            Foreground="White"
+                            Style="{StaticResource ModernButtonStyle}"
+                            FontSize="14"
+                            Padding="20,12"
+                            Margin="10,0,0,0"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Click="ApplyPatchButton_Click"
+                            ToolTip="Apply patch using KHPCPatchManager.exe"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </DockPanel>
 </Window>

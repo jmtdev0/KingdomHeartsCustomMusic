@@ -7,41 +7,48 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 
-    <!-- Package into a single EXE file -->
+    <!-- Single File Publishing Configuration - Self Contained with Compression -->
     <PublishSingleFile>true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <PublishTrimmed>false</PublishTrimmed>
-    <!-- You can try true later -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
-
-    <!-- Necessary to include resources folder -->
-    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- Maximum compression and optimization -->
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="resources\All Games Track List - KH1.xlsx" />
-    <None Remove="resources\All Games Track List - KH2.xlsx" />
+    <None Remove="utils\Actually\KHPCPatchManager.exe" />
   </ItemGroup>
 
+  <!-- Embedded Resources - All files included in the executable -->
   <ItemGroup>
-    <Content Include="resources\All Games Track List - KH1.xlsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="resources\All Games Track List - KH2.xlsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <!-- Excel files -->
+    <EmbeddedResource Include="resources\All Games Track List - KH1.xlsx" />
+    <EmbeddedResource Include="resources\All Games Track List - KH2.xlsx" />
+    <EmbeddedResource Include="utils\Actually\KHPCPatchManager.exe" />
+    
+    <!-- SingleEncoder tools - if they exist -->
+    <EmbeddedResource Include="utils\SingleEncoder\SingleEncoder.exe" Condition="Exists('utils\SingleEncoder\SingleEncoder.exe')" />
+    <EmbeddedResource Include="utils\SingleEncoder\SingleEncoder.dll" Condition="Exists('utils\SingleEncoder\SingleEncoder.dll')" />
+    <EmbeddedResource Include="utils\SingleEncoder\SingleEncoder.runtimeconfig.json" Condition="Exists('utils\SingleEncoder\SingleEncoder.runtimeconfig.json')" />
+    <EmbeddedResource Include="utils\SingleEncoder\original.scd" Condition="Exists('utils\SingleEncoder\original.scd')" />
+    
+    <!-- External tools -->
+    <EmbeddedResource Include="utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe" Condition="Exists('utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe')" />
+    <EmbeddedResource Include="utils\SingleEncoder\tools\oggenc\oggenc.exe" Condition="Exists('utils\SingleEncoder\tools\oggenc.exe')" />
+    
+    <!-- KHPCPatchManager -->
+    <EmbeddedResource Include="utils\KHPCPatchManager.exe" Condition="Exists('utils\KHPCPatchManager.exe')" />
   </ItemGroup>
 
+  <!-- Package References -->
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="NAudio" Version="2.2.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="utils\TrackListLoader.cs">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Compile>
   </ItemGroup>
 
 </Project>
