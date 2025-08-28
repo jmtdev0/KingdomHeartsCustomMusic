@@ -7,18 +7,23 @@
         Background="#FF252526" Foreground="White">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
         <StackPanel>
-            <TextBlock Text="How to Use Kingdom Hearts Music Patcher" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" Foreground="#FF007ACC"/>
-            <TextBlock TextWrapping="Wrap" FontSize="14">
-                1. Select the game tab (Kingdom Hearts I or II).
-                2. Assign your custom audio files to the tracks you want to replace.
-                3. Use the quick actions to assign one file to multiple tracks if needed.
-                4. Save your configuration for future use.
-                5. Click 'Generate Music Patch' to create your patch file.
-                6. Apply the patch to your game using the provided patch manager.
-                7. Enjoy your custom soundtrack!
+            <TextBlock Text="How to Use Kingdom Hearts Music Patcher" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" Foreground="#FF007ACC" TextAlignment="Justify"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" TextAlignment="Justify">
+                This application allows you to create custom patches to change the music in Kingdom Hearts I and II for PC. Music changes are applied using patches, which replace the game's audio files.
             </TextBlock>
-            <TextBlock TextWrapping="Wrap" FontSize="13" Margin="0,20,0,0" Foreground="#FFAAAAAA">
-                For more help, check the documentation or contact the developer.
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" TextAlignment="Justify">
+                ⚠️ Important: Applying these patches is irreversible. The original songs will be replaced by the new ones you select. If you want to restore the original music, you must create a patch with the original files or reinstall the game. Reinstalling the game does not delete your save data.
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" Text="Steps to change game's music:" TextAlignment="Justify"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,2" Text="1. Select the game (KH1 or KH2) in the corresponding tab." TextAlignment="Justify"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,2" Text="2. Assign audio files to the tracks you want to change. You can create a patch that changes only track, a patch that changes multiple tracks, or even a patch that changes every single track in the game." TextAlignment="Justify"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,2" Text="3. Click 'Generate Music Patch' to create the patch." TextAlignment="Justify"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,0,0,2" Text="4. Apply the patch using the 'Apply Patch' button." TextAlignment="Justify"/>
+            <TextBlock TextWrapping="Wrap" Margin="0,10,0,10" TextAlignment="Justify">
+                ℹ️ Note: Patches are generated for one game at a time. This application does not allow you to create a patch that changes music in more than one game simultaneously. You must generate a separate patch for Kingdom Hearts I and another for Kingdom Hearts II if you want to modify both games.
+            </TextBlock>
+            <TextBlock TextWrapping="Wrap" Margin="0,10,0,10" TextAlignment="Justify">
+                You can save and load track configurations to make the process easier.
             </TextBlock>
         </StackPanel>
     </ScrollViewer>

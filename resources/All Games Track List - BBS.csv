@@ -1,0 +1,88 @@
+Filename,Location,Folder,PC Number,PSP Name,Description,Loop,Full Loop
+050title.win32.scd,"bbs_first, bbs_fourth",original\sound\win\bgm,50,Dearly Beloved,Title Screen,Yes,Yes
+116icon.win32.scd,bbs_fourth,original\sound\win\bgm,116,Dearly Beloved (No Intro),Icon,No,No
+070key_l.win32.scd,"bbs_first, bbs_fourth",original\sound\win\bgm,70,The Key of Light,Key (Light),Yes,No
+005syugyo_f.win32.scd,"bbs_first, bbs_fourth",original\sound\win\bgm,5,The Promised Beginning,Training Field,Yes,No
+107syugyo.win32.scd,bbs_fourth,original\sound\win\bgm,107,The Promised Beginning,Training,Yes,No
+006syugyo_b.win32.scd,"bbs_first, bbs_fourth",original\sound\win\bgm,6,Future Masters,Training Battle,Yes,No
+035kinpaku.win32.scd,bbs_fourth,original\sound\win\bgm,35,Shaded Truths,Tension,Yes,No
+034kanasii.win32.scd,bbs_fourth,original\sound\win\bgm,34,Tears of the Light,Sad,Yes,No
+060tera.win32.scd,bbs_fourth,original\sound\win\bgm,60,Terra,Terra,Yes,No
+068zea.win32.scd,"bbs_first, bbs_fourth",original\sound\win\bgm,68,Xehanort,Xehanort,Yes,No
+051worldmap.win32.scd,bbs_fourth,original\sound\win\bgm,51,World Map Music,World Map,Yes,No
+007shira_f.win32.scd,bbs_fourth,original\sound\win\bgm,7,The Secret Whispers,Snow White Field,Yes,No
+008shira_b.win32.scd,bbs_fourth,original\sound\win\bgm,8,Risky Romp,Snow White Battle,Yes,No
+030youki.win32.scd,bbs_fourth,original\sound\win\bgm,30,Innocent Times,Cheerful,Yes,No
+033fuon.win32.scd,bbs_fourth,original\sound\win\bgm,33,Drops of Poison,Disqueting,Yes,No
+001sinde_f.win32.scd,bbs_fourth,original\sound\win\bgm,1,Bibbidi-Bobbidi-Boo,Cinderella Field,Yes,No
+002sinde_b.win32.scd,bbs_fourth,original\sound\win\bgm,2,Castle Escapade,Cinderella Battle,Yes,No
+032odayaka.win32.scd,bbs_fourth,original\sound\win\bgm,32,Peaceful Hearts,Calm,Yes,No
+048hanyo_b1.win32.scd,bbs_fourth,original\sound\win\bgm,48,Extreme Encounters,Generic Battle 1,Yes,No
+023tsusin_f.win32.scd,bbs_fourth,original\sound\win\bgm,23,Dearly Dreams,Communication,Yes,No
+104dice.win32.scd,bbs_fourth,original\sound\win\bgm,104,Dice & Shine,Dice,Yes,Yes
+041anba_b2.win32.scd,bbs_fourth,original\sound\win\bgm,41,Unforgettable,Unversed Battle 2,Yes,No
+003nemure_f.win32.scd,bbs_fourth,original\sound\win\bgm,3,The Silent Forest,Sleeping Beauty Field,Yes,No
+004nemure_b.win32.scd,bbs_fourth,original\sound\win\bgm,4,The Rustling Forest,Sleeping Beauty Battle,Yes,No
+040anba_b1.win32.scd,bbs_fourth,original\sound\win\bgm,40,The Tumbling,Unversed Battle 1,Yes,No
+062ven.win32.scd,bbs_fourth,original\sound\win\bgm,62,Ventus,Ventus,Yes,No
+044vanita_b.win32.scd,bbs_fourth,original\sound\win\bgm,44,Enter the Darkness,Vanitas Battle,Yes,No
+009raydi_f.win32.scd,bbs_fourth,original\sound\win\bgm,9,Radiant Garden,Radiant Garden Field,Yes,No
+010raydi_b.win32.scd,bbs_fourth,original\sound\win\bgm,10,Black Garden,Radiant Garden Battle,Yes,No
+045anthem_b.win32.scd,bbs_fourth,original\sound\win\bgm,45,Black Powder,Anthem Battle,Yes,No
+038ria_deai.win32.scd,bbs_fourth,original\sound\win\bgm,38,Eternal Moments,Lea Meeting,Yes,No
+011distow_f.win32.scd,bbs_fourth,original\sound\win\bgm,11,Mickey Mouse March,Disney Town Field,Yes,No
+012distow_b.win32.scd,bbs_fourth,original\sound\win\bgm,12,Up Down Adventure,Disney Town Battle,Yes,No
+066peet.win32.scd,bbs_fourth,original\sound\win\bgm,66,Hero or Heel,Pete,Yes,No
+100ice1_128.win32.scd,bbs_fourth,original\sound\win\bgm,100,It's a Small World,Ice Cream 1,Yes,No
+101ice1_132.win32.scd,bbs_fourth,original\sound\win\bgm,101,It's a Small World,Ice Cream 1,Yes,No
+102ice_2.win32.scd,bbs_fourth,original\sound\win\bgm,102,Dessert Paradise,Ice Cream 2,Yes,No
+103fruit.win32.scd,bbs_fourth,original\sound\win\bgm,103,Fresh Fruit Balls,Fruit,Yes,No
+106cartrace.win32.scd,bbs_fourth,original\sound\win\bgm,106,Go! Go! Rumble Racer,Kart Race,Yes,No
+114raceview.win32.scd,bbs_fourth,original\sound\win\bgm,114,Big Race,Race View,Yes,No
+031isamashi.win32.scd,bbs_fourth,original\sound\win\bgm,31,Cheers for the Brave,Brave,Yes,No
+074zack.win32.scd,bbs_fourth,original\sound\win\bgm,74,A Date with Fate,Zack,Yes,No
+017riro_f.win32.scd,bbs_fourth,original\sound\win\bgm,17,Hau'oli Hau'oli,Lilo and Stitch Field,Yes,No
+108riro.win32.scd,bbs_fourth,original\sound\win\bgm,108,Hau'oli Hau'oli,Lilo and Stitch,Yes,No
+018riro_b.win32.scd,bbs_fourth,original\sound\win\bgm,18,Makaukau?,Lilo and Stitch Battle,Yes,No
+013never_f.win32.scd,bbs_fourth,original\sound\win\bgm,13,Daydream Upon Neverland,Neverland Field,Yes,No
+014never_b.win32.scd,bbs_fourth,original\sound\win\bgm,14,Neverland's Scherzo,Neverland Battle,Yes,No
+021kouya_f.win32.scd,bbs_fourth,original\sound\win\bgm,21,Keyblade Graveyard Horizon,Wasteland,Yes,No
+046last_b1.win32.scd,bbs_fourth,original\sound\win\bgm,46,Unbreakable Chains,Last Battle 1,Yes,No
+071key_d.win32.scd,bbs_fourth,original\sound\win\bgm,71,The Key of Darkness,Key (Dark),Yes,No
+112rage_bt.win32.scd,bbs_fourth,original\sound\win\bgm,112,Rage Awakened,Rage Battle,Yes,No
+061aqua.win32.scd,bbs_fourth,original\sound\win\bgm,61,Aqua,Aqua,Yes,No
+047last_b2.win32.scd,bbs_fourth,original\sound\win\bgm,47,Dismiss,Last Battle 2,Yes,No
+072key_l_d.win32.scd,bbs_fourth,original\sound\win\bgm,72,The Key,Key (Light/Dark),Yes,No
+115boss.win32.scd,bbs_fourth,original\sound\win\bgm,115,Enter the Void,Boss,Yes,No
+073kizuna.win32.scd,"bbs_first, bbs_fourth",original\sound\win\bgm,73,Destiny's Union,Bonds,Yes,No
+117short_l2.win32.scd,bbs_fourth,original\sound\win\bgm,117,Another Side,?,Yes,No
+122nazono.win32.scd,bbs_fourth,original\sound\win\bgm,122,Dark Impetus,Mysterious Figure,Yes,No
+130Mons_b.win32.scd,bbs_fourth,original\sound\win\bgm,130,Monstrous Monstro,Monstro Battle,Yes,No
+125yami_f.win32.scd,bbs_fourth,original\sound\win\bgm,125,Night of the Dark Dream,Darkness Field,Yes,No
+126yami_b.win32.scd,bbs_fourth,original\sound\win\bgm,126,Night of Tragedy,Darkness Battle,Yes,No
+129Pure_b.win32.scd,bbs_fourth,original\sound\win\bgm,129,Hunter of the Dark,Pureblood Heartless Battle,Yes,No
+128Eraqu_b.win32.scd,bbs_fourth,original\sound\win\bgm,128,"Master, Tell Me the Truth",Eraqus Battle,Yes,No
+127Xeha_b.win32.scd,bbs_fourth,original\sound\win\bgm,127,Forze dell'Oscurita,Xehanort Battle,Yes,No
+015herc_f.win32.scd,bbs_fourth,original\sound\win\bgm,15,Olympus Coliseum,Hercules Field,Yes,No
+016herc_b.win32.scd,bbs_fourth,original\sound\win\bgm,16,Go For It!,Hercules Battle,Yes,No
+019iensid_f.win32.scd,bbs_fourth,original\sound\win\bgm,19,Magical Mystery,Yen Sid Field,Yes,No
+020iensid_b.win32.scd,bbs_fourth,original\sound\win\bgm,20,Working Together,Yen Sid Battle,Yes,No
+022disice_f.win32.scd,bbs_fourth,original\sound\win\bgm,22,Destiny Islands,Disney Ice Field,Yes,Yes
+036seisin.win32.scd,"bbs_first, bbs_fourth",original\sound\win\bgm,36,Dive into the Heart,Mind/Soul/Heart,Yes,No
+037yami.win32.scd,bbs_fourth,original\sound\win\bgm,37,Beyond the Door,Darkness,Yes,Yes
+042dis_b1.win32.scd,bbs_fourth,original\sound\win\bgm,42,Vim and Vigor,Disney Battle 1,Yes,No
+043dis_b2.win32.scd,bbs_fourth,original\sound\win\bgm,43,The Encounter,Disney Battle 2,Yes,No
+049hanyo_b2.win32.scd,bbs_fourth,original\sound\win\bgm,49,Destiny's Force,Generic Battle 2,Yes,No
+063kairi1.win32.scd,bbs_fourth,original\sound\win\bgm,63,Kairi,Kairi I,Yes,No
+067disvill.win32.scd,bbs_fourth,original\sound\win\bgm,67,Villains of a Sort,Disney Villain,Yes,No
+069braig.win32.scd,bbs_fourth,original\sound\win\bgm,69,Organization XIII,Braig,Yes,No
+105poomini.win32.scd,bbs_fourth,original\sound\win\bgm,105,March,Pooh Minigame,Yes,No
+109training.win32.scd,bbs_fourth,original\sound\win\bgm,109,Road to a Hero,Training,Yes,No
+110han_bt1.win32.scd,bbs_fourth,original\sound\win\bgm,110,Rowdy Rumble,?,Yes,No
+111han_bt2.win32.scd,bbs_fourth,original\sound\win\bgm,111,Shrouding Dark Cloud,?,Yes,No
+113kh1tit.win32.scd,bbs_fourth,original\sound\win\bgm,113,Dearly Beloved,KH1 Title Screen,Yes,No
+118gumi.win32.scd,bbs_fourth,original\sound\win\bgm,118,Blast Away!,Gummi Ship,Yes,No
+119desti.win32.scd,bbs_fourth,original\sound\win\bgm,119,Destiny Islands,Destiny Islands,Yes,No
+120hand.win32.scd,bbs_fourth,original\sound\win\bgm,120,Hand in Hand,Hand in Hand,Yes,No
+123rev.win32.scd,bbs_fourth,original\sound\win\bgm,123,Time Reverse,Reverse,Yes,Yes
+124dp_amb.win32.scd,bbs_fourth,original\sound\win\bgm,124,Waves,Departure Ambiance,Yes,No

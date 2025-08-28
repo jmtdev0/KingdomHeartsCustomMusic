@@ -8,6 +8,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using static KingdomHeartsCustomMusic.utils.TrackListLoader;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace KingdomHeartsCustomMusic
 {
@@ -18,10 +20,24 @@ namespace KingdomHeartsCustomMusic
     {
         private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH1 = new();
         private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsKH2 = new();
+        private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsBBS = new();
+        private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsReCOM = new();
+        private readonly List<(TrackInfo Track, TextBox TextBox)> _trackBindingsDDD = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH1 = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH2 = new();
+        private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesBBS = new();
+        private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesReCOM = new();
+        private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesDDD = new();
         private List<TrackInfo> _tracksKH1;
         private List<TrackInfo> _tracksKH2;
+        private List<TrackInfo> _tracksBBS;
+        private List<TrackInfo> _tracksReCOM;
+        private List<TrackInfo> _tracksDDD;
+
+        private static readonly string[] DefaultPatchNames = new[]
+        {
+            "KH1CustomPatch", "KH2CustomPatch", "BBSCustomPatch", "ReCOMCustomPatch", "DDDCustomPatch", "KHCustomPatch"
+        };
 
         public MainWindow()
         {
@@ -31,6 +47,9 @@ namespace KingdomHeartsCustomMusic
             // Hacer que los ComboBox se desplieguen al hacer clic en cualquier parte
             TrackSortComboBoxKH1.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
             TrackSortComboBoxKH2.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
+            TrackSortComboBoxBBS.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
+            TrackSortComboBoxReCOM.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
+            TrackSortComboBoxDDD.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
 
             // Cambiar el texto del botón de generación de parche según la pestaña activa
             MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
@@ -41,6 +60,21 @@ namespace KingdomHeartsCustomMusic
         {
             // Esperar a que el cambio de pestaña se complete antes de actualizar el texto
             Dispatcher.BeginInvoke(new Action(UpdateGeneratePatchButtonText), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private string GetDefaultPatchNameForSelectedTab()
+        {
+            var selectedTab = MainTabControl.SelectedItem as TabItem;
+            var header = selectedTab?.Header?.ToString() ?? string.Empty;
+            return header switch
+            {
+                "Kingdom Hearts I" => "KH1CustomPatch",
+                "Kingdom Hearts II" => "KH2CustomPatch",
+                "Birth by Sleep" => "BBSCustomPatch",
+                "Chain of Memories" => "ReCOMCustomPatch",
+                "Dream Drop Distance" => "DDDCustomPatch",
+                _ => "KHCustomPatch"
+            };
         }
 
         private void UpdateGeneratePatchButtonText()
@@ -54,6 +88,22 @@ namespace KingdomHeartsCustomMusic
                         GeneratePatchButton.Content = "✨ Generate Music Patch (KH1)";
                     else if (selectedTab.Header.ToString().Equals("Kingdom Hearts II"))
                         GeneratePatchButton.Content = "✨ Generate Music Patch (KH2)";
+                    else if (selectedTab.Header.ToString().Equals("Birth by Sleep"))
+                        GeneratePatchButton.Content = "✨ Generate Music Patch (BBS)";
+                    else if (selectedTab.Header.ToString().Equals("Chain of Memories"))
+                        GeneratePatchButton.Content = "✨ Generate Music Patch (ReCOM)";
+                    else if (selectedTab.Header.ToString().Equals("Dream Drop Distance"))
+                        GeneratePatchButton.Content = "✨ Generate Music Patch (DDD)";
+                }
+            }
+
+            // Set default Patch Name for the active tab when empty or when it currently holds another default
+            if (PatchNameTextBox != null)
+            {
+                var defaultName = GetDefaultPatchNameForSelectedTab();
+                if (string.IsNullOrWhiteSpace(PatchNameTextBox.Text) || DefaultPatchNames.Contains(PatchNameTextBox.Text))
+                {
+                    PatchNameTextBox.Text = defaultName;
                 }
             }
         }
@@ -74,14 +124,25 @@ namespace KingdomHeartsCustomMusic
         {
             try
             {
-                // Usar recursos embebidos para los archivos Excel
-                var (excelKH1, excelKH2) = EmbeddedResourceManager.GetTrackListPaths();
+                // Obtener la raíz del proyecto (no la carpeta bin)
+                var projectRoot = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
+                var kh1Csv = Path.Combine(projectRoot, "resources", "All Games Track List - KH1.csv");
+                var kh2Csv = Path.Combine(projectRoot, "resources", "All Games Track List - KH2.csv");
+                var bbsCsv = Path.Combine(projectRoot, "resources", "All Games Track List - BBS.csv");
+                var recomCsv = Path.Combine(projectRoot, "resources", "All Games Track List - ReCOM.csv");
+                var dddCsv = Path.Combine(projectRoot, "resources", "All Games Track List - DDD.csv");
 
-                _tracksKH1 = TrackListLoader.LoadTrackList(excelKH1);
-                _tracksKH2 = TrackListLoader.LoadTrackList(excelKH2);
+                _tracksKH1 = TrackListLoader.LoadTrackList(kh1Csv);
+                _tracksKH2 = TrackListLoader.LoadTrackList(kh2Csv);
+                _tracksBBS = TrackListLoader.LoadTrackList(bbsCsv);
+                _tracksReCOM = TrackListLoader.LoadTrackList(recomCsv);
+                _tracksDDD = TrackListLoader.LoadTrackList(dddCsv);
 
                 RenderTrackListKH1(_tracksKH1);
                 RenderTrackListKH2(_tracksKH2);
+                RenderTrackListBBS(_tracksBBS);
+                RenderTrackListReCOM(_tracksReCOM);
+                RenderTrackListDDD(_tracksDDD);
             }
             catch (Exception ex)
             {
@@ -119,6 +180,66 @@ namespace KingdomHeartsCustomMusic
             {
                 AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2, _trackCheckboxesKH2);
                 var binding = _trackBindingsKH2.Last();
+                if (currentValues.TryGetValue(track.PcNumber, out var value))
+                {
+                    binding.TextBox.Text = value;
+                    if (!string.IsNullOrWhiteSpace(value))
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                }
+            }
+        }
+        private void RenderTrackListBBS(IEnumerable<TrackInfo> tracks)
+        {
+            var currentValues = _trackBindingsBBS.ToDictionary(b => b.Track.PcNumber, b => b.TextBox.Text);
+            WorldListPanelBBS.Children.Clear();
+            _trackBindingsBBS.Clear();
+            _trackCheckboxesBBS.Clear();
+            foreach (var track in tracks)
+            {
+                AddTrackRow(track, WorldListPanelBBS, _trackBindingsBBS, _trackCheckboxesBBS);
+                var binding = _trackBindingsBBS.Last();
+                if (currentValues.TryGetValue(track.PcNumber, out var value))
+                {
+                    binding.TextBox.Text = value;
+                    if (!string.IsNullOrWhiteSpace(value))
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                }
+            }
+        }
+        private void RenderTrackListReCOM(IEnumerable<TrackInfo> tracks)
+        {
+            var currentValues = _trackBindingsReCOM.ToDictionary(b => b.Track.PcNumber, b => b.TextBox.Text);
+            WorldListPanelReCOM.Children.Clear();
+            _trackBindingsReCOM.Clear();
+            _trackCheckboxesReCOM.Clear();
+            foreach (var track in tracks)
+            {
+                AddTrackRow(track, WorldListPanelReCOM, _trackBindingsReCOM, _trackCheckboxesReCOM);
+                var binding = _trackBindingsReCOM.Last();
+                if (currentValues.TryGetValue(track.PcNumber, out var value))
+                {
+                    binding.TextBox.Text = value;
+                    if (!string.IsNullOrWhiteSpace(value))
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                }
+            }
+        }
+        private void RenderTrackListDDD(IEnumerable<TrackInfo> tracks)
+        {
+            // Guardar los valores actuales, ignorando duplicados
+            var currentValues = new Dictionary<string, string>();
+            foreach (var b in _trackBindingsDDD)
+            {
+                if (!currentValues.ContainsKey(b.Track.PcNumber))
+                    currentValues[b.Track.PcNumber] = b.TextBox.Text;
+            }
+            WorldListPanelDDD.Children.Clear();
+            _trackBindingsDDD.Clear();
+            _trackCheckboxesDDD.Clear();
+            foreach (var track in tracks)
+            {
+                AddTrackRow(track, WorldListPanelDDD, _trackBindingsDDD, _trackCheckboxesDDD);
+                var binding = _trackBindingsDDD.Last();
                 if (currentValues.TryGetValue(track.PcNumber, out var value))
                 {
                     binding.TextBox.Text = value;
@@ -186,6 +307,12 @@ namespace KingdomHeartsCustomMusic
             };
             Grid.SetColumn(textbox, 2);
 
+            // Accessibility: associate label and assign accessible names
+            System.Windows.Automation.AutomationProperties.SetLabeledBy(checkBox, label);
+            System.Windows.Automation.AutomationProperties.SetName(checkBox, $"Select track: {track.Description}");
+            System.Windows.Automation.AutomationProperties.SetLabeledBy(textbox, label);
+            System.Windows.Automation.AutomationProperties.SetName(textbox, $"Audio file path for: {track.Description}");
+
             // Modern styled browse button
             var button = new Button
             {
@@ -200,6 +327,7 @@ namespace KingdomHeartsCustomMusic
                 Cursor = System.Windows.Input.Cursors.Hand
             };
             Grid.SetColumn(button, 3);
+            System.Windows.Automation.AutomationProperties.SetName(button, $"Browse for {track.Description}");
 
             // Add hover effects to the button
             button.MouseEnter += (s, e) => {
@@ -221,6 +349,8 @@ namespace KingdomHeartsCustomMusic
                     textbox.Text = dialog.FileName;
                     // Add a subtle visual feedback
                     textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204)); // #FF007ACC
+                    // Accessibility: expose selected file via HelpText
+                    System.Windows.Automation.AutomationProperties.SetHelpText(textbox, $"Selected file: {dialog.FileName}");
                 }
             };
 
@@ -259,6 +389,18 @@ namespace KingdomHeartsCustomMusic
                         .ToDictionary(kvp => kvp.Track.PcNumber.ToString(), kvp => kvp.TextBox.Text),
 
                     ["kh2"] = _trackBindingsKH2
+                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.TextBox.Text))
+                        .ToDictionary(kvp => kvp.Track.PcNumber.ToString(), kvp => kvp.TextBox.Text),
+
+                    ["bbs"] = _trackBindingsBBS
+                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.TextBox.Text))
+                        .ToDictionary(kvp => kvp.Track.PcNumber.ToString(), kvp => kvp.TextBox.Text),
+
+                    ["recom"] = _trackBindingsReCOM
+                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.TextBox.Text))
+                        .ToDictionary(kvp => kvp.Track.PcNumber.ToString(), kvp => kvp.TextBox.Text),
+
+                    ["ddd"] = _trackBindingsDDD
                         .Where(kvp => !string.IsNullOrWhiteSpace(kvp.TextBox.Text))
                         .ToDictionary(kvp => kvp.Track.PcNumber.ToString(), kvp => kvp.TextBox.Text)
                 }
@@ -308,6 +450,48 @@ namespace KingdomHeartsCustomMusic
                     }
                 }
             }
+
+            if (config.TryGetValue("bbs", out var bbsConfig))
+            {
+                foreach (var (pcNumber, filePath) in bbsConfig)
+                {
+                    var binding = _trackBindingsBBS.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
+                    if (binding.TextBox != null)
+                    {
+                        binding.TextBox.Text = filePath;
+                        // Add visual feedback for loaded files
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                    }
+                }
+            }
+
+            if (config.TryGetValue("recom", out var recomConfig))
+            {
+                foreach (var (pcNumber, filePath) in recomConfig)
+                {
+                    var binding = _trackBindingsReCOM.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
+                    if (binding.TextBox != null)
+                    {
+                        binding.TextBox.Text = filePath;
+                        // Add visual feedback for loaded files
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                    }
+                }
+            }
+
+            if (config.TryGetValue("ddd", out var dddConfig))
+            {
+                foreach (var (pcNumber, filePath) in dddConfig)
+                {
+                    var binding = _trackBindingsDDD.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
+                    if (binding.TextBox != null)
+                    {
+                        binding.TextBox.Text = filePath;
+                        // Add visual feedback for loaded files
+                        binding.TextBox.BorderBrush = new SolidColorBrush(Color.FromRgb(0, 122, 204));
+                    }
+                }
+            }
         }
 
         private void LoadConfigButton_Click(object sender, RoutedEventArgs e)
@@ -342,19 +526,57 @@ namespace KingdomHeartsCustomMusic
 
         private void SelectAllCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            // Select all checkboxes
-            foreach (var checkbox in _trackCheckboxesKH1.Values)
+            // Select all checkboxes for the active tab
+            var selectedTab = MainTabControl.SelectedItem as TabItem;
+            string tabHeader = selectedTab?.Header.ToString() ?? "";
+
+            if (tabHeader.Equals("Kingdom Hearts I"))
             {
-                checkbox.IsChecked = true;
+                foreach (var checkbox in _trackCheckboxesKH1.Values) checkbox.IsChecked = true;
+            }
+            else if (tabHeader.Equals("Kingdom Hearts II"))
+            {
+                foreach (var checkbox in _trackCheckboxesKH2.Values) checkbox.IsChecked = true;
+            }
+            else if (tabHeader.Equals("Birth by Sleep"))
+            {
+                foreach (var checkbox in _trackCheckboxesBBS.Values) checkbox.IsChecked = true;
+            }
+            else if (tabHeader.Equals("Chain of Memories"))
+            {
+                foreach (var checkbox in _trackCheckboxesReCOM.Values) checkbox.IsChecked = true;
+            }
+            else if (tabHeader.Equals("Dream Drop Distance"))
+            {
+                foreach (var checkbox in _trackCheckboxesDDD.Values) checkbox.IsChecked = true;
             }
         }
 
         private void SelectAllCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            // Deselect all checkboxes
-            foreach (var checkbox in _trackCheckboxesKH1.Values)
+            // Deselect all checkboxes for the active tab
+            var selectedTab = MainTabControl.SelectedItem as TabItem;
+            string tabHeader = selectedTab?.Header.ToString() ?? "";
+
+            if (tabHeader.Equals("Kingdom Hearts I"))
             {
-                checkbox.IsChecked = false;
+                foreach (var checkbox in _trackCheckboxesKH1.Values) checkbox.IsChecked = false;
+            }
+            else if (tabHeader.Equals("Kingdom Hearts II"))
+            {
+                foreach (var checkbox in _trackCheckboxesKH2.Values) checkbox.IsChecked = false;
+            }
+            else if (tabHeader.Equals("Birth by Sleep"))
+            {
+                foreach (var checkbox in _trackCheckboxesBBS.Values) checkbox.IsChecked = false;
+            }
+            else if (tabHeader.Equals("Chain of Memories"))
+            {
+                foreach (var checkbox in _trackCheckboxesReCOM.Values) checkbox.IsChecked = false;
+            }
+            else if (tabHeader.Equals("Dream Drop Distance"))
+            {
+                foreach (var checkbox in _trackCheckboxesDDD.Values) checkbox.IsChecked = false;
             }
         }
 
@@ -372,10 +594,41 @@ namespace KingdomHeartsCustomMusic
             string selectedFile = dialog.FileName;
 
             // Check which tab we are on
-            bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
+            var selectedTab = MainTabControl.SelectedItem as TabItem;
+            string tabHeader = selectedTab?.Header.ToString() ?? "";
 
-            var bindings = isKH1 ? _trackBindingsKH1 : _trackBindingsKH2;
-            var checkboxes = isKH1 ? _trackCheckboxesKH1 : _trackCheckboxesKH2;
+            List<(TrackInfo, TextBox)> bindings;
+            Dictionary<TrackInfo, CheckBox> checkboxes;
+
+            if (tabHeader.Equals("Kingdom Hearts I"))
+            {
+                bindings = _trackBindingsKH1;
+                checkboxes = _trackCheckboxesKH1;
+            }
+            else if (tabHeader.Equals("Kingdom Hearts II"))
+            {
+                bindings = _trackBindingsKH2;
+                checkboxes = _trackCheckboxesKH2;
+            }
+            else if (tabHeader.Equals("Birth by Sleep"))
+            {
+                bindings = _trackBindingsBBS;
+                checkboxes = _trackCheckboxesBBS;
+            }
+            else if (tabHeader.Equals("Chain of Memories"))
+            {
+                bindings = _trackBindingsReCOM;
+                checkboxes = _trackCheckboxesReCOM;
+            }
+            else if (tabHeader.Equals("Dream Drop Distance"))
+            {
+                bindings = _trackBindingsDDD;
+                checkboxes = _trackCheckboxesDDD;
+            }
+            else
+            {
+                return; // Tab no reconocida
+            }
 
             int assignedCount = 0;
             foreach (var (track, textbox) in bindings)
@@ -401,12 +654,45 @@ namespace KingdomHeartsCustomMusic
             }
         }
 
-        private void GeneratePatchButton_Click(object sender, RoutedEventArgs e)
+        private async void GeneratePatchButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // Get which game is selected
-                bool isKH1 = ((TabItem)MainTabControl.SelectedItem).Header.ToString().Contains("Kingdom Hearts I");
+                // Detectar la pestaña activa correctamente
+                var selectedTab = MainTabControl.SelectedItem as TabItem;
+                string tabHeader = selectedTab?.Header.ToString() ?? "";
+                
+                bool isKH1 = tabHeader.Equals("Kingdom Hearts I");
+                bool isKH2 = tabHeader.Equals("Kingdom Hearts II");
+                bool isBBS = tabHeader.Equals("Birth by Sleep");
+                bool isReCOM = tabHeader.Equals("Chain of Memories");
+                bool isDDD = tabHeader.Equals("Dream Drop Distance");
+
+                // Usar la lista de tracks correspondiente
+                List<(TrackInfo Track, TextBox TextBox)> currentTrackBindings;
+                
+                if (isKH1)
+                    currentTrackBindings = _trackBindingsKH1;
+                else if (isKH2)
+                    currentTrackBindings = _trackBindingsKH2;
+                else if (isBBS)
+                    currentTrackBindings = _trackBindingsBBS;
+                else if (isReCOM)
+                    currentTrackBindings = _trackBindingsReCOM;
+                else if (isDDD)
+                    currentTrackBindings = _trackBindingsDDD;
+                else
+                    return; // Tab no reconocida
+
+                var selectedTracks = currentTrackBindings
+                    .Where(t => !string.IsNullOrWhiteSpace(t.TextBox.Text))
+                    .ToList();
+
+                if (selectedTracks.Count == 0)
+                {
+                    MessageBox.Show("⚠️ No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
                 // Setup tools from embedded resources
                 string appDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
@@ -455,60 +741,110 @@ namespace KingdomHeartsCustomMusic
                 string scdTemplate = toolsSetup.OriginalScdPath;
                 string patchBasePath = Path.Combine(encoderDir, "patches");
 
-                // Get custom patch name (if any)
+                // Get custom patch name (if any) or default for tab
                 string? patchNameInput = PatchNameTextBox.Text?.Trim();
-                bool hasCustomName = !string.IsNullOrEmpty(patchNameInput);
+                if (string.IsNullOrWhiteSpace(patchNameInput))
+                {
+                    patchNameInput = GetDefaultPatchNameForSelectedTab();
+                }
 
                 // Ensure output folder exists in application directory (not temp)
                 string outputDir = Path.Combine(appDir, "patches");
                 Directory.CreateDirectory(outputDir);
 
-                string? baseFileName = hasCustomName
-                    ? patchNameInput
-                    : (isKH1 ? "KHCustomPatch" : "KHCustomPatch");
+                string gameExtension = isKH1 ? "kh1pcpatch" : 
+                                     isKH2 ? "kh2pcpatch" : 
+                                     isBBS ? "bbspcpatch" :
+                                     isReCOM ? "recompcpatch" :
+                                     "dddpcpatch";
+                string baseFileName = patchNameInput!;
 
                 string patchZip = Path.Combine(appDir, "KHCustomPatch.zip"); // Temporary, gets overwritten
-                string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{(isKH1 ? "kh1pcpatch" : "kh2pcpatch")}");
+                string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{gameExtension}");
 
-                // Track processing
-                var currentTrackBindings = isKH1
-                    ? _trackBindingsKH1
-                    : _trackBindingsKH2;
-
-                var selectedTracks = currentTrackBindings
-                    .Where(t => !string.IsNullOrWhiteSpace(t.TextBox.Text))
-                    .ToList();
-
-                if (selectedTracks.Count == 0)
+                // Confirm overwrite if destination exists
+                if (File.Exists(patchFinal))
                 {
-                    MessageBox.Show("⚠️ No tracks selected. Please select at least one audio file.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
+                    var overwrite = MessageBox.Show($"The patch '{baseFileName}.{gameExtension}' already exists in the output folder.\n\nDo you want to overwrite it?",
+                                                    "Confirm overwrite",
+                                                    MessageBoxButton.YesNo,
+                                                    MessageBoxImage.Question);
+                    if (overwrite != MessageBoxResult.Yes)
+                    {
+                        ProgressText.Text = string.Empty;
+                        return;
+                    }
                 }
 
-                // Ensure patches base directory exists
-                Directory.CreateDirectory(patchBasePath);
-
-                var includedTracks = PatchTrackProcessor.ProcessTracks(
-                    currentTrackBindings
-                        .Select(t => (t.Track, t.TextBox.Text))
-                        .ToList(),
-                    encoderExe,
-                    encoderDir,
-                    scdTemplate,
-                    patchBasePath
-                );
-
-                if (includedTracks.Count == 0)
+                // Wire progress callback
+                void ProgressCallback(int current, int total, string phase)
                 {
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (total <= 0)
+                        {
+                            ProgressText.Text = string.Empty;
+                            return;
+                        }
+                        var label = phase == "Encoding" ? "Encoding" : "Preparing";
+                        ProgressText.Text = $"{label}: {current} / {total}";
+                    });
+                }
+
+                GeneratePatchButton.IsEnabled = false;
+                ProgressText.Text = "Preparing...";
+
+                var bindingsSnapshot = currentTrackBindings
+                        .Select(t => (t.Track, t.TextBox.Text))
+                        .ToList();
+
+                PatchPackager.PatchResult? result = null;
+
+                int encodedCount = await Task.Run(() =>
+                {
+                    var includedTracks = PatchTrackProcessor.ProcessTracks(
+                        bindingsSnapshot,
+                        encoderExe,
+                        encoderDir,
+                        scdTemplate,
+                        patchBasePath,
+                        ProgressCallback
+                    );
+
+                    if (includedTracks.Count == 0)
+                    {
+                        return 0;
+                    }
+
+                    Dispatcher.Invoke(() => ProgressText.Text = "Packaging...");
+                    result = PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
+                    return includedTracks.Count;
+                });
+
+                if (encodedCount == 0)
+                {
+                    ProgressText.Text = string.Empty;
                     MessageBox.Show("❌ No tracks were processed successfully.\n\nPlease check that your audio files are valid and try again.", "Processing Failed", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
-                // Patch creation and packaging
-                PatchPackager.CreateFinalPatch(patchBasePath, patchZip, patchFinal, includedTracks);
+                ProgressText.Text = "✅ Done";
+
+                if (result != null)
+                {
+                    // Show completion dialog with owner = this to keep it on top
+                    var msg = $"🎉 Patch Created Successfully!\n\n" +
+                              $"✨ Game: {result.Game}\n" +
+                              $"🎵 Tracks included: {result.Tracks}\n" +
+                              $"📦 File size: {result.FileSize}\n" +
+                              $"📁 Location: {result.FinalPath}\n\n" +
+                              $"Your custom music patch is ready to be applied! 🚀";
+                    MessageBox.Show(this, msg, "Patch Generation Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
             catch (Exception ex)
             {
+                ProgressText.Text = string.Empty;
                 MessageBox.Show(
                     $"❌ Error generating patch:\n\n{ex.Message}\n\n" +
                     $"Please check:\n" +
@@ -518,6 +854,10 @@ namespace KingdomHeartsCustomMusic
                     "Patch Generation Error",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
+            }
+            finally
+            {
+                GeneratePatchButton.IsEnabled = true;
             }
         }
 
@@ -606,6 +946,39 @@ namespace KingdomHeartsCustomMusic
                 RenderTrackListKH2(_tracksKH2.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
             else
                 RenderTrackListKH2(_tracksKH2);
+        }
+        private void TrackSortComboBoxBBS_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_tracksBBS == null) return;
+            if (TrackSortComboBoxBBS.SelectedIndex == 1)
+                RenderTrackListBBS(_tracksBBS.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
+            else
+                RenderTrackListBBS(_tracksBBS);
+        }
+        private void TrackSortComboBoxReCOM_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_tracksReCOM == null) return;
+            if (TrackSortComboBoxReCOM.SelectedIndex == 1)
+                RenderTrackListReCOM(_tracksReCOM.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
+            else
+                RenderTrackListReCOM(_tracksReCOM);
+        }
+
+        private void TrackSortComboBoxDDD_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_tracksDDD == null) return;
+            if (TrackSortComboBoxDDD.SelectedIndex == 1)
+            {
+                // Orden alfabético, los vacíos al final (usando el mayor valor Unicode)
+                var ordered = _tracksDDD
+                    .OrderBy(t => string.IsNullOrWhiteSpace(t.Description) ? "\uFFFF" : t.Description, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(t => t.PcNumber);
+                RenderTrackListDDD(ordered);
+            }
+            else
+            {
+                RenderTrackListDDD(_tracksDDD);
+            }
         }
 
         #endregion

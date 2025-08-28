@@ -1,0 +1,46 @@
+Filename,Location,Folder,PC Number,PlayStation2 Name,Description,Loop,Full Loop
+Title.win32.scd,Recom,original\STREAM\0001,Title,Dearly Beloved,Title,Yes,No
+01F_Town_F.win32.scd,Recom,original\STREAM\0001,01F_Town_F,Traverse Town,Traverse Town Field,Yes,No
+01F_Town_B.win32.scd,Recom,original\STREAM\0001,01F_Town_B,Hand In Hand,Traverse Town Battle,Yes,No
+Event2_.win32.scd,Recom,original\STREAM\0001,Event2,Just Wondering,Cutscene,Yes,No
+Boss1.win32.scd,Recom,original\STREAM\0001,Boss1,Struggle Away,Boss,Yes,No
+19_Alice_Field.win32.scd,Recom,original\STREAM\0001,19,Welcome To Wonderland,Wonderland Field,Yes,No
+21_Alice_Battle.win32.scd,Recom,original\STREAM\0001,21,To Our Surprise,Wonderland Battle,Yes,No
+14_Event_Odayaka.win32.scd,Recom,original\STREAM\0001,14,Piccolo Resto,Cutscene,Yes,Yes
+03F_Hercul.win32.scd,Recom,original\STREAM\0001,03F_Hercul,Olympus Coliseum,Olympus Coliseum Field,Yes,No
+03F_Hercules_B.win32.scd,Recom,original\STREAM\0001,03F_Hercules_B,Go For It,Olympus Coliseum Battle,Yes,No
+Event_Unrest.win32.scd,Recom,original\STREAM\0001,Event_Unrest,Disquieting,Cutscene,Yes,No
+Boss2_World.win32.scd,Recom,original\STREAM\0001,Boss2,The Fight for My Friends,Boss,Yes,No
+25_Aladdin_F.win32.scd,Recom,original\STREAM\0001,25,A Day In Agrabah,Agrabah Field,Yes,No
+26_Aladdin_B.win32.scd,Recom,original\STREAM\0001,26,Arabian Dream,Agrabah Battle,Yes,No
+24_Pinocchio_Field.win32.scd,Recom,original\STREAM\0001,24,A Very Small Wish,Monstro Field,Yes,No
+27_Pinocchio_B.win32.scd,Recom,original\STREAM\0001,27,Monstrous Monstro,Monstro Battle,Yes,No
+12_Event_Yuttari.win32.scd,Recom,original\STREAM\0001,12,La Pace,Cutscene,Yes,Yes
+18_Helloween_B.win32.scd,Recom,original\STREAM\0001,18,Spooks Of Halloween Town,Halloween Town Battle,Yes,No
+17_Halloween_F.win32.scd,Recom,original\STREAM\0001,17,This Is Halloween,Halloween Town Field,Yes,No
+20_Event_13thFloor.win32.scd,Recom,original\STREAM\0001,20,The 13th Floor,Castle Oblivion Field,Yes,No
+38_UnderTheSea.win32.scd,Recom,original\STREAM\0001,38,Under The Sea,Atlantica Field,Yes,No
+39_LittleMermaid_B.win32.scd,Recom,original\STREAM\0001,39,An Adventure In Atlantica,Atlantica Battle,Yes,No
+Event1_Kinpak.win32.scd,Recom,original\STREAM\0001,Event1,Face It!,Cutscene,Yes,Yes
+35_Boss_NiseRiku.win32.scd,Recom,original\STREAM\0001,35,The Force in You,Boss,Yes,No
+22_PeterPan_Field.win32.scd,Recom,original\STREAM\0001,22,Captain Hook Pirate Ship,Neverland Field,Yes,No
+23_PeterPan_Battle.win32.scd,Recom,original\STREAM\0001,23,Pirate Gigue,Neverland Battle,Yes,No
+Event4.win32.scd,Recom,original\STREAM\0001,Event4,Scent of Silence,Cutscene,Yes,Yes
+42_Hollow_F.win32.scd,Recom,original\STREAM\0001,42,Hollow Bastion,Hollow Bastion Field,Yes,No
+43_Hollow_B.win32.scd,Recom,original\STREAM\0001,43,Scherzo Di Notte,Hollow Bastion Battle,Yes,No
+34_Boss_RikuAnsem.win32.scd,Recom,original\STREAM\0001,34,Revenge of Chaos,Boss,Yes,No
+36_WinnieThePooh.win32.scd,Recom,original\STREAM\0001,36,Winnie The Pooh,100 Acre Wood,Yes,No
+44_PooGame1.win32.scd,Recom,original\STREAM\0001,44,March-A-Long,100 Acre Wood Minigame,Yes,No
+45_PoohGame2.win32.scd,Recom,original\STREAM\0001,45,Dash-A-Long,101 Acre Wood Minigame,Yes,No
+15_Event_XIII.win32.scd,Recom,original\STREAM\0001,15,Thirteenth Discretion,Cutscene,Yes,No
+16_XIIIBoss1.win32.scd,Recom,original\STREAM\0001,16,The 13th Struggle,Boss,Yes,No
+30_Twilight_F.win32.scd,Recom,original\STREAM\0001,30,Lazy Afternoons,Twilight Town Field,Yes,No
+31_Twilight_B.win32.scd,Recom,original\STREAM\0001,31,Sinister Sundown,Twilight Town Battle,Yes,No
+32_Destiny_F.win32.scd,Recom,original\STREAM\0001,32,Destiny Islands,Destiny Islands Field,Yes,No
+33_Destiny_B.win32.scd,Recom,original\STREAM\0001,33,Night Of Fate,Destiny Islands Battle,Yes,No
+13_Event_Namine.win32.scd,Recom,original\STREAM\0001,13,Namine,Cutscene,Yes,No
+28_Forget_F.win32.scd,Recom,original\STREAM\0001,28,Castle Oblivion,Castle Oblivion Field,Yes,No
+29_Forget_B.win32.scd,Recom,original\STREAM\0001,29,Forgotten Challenge,Castle Oblivion Battle,Yes,No
+37_LastBoss1.win32.scd,Recom,original\STREAM\0001,37,Graceful Assassin,Boss,Yes,No
+40_LastBoss2.win32.scd,Recom,original\STREAM\0001,40,Scythe of Petals,Boss,Yes,No
+41_LastBoss3.win32.scd,Recom,original\STREAM\0001,41,Lord of the Castle,Boss,Yes,No

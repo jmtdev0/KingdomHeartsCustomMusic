@@ -4,5 +4,6 @@ Información de progreso
 Tooltips
 Accesibilidad
 Orden de las cnaciones
-
+Comprobar que no existe ya un parche con el mismo nombre
+Easter egg
 Conde de Menol

@@ -1,13 +1,20 @@
 ﻿using System.IO;
 using System.IO.Compression;
-using System.Windows;
 using static KingdomHeartsCustomMusic.utils.TrackListLoader;
 
 namespace KingdomHeartsCustomMusic.utils
 {
     public static class PatchPackager
     {
-        public static void CreateFinalPatch(string patchBasePath, string patchZipPath, string patchFinalPath, List<TrackInfo> includedTracks)
+        public class PatchResult
+        {
+            public required string Game { get; init; }
+            public required int Tracks { get; init; }
+            public required string FileSize { get; init; }
+            public required string FinalPath { get; init; }
+        }
+
+        public static PatchResult CreateFinalPatch(string patchBasePath, string patchZipPath, string patchFinalPath, List<TrackInfo> includedTracks)
         {
             // Ensure the "patches" directory exists
             string patchesDir = Path.GetDirectoryName(patchFinalPath)!;
@@ -31,18 +38,27 @@ namespace KingdomHeartsCustomMusic.utils
                 ? $"{fileInfo.Length / (1024.0 * 1024.0):F1} MB"
                 : $"{fileInfo.Length / 1024.0:F1} KB";
 
-            string gameVersion = patchFinalPath.Contains("kh1pcpatch") ? "Kingdom Hearts I" : "Kingdom Hearts II";
+            string gameVersion;
+            if (patchFinalPath.EndsWith("kh1pcpatch"))
+                gameVersion = "Kingdom Hearts I";
+            else if (patchFinalPath.EndsWith("kh2pcpatch"))
+                gameVersion = "Kingdom Hearts II";
+            else if (patchFinalPath.EndsWith("bbspcpatch"))
+                gameVersion = "Birth by Sleep";
+            else if (patchFinalPath.EndsWith("recompcpatch"))
+                gameVersion = "Chain of Memories";
+            else if (patchFinalPath.EndsWith("dddpcpatch"))
+                gameVersion = "Dream Drop Distance";
+            else
+                gameVersion = "Unknown";
 
-            MessageBox.Show(
-                $"🎉 Patch Created Successfully!\n\n" +
-                $"✨ Game: {gameVersion}\n" +
-                $"🎵 Tracks included: {includedTracks.Count}\n" +
-                $"📦 File size: {fileSize}\n" +
-                $"📁 Location: {patchFinalPath}\n\n" +
-                $"Your custom music patch is ready to use! 🎮",
-                "Patch Generation Complete", 
-                MessageBoxButton.OK, 
-                MessageBoxImage.Information);
+            return new PatchResult
+            {
+                Game = gameVersion,
+                Tracks = includedTracks.Count,
+                FileSize = fileSize,
+                FinalPath = patchFinalPath
+            };
         }
     }
 }

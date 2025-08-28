@@ -49,7 +49,8 @@ namespace KingdomHeartsCustomMusic.utils
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true
+                    RedirectStandardError = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
                 }
             };
 

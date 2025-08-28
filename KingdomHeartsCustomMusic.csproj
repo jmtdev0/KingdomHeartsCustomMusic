@@ -21,13 +21,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="resources\All Games Track List - KH1.csv" />
+    <None Remove="resources\All Games Track List - KH2.csv" />
     <None Remove="utils\Actually\KHPCPatchManager.exe" />
   </ItemGroup>
 
   <!-- Embedded Resources - All files included in the executable -->
   <ItemGroup>
     <!-- Excel files -->
+    <EmbeddedResource Include="resources\All Games Track List - KH1.csv" />
     <EmbeddedResource Include="resources\All Games Track List - KH1.xlsx" />
+    <EmbeddedResource Include="resources\All Games Track List - KH2.csv" />
     <EmbeddedResource Include="resources\All Games Track List - KH2.xlsx" />
     <EmbeddedResource Include="utils\Actually\KHPCPatchManager.exe" />
     
