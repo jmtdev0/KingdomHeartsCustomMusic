@@ -119,6 +119,14 @@ namespace KingdomHeartsCustomMusic.utils
             return (kh1Path, kh2Path);
         }
 
+        private static bool TryExtractOriginalScdVariant(string resourceName, string destinationPath, out string path)
+        {
+            path = string.Empty;
+            if (!ResourceExists(resourceName)) return false;
+            path = ExtractEmbeddedResourceToPath(resourceName, destinationPath);
+            return File.Exists(path);
+        }
+
         /// <summary>
         /// Configura todas las herramientas necesarias en un directorio temporal
         /// </summary>
@@ -141,7 +149,7 @@ namespace KingdomHeartsCustomMusic.utils
             Directory.CreateDirectory(Path.Combine(result.ToolsSubDirectory, "adpcmencode3"));
             Directory.CreateDirectory(Path.Combine(result.ToolsSubDirectory, "oggenc"));
 
-            // Extraer SingleEncoder si está embebido
+            // SingleEncoder
             if (ResourceExists("utils.SingleEncoder.SingleEncoder.exe"))
             {
                 result.SingleEncoderPath = ExtractEmbeddedResourceToPath(
@@ -149,14 +157,12 @@ namespace KingdomHeartsCustomMusic.utils
                     Path.Combine(result.EncoderDirectory, "SingleEncoder.exe"));
                 result.HasSingleEncoder = true;
             }
-
             if (ResourceExists("utils.SingleEncoder.SingleEncoder.dll"))
             {
                 ExtractEmbeddedResourceToPath(
                     "utils.SingleEncoder.SingleEncoder.dll",
                     Path.Combine(result.EncoderDirectory, "SingleEncoder.dll"));
             }
-
             if (ResourceExists("utils.SingleEncoder.SingleEncoder.runtimeconfig.json"))
             {
                 ExtractEmbeddedResourceToPath(
@@ -164,6 +170,7 @@ namespace KingdomHeartsCustomMusic.utils
                     Path.Combine(result.EncoderDirectory, "SingleEncoder.runtimeconfig.json"));
             }
 
+            // original.scd (genérico y por juego si están embebidos)
             if (ResourceExists("utils.SingleEncoder.original.scd"))
             {
                 result.OriginalScdPath = ExtractEmbeddedResourceToPath(
@@ -172,7 +179,46 @@ namespace KingdomHeartsCustomMusic.utils
                 result.HasOriginalScd = true;
             }
 
-            // Extraer herramientas adicionales
+            // Variantes por juego (acepta utils/SingleEncoder/<game>/original.scd)
+            // KH1
+            if (TryExtractOriginalScdVariant("utils.SingleEncoder.KH1.original.scd", Path.Combine(result.EncoderDirectory, "KH1.original.scd"), out var kh1) ||
+                TryExtractOriginalScdVariant("utils.SingleEncoder.kh1.original.scd", Path.Combine(result.EncoderDirectory, "KH1.original.scd"), out kh1) ||
+                TryExtractOriginalScdVariant("utils.SingleEncoder.kh1.original.win32.scd", Path.Combine(result.EncoderDirectory, "KH1.original.scd"), out kh1))
+            {
+                result.OriginalScdKH1Path = kh1;
+                result.HasOriginalScdKH1 = true;
+            }
+            // KH2
+            if (TryExtractOriginalScdVariant("utils.SingleEncoder.KH2.original.scd", Path.Combine(result.EncoderDirectory, "KH2.original.scd"), out var kh2) ||
+                TryExtractOriginalScdVariant("utils.SingleEncoder.kh2.original.scd", Path.Combine(result.EncoderDirectory, "KH2.original.scd"), out kh2) ||
+                TryExtractOriginalScdVariant("utils.SingleEncoder.kh2.original.win32.scd", Path.Combine(result.EncoderDirectory, "KH2.original.scd"), out kh2))
+            {
+                result.OriginalScdKH2Path = kh2;
+                result.HasOriginalScdKH2 = true;
+            }
+            // BBS
+            if (TryExtractOriginalScdVariant("utils.SingleEncoder.BBS.original.scd", Path.Combine(result.EncoderDirectory, "BBS.original.scd"), out var bbs) ||
+                TryExtractOriginalScdVariant("utils.SingleEncoder.bbs.original.scd", Path.Combine(result.EncoderDirectory, "BBS.original.scd"), out bbs))
+            {
+                result.OriginalScdBBSPath = bbs;
+                result.HasOriginalScdBBS = true;
+            }
+            // ReCOM
+            if (TryExtractOriginalScdVariant("utils.SingleEncoder.ReCOM.original.scd", Path.Combine(result.EncoderDirectory, "ReCOM.original.scd"), out var recom) ||
+                TryExtractOriginalScdVariant("utils.SingleEncoder.recom.original.scd", Path.Combine(result.EncoderDirectory, "ReCOM.original.scd"), out recom))
+            {
+                result.OriginalScdReCOMPath = recom;
+                result.HasOriginalScdReCOM = true;
+            }
+            // DDD
+            if (TryExtractOriginalScdVariant("utils.SingleEncoder.DDD.original.scd", Path.Combine(result.EncoderDirectory, "DDD.original.scd"), out var ddd) ||
+                TryExtractOriginalScdVariant("utils.SingleEncoder.ddd.original.scd", Path.Combine(result.EncoderDirectory, "DDD.original.scd"), out ddd))
+            {
+                result.OriginalScdDDDPath = ddd;
+                result.HasOriginalScdDDD = true;
+            }
+
+            // Herramientas adicionales
             if (ResourceExists("utils.SingleEncoder.tools.adpcmencode3.adpcmencode3.exe"))
             {
                 ExtractEmbeddedResourceToPath(
@@ -180,7 +226,6 @@ namespace KingdomHeartsCustomMusic.utils
                     Path.Combine(result.ToolsSubDirectory, "adpcmencode3", "adpcmencode3.exe"));
                 result.HasAdpcmEncode = true;
             }
-
             if (ResourceExists("utils.SingleEncoder.tools.oggenc.oggenc.exe"))
             {
                 ExtractEmbeddedResourceToPath(
@@ -189,13 +234,53 @@ namespace KingdomHeartsCustomMusic.utils
                 result.HasOggEnc = true;
             }
 
-            // Extraer KHPCPatchManager si está embebido
+            // KHPCPatchManager
             if (ResourceExists("utils.KHPCPatchManager.exe"))
             {
                 result.PatchManagerPath = ExtractEmbeddedResourceToPath(
                     "utils.KHPCPatchManager.exe",
                     Path.Combine(result.ToolsDirectory, "KHPCPatchManager.exe"));
                 result.HasPatchManager = true;
+            }
+
+            // yt-dlp
+            if (ResourceExists("utils.Actually.yt-dlp.exe"))
+            {
+                result.YtDlpPath = ExtractEmbeddedResourceToPath(
+                    "utils.Actually.yt-dlp.exe",
+                    Path.Combine(result.ToolsDirectory, "yt-dlp.exe"));
+                result.HasYtDlp = true;
+            }
+
+            // ffmpeg (for yt-dlp postprocessing)
+            if (ResourceExists("utils.Actually.ffmpeg.exe"))
+            {
+                result.FfmpegPath = ExtractEmbeddedResourceToPath(
+                    "utils.Actually.ffmpeg.exe",
+                    Path.Combine(result.ToolsDirectory, "ffmpeg.exe"));
+                result.HasFfmpeg = true;
+            }
+
+            // Provision .NET 5 runtime for SingleEncoder if missing (hostfxr)
+            if (result.HasSingleEncoder)
+            {
+                // If hostfxr not present system-wide, provision local runtime and set DOTNET_ROOT
+                try
+                {
+                    string? dotnetRoot = System.Environment.GetEnvironmentVariable("DOTNET_ROOT");
+                    bool hostfxrPresent = false;
+                    if (!string.IsNullOrEmpty(dotnetRoot))
+                    {
+                        hostfxrPresent = File.Exists(Path.Combine(dotnetRoot, @"host", @"fxr", @"5.0.17", @"hostfxr.dll"));
+                    }
+                    if (!hostfxrPresent)
+                    {
+                        var runtimeRoot = DotnetRuntimeBootstrap.EnsureDotnetRuntime(result.ToolsDirectory, "5.0.17");
+                        System.Environment.SetEnvironmentVariable("DOTNET_ROOT", runtimeRoot);
+                        Logger.Log($"DOTNET_ROOT set to '{runtimeRoot}' for SingleEncoder");
+                    }
+                }
+                catch { }
             }
 
             return result;
@@ -233,8 +318,21 @@ namespace KingdomHeartsCustomMusic.utils
         public bool HasSingleEncoder { get; set; }
         public string SingleEncoderPath { get; set; } = "";
         
+        // Genérico (compatibilidad hacia atrás)
         public bool HasOriginalScd { get; set; }
         public string OriginalScdPath { get; set; } = "";
+
+        // Por juego (opcional)
+        public bool HasOriginalScdKH1 { get; set; }
+        public string OriginalScdKH1Path { get; set; } = "";
+        public bool HasOriginalScdKH2 { get; set; }
+        public string OriginalScdKH2Path { get; set; } = "";
+        public bool HasOriginalScdBBS { get; set; }
+        public string OriginalScdBBSPath { get; set; } = "";
+        public bool HasOriginalScdReCOM { get; set; }
+        public string OriginalScdReCOMPath { get; set; } = "";
+        public bool HasOriginalScdDDD { get; set; }
+        public string OriginalScdDDDPath { get; set; } = "";
         
         public bool HasAdpcmEncode { get; set; }
         public bool HasOggEnc { get; set; }
@@ -242,15 +340,25 @@ namespace KingdomHeartsCustomMusic.utils
         public bool HasPatchManager { get; set; }
         public string PatchManagerPath { get; set; } = "";
 
-        public bool IsCompleteSetup => HasSingleEncoder && HasOriginalScd;
+        // yt-dlp
+        public bool HasYtDlp { get; set; }
+        public string YtDlpPath { get; set; } = "";
+
+        // ffmpeg
+        public bool HasFfmpeg { get; set; }
+        public string FfmpegPath { get; set; } = "";
+
+        // Setup is complete when we have a valid SCD template (generic or per-game)
+        // and at least one encoder tool available (oggenc or adpcmencode3).
+        public bool IsCompleteSetup =>
+            (HasOriginalScd || HasOriginalScdKH1 || HasOriginalScdKH2 || HasOriginalScdBBS || HasOriginalScdReCOM || HasOriginalScdDDD)
+            && (HasOggEnc || HasAdpcmEncode);
         
         public List<string> GetMissingTools()
         {
             var missing = new List<string>();
             
-            if (!HasSingleEncoder)
-                missing.Add("SingleEncoder.exe");
-            if (!HasOriginalScd)
+            if (!(HasOriginalScd || HasOriginalScdKH1 || HasOriginalScdKH2 || HasOriginalScdBBS || HasOriginalScdReCOM || HasOriginalScdDDD))
                 missing.Add("original.scd");
             if (!HasAdpcmEncode)
                 missing.Add("adpcmencode3.exe");
@@ -258,6 +366,10 @@ namespace KingdomHeartsCustomMusic.utils
                 missing.Add("oggenc.exe");
             if (!HasPatchManager)
                 missing.Add("KHPCPatchManager.exe");
+            if (!HasYtDlp)
+                missing.Add("yt-dlp.exe");
+            if (!HasFfmpeg)
+                missing.Add("ffmpeg.exe");
                 
             return missing;
         }

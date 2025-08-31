@@ -23,6 +23,7 @@ namespace KingdomHeartsCustomMusic.utils
     int loopStartSample,
     int loopEndSample)
         {
+            Logger.Log($"ScdBuilder.ReplaceOggInScd: template='{originalScdPath}', ogg='{oggPath}', out='{outputScdPath}', loopStart={loopStartSample}, loopEnd={loopEndSample}");
             if (!File.Exists(originalScdPath))
                 throw new FileNotFoundException("SCD template not found.", originalScdPath);
             if (!File.Exists(oggPath))
@@ -30,6 +31,9 @@ namespace KingdomHeartsCustomMusic.utils
 
             byte[] scdTemplate = File.ReadAllBytes(originalScdPath);
             byte[] oggData = File.ReadAllBytes(oggPath);
+
+            if (oggData.Length < 64 || oggData[0] != (byte)'O' || oggData[1] != (byte)'g' || oggData[2] != (byte)'g' || oggData[3] != (byte)'S')
+                throw new InvalidDataException("Provided OGG does not start with OggS header.");
 
             // Read structure
             ushort tablesOffset = ReadUInt16(scdTemplate, 0x0E);
@@ -47,6 +51,8 @@ namespace KingdomHeartsCustomMusic.utils
 
             // Vorbis header size
             int vorbisHeaderSize = GetVorbisHeaderSize(oggData);
+            if (vorbisHeaderSize <= 0)
+                throw new InvalidDataException("Could not detect Vorbis header size in OGG.");
             int streamSize = oggData.Length - vorbisHeaderSize;
 
             // Audio properties
@@ -59,8 +65,8 @@ namespace KingdomHeartsCustomMusic.utils
             WriteUInt32(entry, (uint)sampleRate, metaOffset + 0x08);
             WriteUInt32(entry, (uint)loopStartSample, metaOffset + 0x28);
             WriteUInt32(entry, (uint)loopEndSample, metaOffset + 0x2C);
-            WriteUInt32(entry, (uint)0, metaOffset + 0x10); // LoopStartOffset (unused in most KHPC)
-            WriteUInt32(entry, (uint)oggData.Length, metaOffset + 0x14); // LoopEndOffset (entire stream)
+            WriteUInt32(entry, (uint)0, metaOffset + 0x10); // LoopStartOffset
+            WriteUInt32(entry, (uint)oggData.Length, metaOffset + 0x14); // LoopEndOffset
 
             // No seek table or aux chunks
             WriteUInt32(entry, 0, extradataOffset + 0x10); // Seek table size
@@ -88,6 +94,7 @@ namespace KingdomHeartsCustomMusic.utils
             WriteUInt32(finalData, (uint)finalData.Length, 0x10);
 
             File.WriteAllBytes(outputScdPath, finalData);
+            Logger.Log($"ScdBuilder: wrote SCD '{outputScdPath}' size={finalData.Length} bytes");
         }
 
 

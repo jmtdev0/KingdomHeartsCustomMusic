@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using static KingdomHeartsCustomMusic.utils.TrackListLoader;
+using System.Text;
 
 namespace KingdomHeartsCustomMusic.utils
 {
@@ -10,7 +11,6 @@ namespace KingdomHeartsCustomMusic.utils
     {
         public static List<TrackInfo> ProcessTracks(
     List<(TrackInfo Track, string FilePath)> trackBindings,
-    string encoderExe,
     string encoderDir,
     string scdTemplate,
     string patchBasePath,
@@ -23,6 +23,9 @@ namespace KingdomHeartsCustomMusic.utils
                 .Where(tb => !string.IsNullOrWhiteSpace(tb.FilePath) && File.Exists(tb.FilePath))
                 .GroupBy(tb => tb.FilePath)
                 .ToDictionary(g => g.Key, g => g.Select(tb => tb.Track).ToList());
+
+            Logger.Log($"ProcessTracks: distinct input files: {trackGroups.Count}");
+            Logger.Log($"ProcessTracks: encoderDir='{encoderDir}', scdTemplate='{scdTemplate}', patchBasePath='{patchBasePath}'");
 
             int totalEncodes = trackGroups.Count;
             int currentEncode = 0;
@@ -41,35 +44,70 @@ namespace KingdomHeartsCustomMusic.utils
                     currentEncode++;
                     onProgress?.Invoke(currentEncode, totalEncodes, "Encoding");
 
+                    Logger.Log($"Encoding source: '{filePath}' for {tracks.Count} track(s)");
+
                     // Convert to WAV if needed
                     string tempWavPath = WavProcessingHelper.EnsureWavFormat(filePath);
+                    Logger.Log($"WAV ready at: '{tempWavPath}' (exists: {File.Exists(tempWavPath)})");
+
                     int totalSamples = WavSampleAnalyzer.GetTotalSamples(tempWavPath);
+                    Logger.Log($"Total samples: {totalSamples}");
 
                     // Copy to encoder directory
                     string encoderWavPath = Path.Combine(encoderDir, "music.wav");
                     File.Copy(tempWavPath, encoderWavPath, overwrite: true);
+                    Logger.Log($"Copied WAV to encoder dir: '{encoderWavPath}' (exists: {File.Exists(encoderWavPath)})");
 
-                    RunSingleEncoder(encoderExe, encoderDir, scdTemplate, encoderWavPath, totalSamples);
+                    // In-process encoding using managed SingleEncoder implementation
+                    bool scdBuilt = false;
+                    string outputDir = Path.Combine(encoderDir, "output");
+                    Directory.CreateDirectory(outputDir);
+
+                    try
+                    {
+                        Logger.Log($"Calling ManagedSingleEncoder.Encode with template='{scdTemplate}'");
+                        ManagedSingleEncoder.Encode(scdTemplate, encoderWavPath, quality: 10, fullLoop: true, encoderDir: encoderDir);
+                        scdBuilt = true;
+                    }
+                    catch (Exception exSingle)
+                    {
+                        Logger.Log($"Managed SingleEncoder failed. Exception: {exSingle}");
+                        throw new Exception("SingleEncoder failed. The fallback has been disabled because its output is not supported by the game. Please ensure the SCD template matches the expected version and tools (oggenc/adpcmencode3) are available.", exSingle);
+                    }
 
                     // Save the generated SCD
                     string generatedScdPath = Path.Combine(encoderDir, "output", "original.scd");
+                    Logger.Log($"Expecting encoder output: '{generatedScdPath}', exists: {File.Exists(generatedScdPath)}");
+                    if (!scdBuilt || !File.Exists(generatedScdPath))
+                    {
+                        Logger.Log($"Encoder output missing. scdBuilt={scdBuilt}, pathExists={File.Exists(generatedScdPath)}");
+                        throw new Exception($"Encoder did not produce output at '{generatedScdPath}'");
+                    }
 
                     // Move it to a temporary path identifiable by hash or name
                     string hash = Path.GetFileNameWithoutExtension(filePath).GetHashCode().ToString("X");
                     string renamedScd = Path.Combine(encoderDir, "output", $"generated_{hash}.scd");
                     File.Copy(generatedScdPath, renamedScd, overwrite: true);
+                    Logger.Log($"Generated SCD copied to: '{renamedScd}'");
 
                     generatedScds[filePath] = renamedScd;
 
                     // Cleanup
-                    File.Delete(tempWavPath);
-                    File.Delete(encoderWavPath);
+                    try { File.Delete(tempWavPath); } catch { }
+                    try { File.Delete(encoderWavPath); } catch { }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to encode file '{filePath}':\n{ex.Message}", "Encoding Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Logger.LogException($"Failed to encode file '{filePath}'", ex);
+                    try
+                    {
+                        MessageBox.Show($"Failed to encode file '{filePath}':\n{ex.Message}", "Encoding Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    catch { }
                 }
             }
+
+            Logger.Log($"Generated SCDs: {generatedScds.Count}");
 
             // 3. For each track: copy the generated SCD to its corresponding path
             foreach (var (track, filePath) in trackBindings)
@@ -90,6 +128,7 @@ namespace KingdomHeartsCustomMusic.utils
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
                         File.Copy(sourceScd, targetPath, overwrite: true);
+                        Logger.Log($"SCD copied: '{sourceScd}' -> '{targetPath}'");
                     }
 
                     // Resolve filenames using CSV when available
@@ -108,11 +147,8 @@ namespace KingdomHeartsCustomMusic.utils
                     }
                     string ResolveDddFileName()
                     {
-                        // DDD uses bgm_XXX in PC, but our PC build expects musicXXX.win32.scd in folder structure.
-                        // However, we added Filename (bgm_XXX) only for reference; target file on disk remains musicXXX.win32.scd unless CSV provides a full filename.
                         if (!string.IsNullOrWhiteSpace(track.FileName))
                         {
-                            // If CSV Filename has an extension, use it directly; if it's bgm_XXX, map to musicXXX.win32.scd
                             if (track.FileName!.EndsWith(".win32.scd", StringComparison.OrdinalIgnoreCase))
                                 return track.FileName!;
                             var digits = new string(track.PcNumber.PadLeft(3, '0'));
@@ -125,7 +161,6 @@ namespace KingdomHeartsCustomMusic.utils
                     {
                         string datPath;
                         
-                        // Check if it's vagstream (KH2 special case)
                         if (track.Folder.Contains("vagstream"))
                         {
                             datPath = Path.Combine(
@@ -137,7 +172,6 @@ namespace KingdomHeartsCustomMusic.utils
                         }
                         else
                         {
-                            // Standard format (KH1 and KH2 bgm)
                             datPath = Path.Combine(
                                 patchBasePath,
                                 track.LocationDat,
@@ -223,37 +257,18 @@ namespace KingdomHeartsCustomMusic.utils
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to copy SCD for track '{track.Description}':\n{ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Logger.LogException($"Failed to copy SCD for track '{track.Description}'", ex);
+                    try
+                    {
+                        MessageBox.Show($"Failed to copy SCD for track '{track.Description}':\n{ex.Message}", "Copy Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    catch { }
                 }
             }
 
 
             return includedTracks;
         }
-
-
-        private static void RunSingleEncoder(string encoderExe, string encoderDir, string scdTemplate, string wavPath, int totalSamples)
-        {
-            string args = $"\"{scdTemplate}\" \"{wavPath}\" 10 -fl";
-
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = encoderExe,
-                Arguments = args,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = encoderDir,
-                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden
-            };
-
-            using (var proc = System.Diagnostics.Process.Start(psi))
-            {
-                proc.WaitForExit();
-                if (proc.ExitCode != 0)
-                    throw new Exception($"SingleEncoder exited with code {proc.ExitCode}");
-            }
-        }
-
     }
 
 }

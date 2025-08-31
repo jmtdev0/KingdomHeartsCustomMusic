@@ -1,6 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 using KingdomHeartsCustomMusic.utils;
 
 namespace KingdomHeartsCustomMusic
@@ -10,11 +8,9 @@ namespace KingdomHeartsCustomMusic
     /// </summary>
     public partial class App : Application
     {
-        protected override void OnExit(ExitEventArgs e)
+        private void Application_Exit(object sender, ExitEventArgs e)
         {
-            // Limpiar archivos temporales al cerrar la aplicación
-            EmbeddedResourceManager.CleanupTempFiles();
-            base.OnExit(e);
+            try { EmbeddedResourceManager.CleanupTempFiles(); } catch { }
         }
     }
 }

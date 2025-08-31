@@ -20,39 +20,72 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
+  <!-- Exclude reference Program for SingleEncoder from compilation -->
   <ItemGroup>
+    <Compile Remove="utils\SingleEncoder\SingleEncoder_Program.cs" />
+  </ItemGroup>
+
+  <!-- Use app icon if present -->
+  <PropertyGroup Condition="Exists('Assets/app.ico')">
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="resources\All Games Track List - BBS.csv" />
+    <None Remove="resources\All Games Track List - DDD.csv" />
     <None Remove="resources\All Games Track List - KH1.csv" />
     <None Remove="resources\All Games Track List - KH2.csv" />
+    <None Remove="resources\All Games Track List - ReCOM.csv" />
     <None Remove="utils\Actually\KHPCPatchManager.exe" />
+    <None Remove="utils\Actually\yt-dlp.exe" />
+    <None Remove="utils\Actually\ffmpeg.exe" />
+    <None Remove="utils\SingleEncoder\output\original.scd" />
   </ItemGroup>
 
   <!-- Embedded Resources - All files included in the executable -->
   <ItemGroup>
     <!-- Excel files -->
+    <EmbeddedResource Include="resources\All Games Track List - BBS.csv" />
+    <EmbeddedResource Include="resources\All Games Track List - DDD.csv" />
     <EmbeddedResource Include="resources\All Games Track List - KH1.csv" />
     <EmbeddedResource Include="resources\All Games Track List - KH1.xlsx" />
     <EmbeddedResource Include="resources\All Games Track List - KH2.csv" />
     <EmbeddedResource Include="resources\All Games Track List - KH2.xlsx" />
+    <EmbeddedResource Include="resources\All Games Track List - ReCOM.csv" />
     <EmbeddedResource Include="utils\Actually\KHPCPatchManager.exe" />
+    <EmbeddedResource Include="utils\Actually\yt-dlp.exe" Condition="Exists('utils\Actually\yt-dlp.exe')" />
+    <EmbeddedResource Include="utils\Actually\ffmpeg.exe" Condition="Exists('utils\Actually\ffmpeg.exe')" />
     
-    <!-- SingleEncoder tools - if they exist -->
+    <!-- SingleEncoder tools - if they exist (kept for backward compatibility, not required) -->
     <EmbeddedResource Include="utils\SingleEncoder\SingleEncoder.exe" Condition="Exists('utils\SingleEncoder\SingleEncoder.exe')" />
     <EmbeddedResource Include="utils\SingleEncoder\SingleEncoder.dll" Condition="Exists('utils\SingleEncoder\SingleEncoder.dll')" />
     <EmbeddedResource Include="utils\SingleEncoder\SingleEncoder.runtimeconfig.json" Condition="Exists('utils\SingleEncoder\SingleEncoder.runtimeconfig.json')" />
     <EmbeddedResource Include="utils\SingleEncoder\original.scd" Condition="Exists('utils\SingleEncoder\original.scd')" />
+    <!-- Per-game templates (optional) -->
+    <EmbeddedResource Include="utils\SingleEncoder\KH1.original.scd" Condition="Exists('utils\SingleEncoder\KH1.original.scd')" />
+    <EmbeddedResource Include="utils\SingleEncoder\KH2.original.scd" Condition="Exists('utils\SingleEncoder\KH2.original.scd')" />
+    <EmbeddedResource Include="utils\SingleEncoder\BBS.original.scd" Condition="Exists('utils\SingleEncoder\BBS.original.scd')" />
+    <EmbeddedResource Include="utils\SingleEncoder\ReCOM.original.scd" Condition="Exists('utils\SingleEncoder\ReCOM.original.scd')" />
+    <EmbeddedResource Include="utils\SingleEncoder\DDD.original.scd" Condition="Exists('utils\SingleEncoder\DDD.original.scd')" />
     
     <!-- External tools -->
     <EmbeddedResource Include="utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe" Condition="Exists('utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe')" />
-    <EmbeddedResource Include="utils\SingleEncoder\tools\oggenc\oggenc.exe" Condition="Exists('utils\SingleEncoder\tools\oggenc.exe')" />
+    <EmbeddedResource Include="utils\SingleEncoder\tools\oggenc\oggenc.exe" Condition="Exists('utils\SingleEncoder\tools\oggenc\oggenc.exe')" />
     
     <!-- KHPCPatchManager -->
     <EmbeddedResource Include="utils\KHPCPatchManager.exe" Condition="Exists('utils\KHPCPatchManager.exe')" />
+  </ItemGroup>
+
+  <!-- Include the app icon as a WPF Resource only when it exists -->
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" Condition="Exists('Assets/app.ico')" />
   </ItemGroup>
 
   <!-- Package References -->
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
   </ItemGroup>
 
 </Project>

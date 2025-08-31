@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 namespace KingdomHeartsCustomMusic.utils
 {
@@ -27,41 +28,64 @@ namespace KingdomHeartsCustomMusic.utils
             if (!File.Exists(inputWavPath))
                 throw new FileNotFoundException("Input WAV not found", inputWavPath);
 
-            var args = new List<string>
-        {
-            $"\"{inputWavPath}\"",
-            $"-o \"{outputOggPath}\"",
-            $"-q {quality}"
-        };
+            var argsList = new List<string>
+            {
+                "-Q", // quiet to reduce pipe spam
+                $"\"{inputWavPath}\"",
+                $"-o \"{outputOggPath}\"",
+                $"-q {quality}"
+            };
 
             if (loopStart.HasValue && loopEnd.HasValue)
             {
-                args.Add($"-c LoopStart={loopStart.Value}");
-                args.Add($"-c LoopEnd={loopEnd.Value - 1}"); // oggenc expects LoopEnd as last sample index
+                argsList.Add($"-c LoopStart={loopStart.Value}");
+                argsList.Add($"-c LoopEnd={loopEnd.Value - 1}"); // oggenc expects LoopEnd as last sample index
             }
 
-            var process = new Process
+            string arguments = string.Join(" ", argsList);
+            Logger.Log($"Running oggenc: '{oggencPath}' {arguments}");
+
+            var psi = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = oggencPath,
-                    Arguments = string.Join(" ", args),
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                }
+                FileName = oggencPath,
+                Arguments = arguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WindowStyle = ProcessWindowStyle.Hidden
             };
 
-            process.Start();
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+            using var proc = new Process { StartInfo = psi, EnableRaisingEvents = false };
+            var sbOut = new StringBuilder();
+            var sbErr = new StringBuilder();
+            proc.OutputDataReceived += (s, e) => { if (e.Data != null) { sbOut.AppendLine(e.Data); /* keep quiet */ } };
+            proc.ErrorDataReceived += (s, e) => { if (e.Data != null) { sbErr.AppendLine(e.Data); Logger.Log($"oggenc ERR: {e.Data}"); } };
 
-            if (process.ExitCode != 0)
+            if (!proc.Start())
+                throw new Exception("Failed to start oggenc process");
+
+            proc.BeginOutputReadLine();
+            proc.BeginErrorReadLine();
+
+            const int timeoutMs = 300000; // 5 minutes
+            if (!proc.WaitForExit(timeoutMs))
             {
-                throw new Exception($"oggenc failed:\n{error}\n{output}");
+                try { proc.Kill(entireProcessTree: true); } catch { }
+                throw new TimeoutException("oggenc timed out.");
+            }
+
+            Logger.Log($"oggenc exit code: {proc.ExitCode}");
+            if (proc.ExitCode != 0)
+            {
+                var err = sbErr.ToString();
+                var stdout = sbOut.ToString();
+                throw new Exception($"oggenc failed (code {proc.ExitCode}).\n{err}\n{stdout}");
+            }
+
+            if (!File.Exists(outputOggPath))
+            {
+                throw new FileNotFoundException("oggenc did not produce the expected output", outputOggPath);
             }
         }
     }

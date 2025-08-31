@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.IO;
+using System.Reflection;
 
 namespace KingdomHeartsCustomMusic.utils
 {
@@ -15,23 +16,10 @@ namespace KingdomHeartsCustomMusic.utils
                 path = path.Replace(".xlsx", ".csv");
             }
 
-            // Si el archivo no existe, buscar en la carpeta resources en la raíz del proyecto
-            if (!File.Exists(path))
-            {
-                var projectRoot = AppDomain.CurrentDomain.BaseDirectory;
-                var resourcesPath = Path.Combine(projectRoot, "resources", Path.GetFileName(path));
-                if (File.Exists(resourcesPath))
-                {
-                    path = resourcesPath;
-                }
-                else
-                {
-                    throw new System.IO.FileNotFoundException($"Track list file not found: {path}");
-                }
-            }
+            // Resolve to on-disk path or embedded resource
+            string[] lines = ReadAllLinesFromPathOrResource(path);
 
             var list = new List<TrackInfo>();
-            var lines = File.ReadAllLines(path);
 
             // Prepare header for flexible ordering (BBS/ReCOM/DDD can have Filename first)
             var header = lines.Length > 0 ? ParseCsvLine(lines[0]) : Array.Empty<string>();
@@ -176,6 +164,41 @@ namespace KingdomHeartsCustomMusic.utils
             }
 
             return list;
+        }
+
+        private static string[] ReadAllLinesFromPathOrResource(string inputPath)
+        {
+            // Try the incoming path first
+            if (File.Exists(inputPath))
+            {
+                return File.ReadAllLines(inputPath);
+            }
+
+            // Try a resources folder next to the executable
+            var fileName = Path.GetFileName(inputPath);
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var alongside = Path.Combine(baseDir, "resources", fileName);
+            if (File.Exists(alongside))
+            {
+                return File.ReadAllLines(alongside);
+            }
+
+            // Try embedded resource
+            var asm = Assembly.GetExecutingAssembly();
+            var names = asm.GetManifestResourceNames();
+            var resName = names.FirstOrDefault(n =>
+                n.EndsWith(fileName, StringComparison.OrdinalIgnoreCase) ||
+                n.EndsWith($"resources.{fileName}", StringComparison.OrdinalIgnoreCase));
+
+            if (resName != null)
+            {
+                using var stream = asm.GetManifestResourceStream(resName)!;
+                using var reader = new StreamReader(stream);
+                var content = reader.ReadToEnd();
+                return content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            }
+
+            throw new FileNotFoundException($"Track list file not found: {inputPath}");
         }
 
         private static string[] ParseCsvLine(string line)

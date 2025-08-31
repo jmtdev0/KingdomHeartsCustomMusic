@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 
 namespace KingdomHeartsCustomMusic
 {
@@ -7,6 +8,16 @@ namespace KingdomHeartsCustomMusic
         public InstructionsWindow()
         {
             InitializeComponent();
+            PreviewKeyDown += OnPreviewKeyDownCloseOnEsc;
+        }
+
+        private void OnPreviewKeyDownCloseOnEsc(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                Close();
+            }
         }
     }
 }

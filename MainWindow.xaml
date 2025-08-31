@@ -7,7 +7,8 @@
         FontFamily="Segoe UI" 
         Foreground="White"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResizeWithGrip"
+        Icon="pack://application:,,,/Assets/app.ico">
 
     <Window.Resources>
         <!-- Focus visual style used by multiple controls -->
@@ -81,7 +82,7 @@
             </Setter>
         </Style>
 
-        <!-- Modern TextBox Style -->
+        <!-- Modern TextBox Style with placeholder support via Tag -->
         <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="#FF2D2D30"/>
             <Setter Property="Foreground" Value="White"/>
@@ -97,8 +98,17 @@
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
-                            <ScrollViewer x:Name="PART_ContentHost" 
-                                          Margin="{TemplateBinding Padding}"/>
+                            <Grid>
+                                <ScrollViewer x:Name="PART_ContentHost" 
+                                              Margin="{TemplateBinding Padding}"/>
+                                <TextBlock x:Name="Placeholder"
+                                           Text="{TemplateBinding Tag}"
+                                           Foreground="#80FFFFFF"
+                                           Margin="{TemplateBinding Padding}"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False"
+                                           Visibility="Collapsed"/>
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
@@ -107,6 +117,9 @@
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="BorderBrush" Value="#FF606060"/>
+                            </Trigger>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -361,6 +374,7 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -368,8 +382,16 @@
                                                        Margin="0,0,0,15"
                                                        Foreground="#FF007ACC"
                                                        VerticalAlignment="Center"/>
+                                            <TextBox x:Name="TrackSearchTextBoxKH1"
+                                                     Grid.Column="1"
+                                                     Width="220"
+                                                     Margin="15,0,0,15"
+                                                     Style="{StaticResource ModernTextBoxStyle}"
+                                                     ToolTip="Filter tracks by name"
+                                                     Tag="Filter tracks..."
+                                                     TextChanged="TrackSearchTextBoxKH1_TextChanged"/>
                                             <ComboBox x:Name="TrackSortComboBoxKH1"
-                                                      Grid.Column="1"
+                                                      Grid.Column="2"
                                                       Width="220"
                                                       Margin="15,0,0,15"
                                                       SelectedIndex="0"
@@ -439,6 +461,7 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -447,9 +470,17 @@
                                                        Foreground="#FF007ACC"
                                                        VerticalAlignment="Center"/>
 
-                                            <!-- Sorting ComboBox -->
+                                            <TextBox x:Name="TrackSearchTextBoxKH2"
+                                                     Grid.Column="1"
+                                                     Width="220"
+                                                     Margin="15,0,0,15"
+                                                     Style="{StaticResource ModernTextBoxStyle}"
+                                                     ToolTip="Filter tracks by name"
+                                                     Tag="Filter tracks..."
+                                                     TextChanged="TrackSearchTextBoxKH2_TextChanged"/>
+
                                             <ComboBox x:Name="TrackSortComboBoxKH2"
-                                                      Grid.Column="1"
+                                                      Grid.Column="2"
                                                       Width="220"
                                                       Margin="15,0,0,15"
                                                       SelectedIndex="0"
@@ -520,6 +551,7 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -530,8 +562,17 @@
                                         
 
                                         <!-- Sorting ComboBox -->
+                                        <TextBox x:Name="TrackSearchTextBoxBBS"
+                                                 Grid.Column="1"
+                                                 Width="220"
+                                                 Margin="15,0,0,15"
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 ToolTip="Filter tracks by name"
+                                                 Tag="Filter tracks..."
+                                                 TextChanged="TrackSearchTextBoxBBS_TextChanged"/>
+
                                         <ComboBox x:Name="TrackSortComboBoxBBS"
-                                                  Grid.Column="1"
+                                                  Grid.Column="2"
                                                   Width="220"
                                                   Margin="15,0,0,15"
                                                   SelectedIndex="0"
@@ -603,6 +644,7 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -611,8 +653,17 @@
                                                        Foreground="#FF007ACC"
                                                        VerticalAlignment="Center"/>
                                         <!-- Sorting ComboBox -->
+                                        <TextBox x:Name="TrackSearchTextBoxReCOM"
+                                                 Grid.Column="1"
+                                                 Width="220"
+                                                 Margin="15,0,0,15"
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 ToolTip="Filter tracks by name"
+                                                 Tag="Filter tracks..."
+                                                 TextChanged="TrackSearchTextBoxReCOM_TextChanged"/>
+
                                         <ComboBox x:Name="TrackSortComboBoxReCOM"
-                                                  Grid.Column="1"
+                                                  Grid.Column="2"
                                                   Width="220"
                                                   Margin="15,0,0,15"
                                                   SelectedIndex="0"
@@ -684,6 +735,7 @@
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -692,8 +744,17 @@
                                                        Foreground="#FF007ACC"
                                                        VerticalAlignment="Center"/>
                                         <!-- Sorting ComboBox -->
+                                        <TextBox x:Name="TrackSearchTextBoxDDD"
+                                                 Grid.Column="1"
+                                                 Width="220"
+                                                 Margin="15,0,0,15"
+                                                 Style="{StaticResource ModernTextBoxStyle}"
+                                                 ToolTip="Filter tracks by name"
+                                                 Tag="Filter tracks..."
+                                                 TextChanged="TrackSearchTextBoxDDD_TextChanged"/>
+
                                         <ComboBox x:Name="TrackSortComboBoxDDD"
-                                                  Grid.Column="1"
+                                                  Grid.Column="2"
                                                   Width="220"
                                                   Margin="15,0,0,15"
                                                   SelectedIndex="0"
@@ -739,7 +800,7 @@
                                FontSize="14"
                                Target="{Binding ElementName=PatchNameTextBox}"/>
                         <TextBox x:Name="PatchNameTextBox"
-                                 Width="375"
+                                 Width="250"
                                  Style="{StaticResource ModernTextBoxStyle}"
                                  ToolTip="Enter a custom name for your patch"/>
                     </StackPanel>
