@@ -91,16 +91,21 @@
             <Setter Property="Padding" Value="8,6"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingStyle}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <!-- Ensure predictable glyph layout to avoid half-pixel caret offset -->
+            <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
                         <Border Background="{TemplateBinding Background}" 
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="4">
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True">
                             <Grid>
-                                <ScrollViewer x:Name="PART_ContentHost" 
-                                              Margin="{TemplateBinding Padding}"/>
+                                <!-- Align caret (ContentHost) and Placeholder via Margin equal to Padding -->
+                                <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
                                 <TextBlock x:Name="Placeholder"
                                            Text="{TemplateBinding Tag}"
                                            Foreground="#80FFFFFF"
@@ -375,6 +380,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -401,6 +407,15 @@
                                                 <ComboBoxItem Content="Chronological order"/>
                                                 <ComboBoxItem Content="Alphabetical order"/>
                                             </ComboBox>
+                                            <CheckBox x:Name="ShowAssignedOnlyKH1"
+                                                      Grid.Column="3"
+                                                      Content="Hide empty tracks"
+                                                      Foreground="White"
+                                                      Margin="15,0,0,15"
+                                                      VerticalAlignment="Center"
+                                                      Visibility="Collapsed"
+                                                      Checked="ShowAssignedOnlyKH1_CheckedChanged"
+                                                      Unchecked="ShowAssignedOnlyKH1_CheckedChanged"/>
                                         </Grid>
                                         <StackPanel x:Name="WorldListPanelKH1" Orientation="Vertical"/>
                                     </StackPanel>
@@ -462,6 +477,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -490,6 +506,15 @@
                                                 <ComboBoxItem Content="Chronological order"/>
                                                 <ComboBoxItem Content="Alphabetical order"/>
                                             </ComboBox>
+                                            <CheckBox x:Name="ShowAssignedOnlyKH2"
+                                                      Grid.Column="3"
+                                                      Content="Hide empty tracks"
+                                                      Foreground="White"
+                                                      Margin="15,0,0,15"
+                                                      VerticalAlignment="Center"
+                                                      Visibility="Collapsed"
+                                                      Checked="ShowAssignedOnlyKH2_CheckedChanged"
+                                                      Unchecked="ShowAssignedOnlyKH2_CheckedChanged"/>
                                         </Grid>
 
                                         <StackPanel x:Name="WorldListPanelKH2" Orientation="Vertical"/>
@@ -552,6 +577,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -582,6 +608,15 @@
                                             <ComboBoxItem Content="Chronological order"/>
                                             <ComboBoxItem Content="Alphabetical order"/>
                                         </ComboBox>
+                                        <CheckBox x:Name="ShowAssignedOnlyBBS"
+                                                  Grid.Column="3"
+                                                  Content="Hide empty tracks"
+                                                  Foreground="White"
+                                                  Margin="15,0,0,15"
+                                                  VerticalAlignment="Center"
+                                                  Visibility="Collapsed"
+                                                  Checked="ShowAssignedOnlyBBS_CheckedChanged"
+                                                  Unchecked="ShowAssignedOnlyBBS_CheckedChanged"/>
 
                                         </Grid>
 
@@ -645,6 +680,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -673,6 +709,15 @@
                                             <ComboBoxItem Content="Chronological order"/>
                                             <ComboBoxItem Content="Alphabetical order"/>
                                         </ComboBox>
+                                        <CheckBox x:Name="ShowAssignedOnlyReCOM"
+                                                  Grid.Column="3"
+                                                  Content="Hide empty tracks"
+                                                  Foreground="White"
+                                                  Margin="15,0,0,15"
+                                                  VerticalAlignment="Center"
+                                                  Visibility="Collapsed"
+                                                  Checked="ShowAssignedOnlyReCOM_CheckedChanged"
+                                                  Unchecked="ShowAssignedOnlyReCOM_CheckedChanged"/>
 
                                         </Grid>
 
@@ -736,6 +781,7 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Text="🎼 Music Tracks" 
                                                        FontSize="16" 
@@ -764,6 +810,15 @@
                                             <ComboBoxItem Content="Chronological order"/>
                                             <ComboBoxItem Content="Alphabetical order"/>
                                         </ComboBox>
+                                        <CheckBox x:Name="ShowAssignedOnlyDDD"
+                                                  Grid.Column="3"
+                                                  Content="Hide empty tracks"
+                                                  Foreground="White"
+                                                  Margin="15,0,0,15"
+                                                  VerticalAlignment="Center"
+                                                  Visibility="Collapsed"
+                                                  Checked="ShowAssignedOnlyDDD_CheckedChanged"
+                                                  Unchecked="ShowAssignedOnlyDDD_CheckedChanged"/>
 
                                         </Grid>
 

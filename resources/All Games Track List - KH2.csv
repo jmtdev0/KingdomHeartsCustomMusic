@@ -2,27 +2,27 @@ Location (.bgm),Location (.dat),Folder,PC Number,PlayStation2 Name,Description
 kh2_first,,original\vagstream,Title,Dearly Beloved,Title
 kh2_fifth,,original\bgm,118,Lazy Afternoons,Twilight Town Field (Roxas)
 kh2_first,,original\bgm,119,Sinister Sundown,Twilight Town Battle (Roxas)
-kh2_first,,original\bgm,82,The Escapade,Minigame
-kh2_fifth,,original\bgm,50,Dive Into The Heart -Destati-,Dive Into The Heart Field
-kh2_fifth,,original\bgm,51,Fragments Of Sorrow,Dive Into The Heart Battle
+kh2_first,,original\bgm,082,The Escapade,Minigame
+kh2_fifth,,original\bgm,050,Dive Into The Heart -Destati-,Dive Into The Heart Field
+kh2_fifth,,original\bgm,051,Fragments Of Sorrow,Dive Into The Heart Battle
 kh2_fifth,,original\bgm,114,Tension Rising,Event Battle/Boss
-kh2_fifth,,original\bgm,91,Kairi,Cutscene
-kh2_fifth,,original\bgm,99,Missing You,Cutscene
+kh2_fifth,,original\bgm,091,Kairi,Cutscene
+kh2_fifth,,original\bgm,099,Missing You,Cutscene
 kh2_fifth,,original\bgm,151,The 13th Struggle,Event Battle/Boss
 kh2_fifth,,original\bgm,146,Roxas,Cutscene
-kh2_fifth,,original\bgm,88,Sora,Cutscene
-kh2_fifth,,original\bgm,52,The Afternoon Street,Twilight Town Field
-kh2_fifth,,original\bgm,53,Working Together (Twilight Town),Twilight Town Battle
+kh2_fifth,,original\bgm,088,Sora,Cutscene
+kh2_fifth,,original\bgm,052,The Afternoon Street,Twilight Town Field
+kh2_fifth,,original\bgm,053,Working Together (Twilight Town),Twilight Town Battle
 kh2_fifth,,original\bgm,134,Working Together (Mysterious Tower),Mysterious Tower Battle
-kh2_fifth,,original\bgm,89,Friends In My Heart,Cutscene
+kh2_fifth,,original\bgm,089,Friends In My Heart,Cutscene
 kh2_fifth,,original\bgm,133,Magical Mystery,Mysterious Tower Field
 kh2_fifth,,original\bgm,137,A Twinkle in the Sky,World Map
 kh2_fifth,,original\bgm,152,Reviving Hollow Bastion,Hollow Bastion Field
 kh2_fifth,,original\bgm,153,Scherzo Di Notte,Hollow Bastion Battle
-kh2_fifth,,original\bgm,97,Laughter and Merriment,Cutscene
+kh2_fifth,,original\bgm,097,Laughter and Merriment,Cutscene
 kh2_fifth,,original\bgm,121,Desire for All That Lost,Event Battle/Boss
 kh2_fifth,,original\bgm,521,Desire For All That Lost (Timeless River),Timeless River Boss
-kh2_fifth,,original\bgm,94,Organization XIII,Cutscene
+kh2_fifth,,original\bgm,094,Organization XIII,Cutscene
 kh2_fifth,,original\bgm,139,Gearing Up,Gummi Hangar
 kh2_fifth,,original\bgm,138,Shipmeisters Shanty,Gummi Hangar
 kh2_fifth,,original\bgm,148,Blast Off!,Gummi Hangar
@@ -30,25 +30,26 @@ kh2_sixth,,original\vagstream,GM1_Asteroid,Asteroids Attack,Gummi Ship
 kh2_fifth,,original\bgm,142,Crossing the Finish Line,Gummi Ship
 kh2_fifth,,original\bgm,101,Waltz Of The Damned,Beast Castle Field
 kh2_fifth,,original\bgm,104,Dance Of The Daring,Beast Castle Battle
-kh2_fifth,,original\bgm,98,Hesitation,Cutscene
+kh2_fifth,,original\bgm,625,Thresholder,Boss
+kh2_fifth,,original\bgm,098,Hesitation,Cutscene
 kh2_fifth,,original\bgm,131,Dance to the Death,Event Battle/Boss
 kh2_fifth,,original\bgm,132,Beauty and the Beast,Cutscene
 kh2_fifth,,original\bgm,116,The Home Of Dragons,Land of Dragons Field
 kh2_fifth,,original\bgm,112,Fields of Honor,Land of Dragons Battle
-kh2_fifth,,original\bgm,95,Apprehension,Cutscene
+kh2_fifth,,original\bgm,095,Apprehension,Cutscene
 kh2_fifth,,original\bgm,145,Vim and Vigor,Event Battle/Boss
 kh2_sixth,,original\vagstream,GM3_Cloud,Cloudchasers,Gummi Ship
 kh2_fifth,,original\bgm,103,Olympus Coliseum,Olympus Coliseum Field
 kh2_fifth,,original\bgm,164,Road To Hero,Olympus Coliseum Minigame
 kh2_fifth,,original\bgm,100,The Underworld,Underworld Field
 kh2_fifth,,original\bgm,102,What Lies Beneath,Underworld Battle
-kh2_fifth,,original\bgm,93,Villains Of A Sort,Cutscene
+kh2_fifth,,original\bgm,093,Villains Of A Sort,Cutscene
 kh2_fifth,,original\bgm,120,Beneath the Ground (Variation A),Underworld Cups
-kh2_fifth,,original\bgm,81,Beneath the Ground (Variation B),Underworld Cups
+kh2_fifth,,original\bgm,081,Beneath the Ground (Variation B),Underworld Cups
 kh2_fifth,,original\bgm,117,Rowdy Rumble,Event Battle/Boss
 kh2_fifth,,original\bgm,517,Rowdy Rumble (Timeless River),Timeless River Boss
 kh2_fifth,,original\bgm,143,Mickey Mouse Club March,Disney Castle Field
-kh2_fifth,,original\bgm,92,A Walk In Adante,Cutscene
+kh2_fifth,,original\bgm,092,A Walk In Adante,Cutscene
 kh2_fifth,,original\bgm,189,Monochrome Dreams,Timeless River Field
 kh2_fifth,,original\bgm,190,"Old Friends, Old Rivals",Timeless River Battle
 kh2_sixth,,original\vagstream,GM4_Floating,Floating in Bliss,Gummi Ship
@@ -78,33 +79,49 @@ kh2_fifth,,original\bgm,115,The Corrupted,Event Battle/Boss
 kh2_sixth,,original\vagstream,GM2_Highway,Hazardous Highway,Gummi Ship
 kh2_fifth,,original\bgm,127,A Day in Agrabah,Agrabah Field
 kh2_fifth,,original\bgm,128,Arabian Dream ,Agrabah Battle
-kh2_fifth,,original\bgm,84,Arabian Daydream,Carpet Minigame
+kh2_fifth,,original\bgm,084,Arabian Daydream,Carpet Minigame
 kh2_fifth,,original\bgm,144,This Is Halloween,Halloween Town Field
-kh2_fifth,,original\bgm,86,Spooks Of Halloween Town,Halloween Town Battle
+kh2_fifth,,original\bgm,086,Spooks Of Halloween Town,Halloween Town Battle
 kh2_fifth,,original\bgm,149,Spooks Of Halloween Town,Halloween Town Battle
-kh2_fifth,,original\bgm,64,What A Surprise,Christmas Town Field
-kh2_fifth,,original\bgm,65,Happy Holidays,Christmas Town Battle
+kh2_fifth,,original\bgm,064,What A Surprise,Christmas Town Field
+kh2_fifth,,original\bgm,065,Happy Holidays,Christmas Town Battle
 kh2_fifth,,original\bgm,186,Adventures In The Savannah,Pride Lands Field
 kh2_fifth,,original\bgm,187,Savannah Pride,Pride Lands Battle
 kh2_fifth,,original\bgm,110,The Encounter,Event Battle/Boss
 kh2_fifth,,original\bgm,135,Space Paranoids,Space Paranoids Field
 kh2_fifth,,original\bgm,136,Byte Bashing,Space Paranoids Battle
-kh2_fifth,,original\bgm,85,Byte Striking,Light Cycle
-kh2_fifth,,original\bgm,68,Cavern Of Remembrance,Cavern Of Remembrance Field
-kh2_fifth,,original\bgm,69,Deep Anxiety,Cavern Of Remembrance Battle
-kh2_fifth,,original\bgm,63,The 13th Reflection,Boss
+kh2_fifth,,original\bgm,085,Byte Striking,Light Cycle
+kh2_fifth,,original\bgm,621,The Experiment/Hostile Program,Boss
+kh2_fifth,,original\bgm,068,Cavern Of Remembrance,Cavern Of Remembrance Field
+kh2_fifth,,original\bgm,069,Deep Anxiety,Cavern Of Remembrance Battle
+kh2_fifth,,original\bgm,620,Transport to Remembrance Battle,
+kh2_fifth,,original\bgm,063,The 13th Reflection,Boss
 kh2_fifth,,original\bgm,111,Sinister Shadows,Event Battle/Boss
+kh2_fifth,,original\bgm,600,1000 Heartless Battle,
+kh2_fifth,,original\bgm,614,Final Fantasy Gauntlet (Before 1000 Heartless Battle),
 kh2_fifth,,original\bgm,185,The 13th Dilemma,Boss
 kh2_fifth,,original\bgm,188,One Winged Angel,Boss
+kh2_fifth,,original\bgm,601,Riku in Summit (The Land of Dragons),
 kh2_sixth,,original\vagstream,GM5_Senkan,Battleship Bravery,Gummi Ship
-kh2_fifth,,original\bgm,54,Sacred Moon,The World That Never Was Field
-kh2_fifth,,original\bgm,55,Deep Drive,The World That Never Was Battle
-kh2_fifth,,original\bgm,66,The Other Promise,Boss
-kh2_fifth,,original\bgm,90,Riku,Cutscene
-kh2_fifth,,original\bgm,96,Courage,Cutscene
-kh2_fifth,,original\bgm,87,Dissapeared,Boss
-kh2_fifth,,original\bgm,59,A Fight To The Death,Boss
-kh2_fifth,,original\bgm,60,Darkness Of The Unknown (Part 1),Boss
-kh2_fifth,,original\bgm,61,Darkness Of The Unknown (Part 2),Boss
-kh2_fifth,,original\bgm,62,Darkness Of The Unknown (Part 3),Boss
+kh2_fifth,,original\bgm,054,Sacred Moon,The World That Never Was Field
+kh2_fifth,,original\bgm,055,Deep Drive,The World That Never Was Battle
+kh2_fifth,,original\bgm,066,The Other Promise,Boss
+kh2_fifth,,original\bgm,090,Riku,Cutscene
+kh2_fifth,,original\bgm,096,Courage,Cutscene
+kh2_fifth,,original\bgm,087,Dissapeared,Boss
+kh2_fifth,,original\bgm,059,A Fight To The Death,Boss
+kh2_fifth,,original\bgm,060,Darkness Of The Unknown (Part 1),Boss
+kh2_fifth,,original\bgm,061,Darkness Of The Unknown (Part 2),Boss
+kh2_fifth,,original\bgm,062,Darkness Of The Unknown (Part 3),Boss
+kh2_fifth,,original\bgm,602,Data Xigbar,
+kh2_fifth,,original\bgm,603,Data Xaldin,
+kh2_fifth,,original\bgm,604,Data Vexen,
+kh2_fifth,,original\bgm,605,Data Lexaeus,
+kh2_fifth,,original\bgm,606,Data Zexion,
+kh2_fifth,,original\bgm,607,Data Saix,
+kh2_fifth,,original\bgm,609,Data Demyx,
+kh2_fifth,,original\bgm,610,Data Luxord,
+kh2_fifth,,original\bgm,611,Data Marluxia,
+kh2_fifth,,original\bgm,612,Data Larxene,
+kh2_fifth,,original\bgm,613,Data Final Xemnas,
 kh2_sixth,,original\vagstream,End_Piano,Dearly Beloved Reprise,Battle Report

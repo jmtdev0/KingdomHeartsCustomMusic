@@ -43,6 +43,13 @@ namespace KingdomHeartsCustomMusic
         private readonly HashSet<string> _selectedPcNumbersReCOM = new();
         private readonly HashSet<string> _selectedPcNumbersDDD = new();
 
+        // NEW: Persist entered paths per tab (keyed by PcNumber) so filtering doesn't lose values
+        private readonly Dictionary<string, string> _pathValuesKH1 = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _pathValuesKH2 = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _pathValuesBBS = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _pathValuesReCOM = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _pathValuesDDD = new(StringComparer.OrdinalIgnoreCase);
+
         private static readonly string[] DefaultPatchNames = new[]
         {
             "KH1CustomPatch", "KH2CustomPatch", "BBSCustomPatch", "ReCOMCustomPatch", "DDDCustomPatch", "KHCustomPatch"
@@ -175,110 +182,70 @@ namespace KingdomHeartsCustomMusic
         private void RenderTrackListKH1(IEnumerable<TrackInfo> tracks)
         {
             if (WorldListPanelKH1 == null) return; // safety
-            // Guardar los valores actuales (solo PcNumber no vacíos)
-            var currentValues = _trackBindingsKH1
-                .Where(b => !string.IsNullOrEmpty(b.Track.PcNumber))
-                .ToDictionary(b => b.Track.PcNumber!, b => b.PathTextBox.Text);
             WorldListPanelKH1.Children.Clear();
             _trackBindingsKH1.Clear();
             _trackCheckboxesKH1.Clear();
             foreach (var track in tracks)
             {
-                AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1, _trackCheckboxesKH1);
-                // Restaurar valor si existe
-                var binding = _trackBindingsKH1.Last();
-                if (!string.IsNullOrEmpty(track.PcNumber) && currentValues.TryGetValue(track.PcNumber!, out var value))
-                {
-                    binding.PathTextBox.Text = value ?? string.Empty;
-                }
+                AddTrackRow(track, WorldListPanelKH1, _trackBindingsKH1, _trackCheckboxesKH1, _pathValuesKH1);
             }
+            UpdateShowAssignedOnlyVisibility();
         }
         private void RenderTrackListKH2(IEnumerable<TrackInfo> tracks)
         {
             if (WorldListPanelKH2 == null) return;
-            var currentValues = _trackBindingsKH2
-                .Where(b => !string.IsNullOrEmpty(b.Track.PcNumber))
-                .ToDictionary(b => b.Track.PcNumber!, b => b.PathTextBox.Text);
             WorldListPanelKH2.Children.Clear();
             _trackBindingsKH2.Clear();
             _trackCheckboxesKH2.Clear();
             foreach (var track in tracks)
             {
-                AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2, _trackCheckboxesKH2);
-                var binding = _trackBindingsKH2.Last();
-                if (!string.IsNullOrEmpty(track.PcNumber) && currentValues.TryGetValue(track.PcNumber!, out var value))
-                {
-                    binding.PathTextBox.Text = value ?? string.Empty;
-                }
+                AddTrackRow(track, WorldListPanelKH2, _trackBindingsKH2, _trackCheckboxesKH2, _pathValuesKH2);
             }
+            UpdateShowAssignedOnlyVisibility();
         }
         private void RenderTrackListBBS(IEnumerable<TrackInfo> tracks)
         {
             if (WorldListPanelBBS == null) return;
-            var currentValues = _trackBindingsBBS
-                .Where(b => !string.IsNullOrEmpty(b.Track.PcNumber))
-                .ToDictionary(b => b.Track.PcNumber!, b => b.PathTextBox.Text);
             WorldListPanelBBS.Children.Clear();
             _trackBindingsBBS.Clear();
             _trackCheckboxesBBS.Clear();
             foreach (var track in tracks)
             {
-                AddTrackRow(track, WorldListPanelBBS, _trackBindingsBBS, _trackCheckboxesBBS);
-                var binding = _trackBindingsBBS.Last();
-                if (!string.IsNullOrEmpty(track.PcNumber) && currentValues.TryGetValue(track.PcNumber!, out var value))
-                {
-                    binding.PathTextBox.Text = value ?? string.Empty;
-                }
+                AddTrackRow(track, WorldListPanelBBS, _trackBindingsBBS, _trackCheckboxesBBS, _pathValuesBBS);
             }
+            UpdateShowAssignedOnlyVisibility();
         }
         private void RenderTrackListReCOM(IEnumerable<TrackInfo> tracks)
         {
             if (WorldListPanelReCOM == null) return;
-            var currentValues = _trackBindingsReCOM
-                .Where(b => !string.IsNullOrEmpty(b.Track.PcNumber))
-                .ToDictionary(b => b.Track.PcNumber!, b => b.PathTextBox.Text);
             WorldListPanelReCOM.Children.Clear();
             _trackBindingsReCOM.Clear();
             _trackCheckboxesReCOM.Clear();
             foreach (var track in tracks)
             {
-                AddTrackRow(track, WorldListPanelReCOM, _trackBindingsReCOM, _trackCheckboxesReCOM);
-                var binding = _trackBindingsReCOM.Last();
-                if (!string.IsNullOrEmpty(track.PcNumber) && currentValues.TryGetValue(track.PcNumber!, out var value))
-                {
-                    binding.PathTextBox.Text = value ?? string.Empty;
-                }
+                AddTrackRow(track, WorldListPanelReCOM, _trackBindingsReCOM, _trackCheckboxesReCOM, _pathValuesReCOM);
             }
+            UpdateShowAssignedOnlyVisibility();
         }
         private void RenderTrackListDDD(IEnumerable<TrackInfo> tracks)
         {
             if (WorldListPanelDDD == null) return;
-            // Guardar los valores actuales, ignorando duplicados y PcNumber nulos
-            var currentValues = new Dictionary<string, string>();
-            foreach (var b in _trackBindingsDDD)
-            {
-                if (!string.IsNullOrEmpty(b.Track.PcNumber) && !currentValues.ContainsKey(b.Track.PcNumber!))
-                    currentValues[b.Track.PcNumber!] = b.PathTextBox.Text;
-            }
             WorldListPanelDDD.Children.Clear();
             _trackBindingsDDD.Clear();
             _trackCheckboxesDDD.Clear();
             foreach (var track in tracks)
             {
-                AddTrackRow(track, WorldListPanelDDD, _trackBindingsDDD, _trackCheckboxesDDD);
-                var binding = _trackBindingsDDD.Last();
-                if (!string.IsNullOrEmpty(track.PcNumber) && currentValues.TryGetValue(track.PcNumber!, out var value))
-                {
-                    binding.PathTextBox.Text = value ?? string.Empty;
-                }
+                AddTrackRow(track, WorldListPanelDDD, _trackBindingsDDD, _trackCheckboxesDDD, _pathValuesDDD);
             }
+            UpdateShowAssignedOnlyVisibility();
         }
 
         private void AddTrackRow(
             TrackInfo track,
             StackPanel containerPanel,
             List<(TrackInfo Track, TextBox PathTextBox)> bindingList,
-            Dictionary<TrackInfo, CheckBox> selectionMap)
+            Dictionary<TrackInfo, CheckBox> selectionMap,
+            Dictionary<string, string> pathMap)
         {
             // Create a modern styled border container for each track
             var trackBorder = new Border
@@ -319,14 +286,8 @@ namespace KingdomHeartsCustomMusic
             }
 
             // Keep selectionSet in sync
-            checkBox.Checked += (s, e) =>
-            {
-                if (!string.IsNullOrEmpty(track.PcNumber)) selectionSet.Add(track.PcNumber);
-            };
-            checkBox.Unchecked += (s, e) =>
-            {
-                if (!string.IsNullOrEmpty(track.PcNumber)) selectionSet.Remove(track.PcNumber);
-            };
+            checkBox.Checked += (s, e) => { if (!string.IsNullOrEmpty(track.PcNumber)) selectionSet.Add(track.PcNumber); };
+            checkBox.Unchecked += (s, e) => { if (!string.IsNullOrEmpty(track.PcNumber)) selectionSet.Remove(track.PcNumber); };
 
             // Track description with better typography
             var label = new TextBlock
@@ -355,7 +316,13 @@ namespace KingdomHeartsCustomMusic
             };
             Grid.SetColumn(textbox, 2);
 
-            // Real-time validation: red for YouTube URL; yellow for existing local file; gray for empty/others
+            // Initialize from persisted map
+            if (!string.IsNullOrWhiteSpace(track.PcNumber) && pathMap.TryGetValue(track.PcNumber!, out var stored))
+            {
+                textbox.Text = stored ?? string.Empty;
+            }
+
+            // Real-time validation and persistence
             textbox.TextChanged += (s, e) =>
             {
                 var value = textbox.Text?.Trim() ?? string.Empty;
@@ -371,15 +338,24 @@ namespace KingdomHeartsCustomMusic
                 {
                     textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)); // default gray
                 }
+
+                if (!string.IsNullOrEmpty(track.PcNumber))
+                {
+                    if (string.IsNullOrWhiteSpace(value)) pathMap.Remove(track.PcNumber);
+                    else pathMap[track.PcNumber] = value;
+                }
+
+                // Update visibility of the "Hide empty tracks" checkbox for all tabs
+                UpdateShowAssignedOnlyVisibility();
             };
 
-            // Accessibility: associate label and assign accessible names
+            // Accessibility
             System.Windows.Automation.AutomationProperties.SetLabeledBy(checkBox, label);
             System.Windows.Automation.AutomationProperties.SetName(checkBox, $"Select track: {track.Description}");
             System.Windows.Automation.AutomationProperties.SetLabeledBy(textbox, label);
             System.Windows.Automation.AutomationProperties.SetName(textbox, $"Audio file path or YouTube URL for: {track.Description}");
 
-            // Modern styled browse button
+            // Browse button
             var button = new Button
             {
                 Content = "📁 Browse / YouTube URL",
@@ -396,13 +372,8 @@ namespace KingdomHeartsCustomMusic
             Grid.SetColumn(button, 3);
             System.Windows.Automation.AutomationProperties.SetName(button, $"Browse file or paste YouTube URL for {track.Description}");
 
-            // Add hover effects to the button
-            button.MouseEnter += (s, e) => {
-                button.Background = new SolidColorBrush(Color.FromRgb(64, 64, 64));
-            };
-            button.MouseLeave += (s, e) => {
-                button.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
-            };
+            button.MouseEnter += (s, e) => { button.Background = new SolidColorBrush(Color.FromRgb(64, 64, 64)); };
+            button.MouseLeave += (s, e) => { button.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)); };
 
             button.Click += (s, e) =>
             {
@@ -413,19 +384,14 @@ namespace KingdomHeartsCustomMusic
                 };
                 if (dialog.ShowDialog() == true)
                 {
-                    textbox.Text = dialog.FileName;
-                    // Accessibility: expose selected file via HelpText
+                    textbox.Text = dialog.FileName; // TextChanged will persist in pathMap
                     System.Windows.Automation.AutomationProperties.SetHelpText(textbox, $"Selected file: {dialog.FileName}");
                 }
             };
 
-            // Add focus effects to textbox (only thickness)
-            textbox.GotFocus += (s, e) => {
-                textbox.BorderThickness = new Thickness(2);
-            };
-            textbox.LostFocus += (s, e) => {
-                textbox.BorderThickness = new Thickness(1);
-            };
+            // Focus effects
+            textbox.GotFocus += (s, e) => { textbox.BorderThickness = new Thickness(2); };
+            textbox.LostFocus += (s, e) => { textbox.BorderThickness = new Thickness(1); };
 
             row.Children.Add(checkBox);
             row.Children.Add(label);
@@ -443,29 +409,76 @@ namespace KingdomHeartsCustomMusic
 
         private void SaveConfigButton_Click(object sender, RoutedEventArgs e)
         {
+            string? ResolveCanonicalPc(IEnumerable<TrackInfo> tracks, string rawKey)
+            {
+                if (string.IsNullOrWhiteSpace(rawKey)) return null;
+                var key = rawKey.Trim();
+
+                // If it's already exactly a PcNumber on a known track, return it
+                var exact = tracks.FirstOrDefault(t => string.Equals(t.PcNumber, key, StringComparison.OrdinalIgnoreCase));
+                if (exact != null) return exact.PcNumber;
+
+                // If key starts with "NNN - ..." or "NN - ...", extract candidate before first " - "
+                var parts = key.Split(new[] { " - " }, 2, StringSplitOptions.None);
+                var candidate = parts.Length > 0 ? parts[0].Trim() : key;
+
+                // If candidate is numeric, try padded/unpadded match
+                if (int.TryParse(candidate, out var num))
+                {
+                    var padded = num.ToString().PadLeft(3, '0');
+                    var byPadded = tracks.FirstOrDefault(t => string.Equals(t.PcNumber, padded, StringComparison.OrdinalIgnoreCase));
+                    if (byPadded != null) return byPadded.PcNumber;
+
+                    var byUnpadded = tracks.FirstOrDefault(t => t.PcNumber != null && t.PcNumber.TrimStart('0').Equals(candidate.TrimStart('0'), StringComparison.OrdinalIgnoreCase));
+                    if (byUnpadded != null) return byUnpadded.PcNumber;
+                }
+
+                // Try matching full composite "PC - Description" to find exact track
+                var byComposite = tracks.FirstOrDefault(t => ($"{t.PcNumber} - {t.Description}").Equals(key, StringComparison.OrdinalIgnoreCase));
+                if (byComposite != null) return byComposite.PcNumber;
+
+                // Try matching by description substring
+                var byDesc = tracks.FirstOrDefault(t => !string.IsNullOrWhiteSpace(t.Description) && key.IndexOf(t.Description, StringComparison.OrdinalIgnoreCase) >= 0);
+                if (byDesc != null) return byDesc.PcNumber;
+
+                // As last resort, if the rawKey itself looks numeric return padded form
+                if (int.TryParse(key, out var n)) return n.ToString().PadLeft(3, '0');
+
+                return null;
+            }
+
+            Dictionary<string, string> BuildTabDict(Dictionary<string, string> pathMap, List<TrackInfo> tracks)
+            {
+                var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kvp in pathMap.Where(k => !string.IsNullOrWhiteSpace(k.Value)))
+                {
+                    var rawKey = kvp.Key?.Trim() ?? string.Empty;
+                    var path = kvp.Value;
+
+                    var canonical = ResolveCanonicalPc(tracks, rawKey);
+                    if (!string.IsNullOrWhiteSpace(canonical))
+                    {
+                        // Use canonical PcNumber as key (this is what the loader expects)
+                        dict[canonical] = path!;
+                    }
+                    else
+                    {
+                        // Fallback: still save under the raw key so data isn't lost
+                        dict[rawKey] = path!;
+                    }
+                }
+                return dict;
+            }
+
             var config = new RoutesConfig
             {
                 Tracks = new Dictionary<string, Dictionary<string, string>>
                 {
-                    ["kh1"] = _trackBindingsKH1
-                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.PathTextBox.Text) && !string.IsNullOrEmpty(kvp.Track.PcNumber))
-                        .ToDictionary(kvp => kvp.Track.PcNumber!, kvp => kvp.PathTextBox.Text),
-
-                    ["kh2"] = _trackBindingsKH2
-                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.PathTextBox.Text) && !string.IsNullOrEmpty(kvp.Track.PcNumber))
-                        .ToDictionary(kvp => kvp.Track.PcNumber!, kvp => kvp.PathTextBox.Text),
-
-                    ["bbs"] = _trackBindingsBBS
-                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.PathTextBox.Text) && !string.IsNullOrEmpty(kvp.Track.PcNumber))
-                        .ToDictionary(kvp => kvp.Track.PcNumber!, kvp => kvp.PathTextBox.Text),
-
-                    ["recom"] = _trackBindingsReCOM
-                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.PathTextBox.Text) && !string.IsNullOrEmpty(kvp.Track.PcNumber))
-                        .ToDictionary(kvp => kvp.Track.PcNumber!, kvp => kvp.PathTextBox.Text),
-
-                    ["ddd"] = _trackBindingsDDD
-                        .Where(kvp => !string.IsNullOrWhiteSpace(kvp.PathTextBox.Text) && !string.IsNullOrEmpty(kvp.Track.PcNumber))
-                        .ToDictionary(kvp => kvp.Track.PcNumber!, kvp => kvp.PathTextBox.Text)
+                    ["kh1"] = BuildTabDict(_pathValuesKH1, _tracksKH1),
+                    ["kh2"] = BuildTabDict(_pathValuesKH2, _tracksKH2),
+                    ["bbs"] = BuildTabDict(_pathValuesBBS, _tracksBBS),
+                    ["recom"] = BuildTabDict(_pathValuesReCOM, _tracksReCOM),
+                    ["ddd"] = BuildTabDict(_pathValuesDDD, _tracksDDD)
                 }
             };
 
@@ -484,67 +497,76 @@ namespace KingdomHeartsCustomMusic
                 MessageBox.Show("✅ Configuration saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
+
         private void ApplyLoadedConfig(Dictionary<string, Dictionary<string, string>> config)
         {
-            if (config.TryGetValue("kh1", out var kh1Config))
+            void ApplyForTab(string key, List<(TrackInfo Track, TextBox PathTextBox)> bindings, Dictionary<string, string> pathMap)
             {
-                foreach (var (pcNumber, filePath) in kh1Config)
+                if (!config.TryGetValue(key, out var tabCfg)) return;
+                foreach (var kvp in tabCfg)
                 {
-                    var binding = _trackBindingsKH1.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
-                    if (binding.PathTextBox != null)
+                    var rawKey = kvp.Key?.Trim() ?? string.Empty;
+                    // Key may be "PC - Description" or just "PC". Extract PC candidate before the first " - "
+                    var parts = rawKey.Split(new[] { " - " }, 2, StringSplitOptions.None);
+                    var incoming = parts.Length > 0 ? parts[0].Trim() : rawKey;
+                    var filePath = kvp.Value;
+                    if (string.IsNullOrWhiteSpace(incoming)) continue;
+
+                    // Resolve canonical pcNumber by looking for a matching binding
+                    string? resolvedPc = null;
+
+                    // Try exact match against bindings
+                    var bindingExact = bindings.FirstOrDefault(b => string.Equals(b.Track.PcNumber, incoming, StringComparison.OrdinalIgnoreCase));
+                    if (bindingExact.Track != null)
+                        resolvedPc = bindingExact.Track.PcNumber;
+
+                    // If incoming is numeric, try padded/unpadded variants
+                    if (resolvedPc == null && int.TryParse(incoming, out var num))
                     {
-                        binding.PathTextBox.Text = filePath;
+                        string padded = num.ToString().PadLeft(3, '0');
+                        var bindingPadded = bindings.FirstOrDefault(b => string.Equals(b.Track.PcNumber, padded, StringComparison.OrdinalIgnoreCase));
+                        if (bindingPadded.Track != null)
+                            resolvedPc = bindingPadded.Track.PcNumber;
+
+                        if (resolvedPc == null)
+                        {
+                            // Try unpadded match
+                            var unpadded = num.ToString();
+                            var bindingUnpadded = bindings.FirstOrDefault(b => b.Track.PcNumber != null && b.Track.PcNumber.TrimStart('0').Equals(unpadded.TrimStart('0'), StringComparison.OrdinalIgnoreCase));
+                            if (bindingUnpadded.Track != null)
+                                resolvedPc = bindingUnpadded.Track.PcNumber;
+                        }
+                    }
+
+                    // If still unresolved, try to match by full rawKey against a binding's full description composite
+                    if (resolvedPc == null)
+                    {
+                        var byDesc = bindings.FirstOrDefault(b => ($"{b.Track.PcNumber} - {b.Track.Description}").Equals(rawKey, StringComparison.OrdinalIgnoreCase));
+                        if (byDesc.Track != null)
+                            resolvedPc = byDesc.Track.PcNumber;
+                    }
+
+                    // Fallback: use incoming as-is
+                    if (resolvedPc == null)
+                        resolvedPc = incoming;
+
+                    // Persist under resolved canonical PC number so AddTrackRow can find it by track.PcNumber
+                    pathMap[resolvedPc] = filePath;
+
+                    // Also set textbox if binding exists for resolvedPc
+                    var targetBinding = bindings.FirstOrDefault(b => string.Equals(b.Track.PcNumber, resolvedPc, StringComparison.OrdinalIgnoreCase));
+                    if (targetBinding.PathTextBox != null)
+                    {
+                        targetBinding.PathTextBox.Text = filePath;
                     }
                 }
             }
 
-            if (config.TryGetValue("kh2", out var kh2Config))
-            {
-                foreach (var (pcNumber, filePath) in kh2Config)
-                {
-                    var binding = _trackBindingsKH2.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
-                    if (binding.PathTextBox != null)
-                    {
-                        binding.PathTextBox.Text = filePath;
-                    }
-                }
-            }
-
-            if (config.TryGetValue("bbs", out var bbsConfig))
-            {
-                foreach (var (pcNumber, filePath) in bbsConfig)
-                {
-                    var binding = _trackBindingsBBS.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
-                    if (binding.PathTextBox != null)
-                    {
-                        binding.PathTextBox.Text = filePath;
-                    }
-                }
-            }
-
-            if (config.TryGetValue("recom", out var recomConfig))
-            {
-                foreach (var (pcNumber, filePath) in recomConfig)
-                {
-                    var binding = _trackBindingsReCOM.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
-                    if (binding.PathTextBox != null)
-                    {
-                        binding.PathTextBox.Text = filePath;
-                    }
-                }
-            }
-
-            if (config.TryGetValue("ddd", out var dddConfig))
-            {
-                foreach (var (pcNumber, filePath) in dddConfig)
-                {
-                    var binding = _trackBindingsDDD.FirstOrDefault(b => b.Track.PcNumber == pcNumber);
-                    if (binding.PathTextBox != null)
-                    {
-                        binding.PathTextBox.Text = filePath;
-                    }
-                }
-            }
+            ApplyForTab("kh1", _trackBindingsKH1, _pathValuesKH1);
+            ApplyForTab("kh2", _trackBindingsKH2, _pathValuesKH2);
+            ApplyForTab("bbs", _trackBindingsBBS, _pathValuesBBS);
+            ApplyForTab("recom", _trackBindingsReCOM, _pathValuesReCOM);
+            ApplyForTab("ddd", _trackBindingsDDD, _pathValuesDDD);
         }
 
         private void LoadConfigButton_Click(object sender, RoutedEventArgs e)
@@ -735,20 +757,19 @@ namespace KingdomHeartsCustomMusic
             var urls = bindingsSnapshot
                 .Select(b => b.Value?.Trim())
                 .Where(v => !string.IsNullOrWhiteSpace(v) && YouTubeRegex.IsMatch(v!))
-                .Select(v => v!) // assert non-null after filtering
+                .Select(v => v!)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             Logger.Log($"EnsureYouTubeDownloadsAsync: found {urls.Count} distinct URL(s)");
 
             if (urls.Count == 0)
-                return downloads; // nothing to do
+                return downloads;
 
             string appDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
             string rootDir = Path.Combine(appDir, "Generated Patches");
             Directory.CreateDirectory(rootDir);
 
-            // Migrate legacy Downloaded Tracks at app root into new location
             try
             {
                 string legacyDl = Path.Combine(appDir, "Downloaded Tracks");
@@ -812,13 +833,28 @@ namespace KingdomHeartsCustomMusic
                 return downloads;
             }
 
+            // Regex to capture percentages like " 12.3%" or "99%"
+            var percentRegex = new Regex(@"(?<!\d)(?<num>\d{1,3})(?:\.\d+)?%", RegexOptions.Compiled);
+
             int index = 0;
             foreach (var url in urls)
             {
                 index++;
+                int lastPct = -1;
+                void UpdatePct(int pct)
+                {
+                    if (pct < 0 || pct > 100) return;
+                    if (pct == lastPct) return;
+                    lastPct = pct;
+                    Dispatcher.Invoke(() =>
+                    {
+                        ProgressText.Text = $"Downloading YouTube audio ({index}/{urls.Count}, {pct}%)";
+                    });
+                }
+
                 Dispatcher.Invoke(() =>
                 {
-                    ProgressText.Text = $"Downloading YouTube audio {index}/{urls.Count}";
+                    ProgressText.Text = $"Downloading YouTube audio ({index}/{urls.Count}, 0%)";
                 });
 
                 var videoId = TryExtractYouTubeId(url);
@@ -839,13 +875,12 @@ namespace KingdomHeartsCustomMusic
                     if (string.IsNullOrEmpty(ffmpegArg))
                         Logger.Log("ffmpeg not found; proceeding without --ffmpeg-location (yt-dlp may still find it if in PATH)");
 
-                    // Force deterministic output name to map by ID
-                    string outputTemplate = "%(id)s.%(ext)s";
+                    string outputTemplate = "%(title)s [%(id)s].%(ext)s";
 
                     var psi = new ProcessStartInfo
                     {
                         FileName = ytDlpPath,
-                        Arguments = $"-x --audio-format mp3 --no-part --no-progress -o \"{outputTemplate}\"{ffmpegArg} --postprocessor-args \"FFmpegExtractAudio:-filter:a volume=4\" \"{url}\"",
+                        Arguments = $"-x --audio-format mp3 --no-part --newline -o \"{outputTemplate}\"{ffmpegArg} --postprocessor-args \"FFmpegExtractAudio:-filter:a volume=4\" \"{url}\"",
                         WorkingDirectory = downloadsDir,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -855,40 +890,83 @@ namespace KingdomHeartsCustomMusic
 
                     Logger.Log($"Running: \"{psi.FileName}\" {psi.Arguments}");
 
+                    var preFiles = new HashSet<string>(Directory.GetFiles(downloadsDir, "*.mp3"), StringComparer.OrdinalIgnoreCase);
+
                     using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
-                    proc.OutputDataReceived += (s, e) => { if (e.Data != null) Logger.Log($"yt-dlp[{index}] OUT: {e.Data}"); };
-                    proc.ErrorDataReceived += (s, e) => { if (e.Data != null) Logger.Log($"yt-dlp[{index}] ERR: {e.Data}"); };
+                    proc.OutputDataReceived += (s, e) =>
+                    {
+                        if (e.Data != null)
+                        {
+                            Logger.Log($"yt-dlp[{index}] OUT: {e.Data}");
+                            var m = percentRegex.Match(e.Data);
+                            if (m.Success && int.TryParse(m.Groups["num"].Value, out var p)) UpdatePct(Math.Min(100, p));
+                        }
+                    };
+                    proc.ErrorDataReceived += (s, e) =>
+                    {
+                        if (e.Data != null)
+                        {
+                            Logger.Log($"yt-dlp[{index}] ERR: {e.Data}");
+                            var m = percentRegex.Match(e.Data);
+                            if (m.Success && int.TryParse(m.Groups["num"].Value, out var p)) UpdatePct(Math.Min(100, p));
+                        }
+                    };
 
                     proc.Start();
                     proc.BeginOutputReadLine();
                     proc.BeginErrorReadLine();
                     await proc.WaitForExitAsync();
+                    UpdatePct(100);
 
                     Logger.Log($"yt-dlp[{index}] ExitCode: {proc.ExitCode}");
 
-                    // Resolve expected mp3 by ID
-                    string expectedMp3 = Path.Combine(downloadsDir, $"{videoId}.mp3");
-                    string? resolved = null;
-                    if (File.Exists(expectedMp3))
+                    string? resolved = Directory.GetFiles(downloadsDir, "*.mp3")
+                        .FirstOrDefault(p => Path.GetFileName(p).Contains(videoId, StringComparison.OrdinalIgnoreCase));
+
+                    if (string.IsNullOrEmpty(resolved))
                     {
-                        resolved = expectedMp3;
-                    }
-                    else
-                    {
-                        // Fallback: search by ID in filename
-                        var candidate = Directory.GetFiles(downloadsDir, "*.mp3")
-                            .FirstOrDefault(p => Path.GetFileName(p).Contains(videoId, StringComparison.OrdinalIgnoreCase));
-                        if (!string.IsNullOrEmpty(candidate)) resolved = candidate;
+                        var candidates = Directory.GetFiles(downloadsDir, "*.mp3")
+                            .Where(p => !preFiles.Contains(p))
+                            .Select(p => new FileInfo(p))
+                            .OrderByDescending(f => f.LastWriteTimeUtc)
+                            .ToList();
+                        if (candidates.Count > 0)
+                            resolved = candidates.First().FullName;
                     }
 
-                    if (!string.IsNullOrEmpty(resolved))
+                    if (!string.IsNullOrEmpty(resolved) && File.Exists(resolved))
                     {
+                        var stem = Path.GetFileNameWithoutExtension(resolved);
+                        var ext = Path.GetExtension(resolved);
+                        var idTag = $"[{videoId}]";
+                        string newStem = stem.Replace($" {idTag}", string.Empty).Replace(idTag, string.Empty).Trim();
+                        string newPath = Path.Combine(downloadsDir, newStem + ext);
+
+                        int dup = 1;
+                        while (!string.Equals(newPath, resolved, StringComparison.OrdinalIgnoreCase) && File.Exists(newPath))
+                        {
+                            newPath = Path.Combine(downloadsDir, $"{newStem} ({dup++}){ext}");
+                        }
+                        if (!string.Equals(newPath, resolved, StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                File.Move(resolved, newPath);
+                                Logger.Log($"Renamed '{resolved}' -> '{newPath}'");
+                                resolved = newPath;
+                            }
+                            catch (Exception rnEx)
+                            {
+                                Logger.Log($"Rename failed, keeping original filename. Reason: {rnEx.Message}");
+                            }
+                        }
+
                         downloads[url] = resolved!;
                         Logger.Log($"Downloaded file mapped by ID: {url} -> {resolved}");
                     }
                     else
                     {
-                        Logger.Log($"No MP3 found matching video ID {videoId}");
+                        Logger.Log($"No MP3 found for URL {url} (ID {videoId})");
                     }
                 }
                 catch (Exception ex)
@@ -946,13 +1024,27 @@ namespace KingdomHeartsCustomMusic
                     return;
                 }
 
+                // Confirmación antes de comenzar el proceso pesado
+                var confirm = MessageBox.Show(
+                    "Patch generation can take several minutes, especially if you included multiple YouTube URLs.\n\nDo you want to continue?",
+                    "Confirm Patch Generation",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                if (confirm != MessageBoxResult.Yes)
+                {
+                    Logger.Log("User cancelled patch generation at confirmation dialog");
+                    ProgressText.Text = string.Empty;
+                    return;
+                }
+
                 // Snapshot previo (antes de descargar)
                 var bindingsSnapshot = currentTrackBindings
                     .Select(t => (t.Track, t.PathTextBox.Text))
                     .ToList();
+
                 Logger.Log($"Bindings snapshot count: {bindingsSnapshot.Count}");
 
-                // Preparar rutas de salida y comprobar overwrite ANTES de descargar nada
+                // Preparar rutas de salida y comprobar overwrite ANTES de descargar YouTube
                 string appDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
                 // Carpeta de salida bajo 'Generated Patches/Patches'
                 string rootDir = Path.Combine(appDir, "Generated Patches");
@@ -1081,13 +1173,13 @@ namespace KingdomHeartsCustomMusic
                     }
                     
                     message += "📋 To complete setup:\n" +
-                              "1. Obtain the missing files from KHPCSoundTools\n" +
-                              "2. Place them in your project's utils/ folder\n" +
-                              "3. Rebuild the application\n\n" +
-                              "🔗 Get KHPCSoundTools from:\n" +
-                              "• https://github.com/OpenKH/KHPCSoundTools\n" +
-                              "• Kingdom Hearts modding community\n\n" +
-                              "💡 Once embedded, these tools will be included in your .exe!";
+                               "1. Obtain the missing files from KHPCSoundTools\n" +
+                               "2. Place them in your project's utils/ folder\n" +
+                               "3. Rebuild the application\n\n" +
+                               "🔗 Get KHPCSoundTools from:\n" +
+                               "• https://github.com/OpenKH/KHPCSoundTools\n" +
+                               "• Kingdom Hearts modding community\n\n" +
+                               "💡 Once embedded, these tools will be included in your .exe!";
                     
                     MessageBox.Show(message, "Setup Required", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
@@ -1098,8 +1190,8 @@ namespace KingdomHeartsCustomMusic
                 string patchBasePath = Path.Combine(encoderDir, "patches");
                 Logger.Log($"Paths - encoderDir: {encoderDir}, scdTemplate: {scdTemplate}, patchBasePath: {patchBasePath}");
 
-                // Wire progress callback
-                void ProgressCallback(int current, int total, string phase)
+                // Wire progress callback with item-level percentage
+                void ProgressCallback(int current, int total, string phase, int itemPercent)
                 {
                     Dispatcher.Invoke(() =>
                     {
@@ -1108,13 +1200,21 @@ namespace KingdomHeartsCustomMusic
                             ProgressText.Text = string.Empty;
                             return;
                         }
-                        var label = phase == "Encoding" ? "Encoding" : "Preparing";
-                        ProgressText.Text = $"{label}: {current} / {total}";
+                        if (phase == "Encoding")
+                        {
+                            // Clamp percent and show at least 1% while running to avoid 0% -> Done
+                            int pct = Math.Max(0, Math.Min(100, itemPercent));
+                            ProgressText.Text = $"Encoding ({current}/{total}, {pct}%)";
+                        }
+                        else
+                        {
+                            ProgressText.Text = $"Preparing ({current}/{total}, 0%)";
+                        }
                     });
                 }
 
                 GeneratePatchButton.IsEnabled = false;
-                ProgressText.Text = "Preparing...";
+                ProgressText.Text = "Preparing (0/0, 0%)";
 
                 PatchPackager.PatchResult? result = null;
 
@@ -1122,7 +1222,7 @@ namespace KingdomHeartsCustomMusic
                 {
                     Logger.Log("ProcessTracks: begin");
                     var includedTracks = PatchTrackProcessor.ProcessTracks(
-                        resolvedSnapshot, // use resolved values (local files)
+                        resolvedSnapshot,
                         encoderDir,
                         scdTemplate,
                         patchBasePath,
@@ -1141,8 +1241,6 @@ namespace KingdomHeartsCustomMusic
                     Logger.Log($"PatchPackager.CreateFinalPatch: completed. Final: {result?.FinalPath}");
                     return includedTracks.Count;
                 });
-
-                Logger.Log($"Encoded count: {encodedCount}");
 
                 if (encodedCount == 0)
                 {
@@ -1320,60 +1418,27 @@ namespace KingdomHeartsCustomMusic
 
         #region Sort ComboBoxes
 
-        private void TrackSortComboBoxKH1_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_tracksKH1 == null) return;
-            var filtered = ApplyFilter(_tracksKH1, GetSearchTextKH1());
-            if (TrackSortComboBoxKH1.SelectedIndex == 1)
-                RenderTrackListKH1(filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
-            else
-                RenderTrackListKH1(filtered);
-        }
-        private void TrackSortComboBoxKH2_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_tracksKH2 == null) return;
-            var filtered = ApplyFilter(_tracksKH2, GetSearchTextKH2());
-            if (TrackSortComboBoxKH2.SelectedIndex == 1)
-                RenderTrackListKH2(filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
-            else
-                RenderTrackListKH2(filtered);
-        }
-        private void TrackSortComboBoxBBS_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_tracksBBS == null) return;
-            var filtered = ApplyFilter(_tracksBBS, GetSearchTextBBS());
-            if (TrackSortComboBoxBBS.SelectedIndex == 1)
-                RenderTrackListBBS(filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
-            else
-                RenderTrackListBBS(filtered);
-        }
-        private void TrackSortComboBoxReCOM_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_tracksReCOM == null) return;
-            var filtered = ApplyFilter(_tracksReCOM, GetSearchTextReCOM());
-            if (TrackSortComboBoxReCOM.SelectedIndex == 1)
-                RenderTrackListReCOM(filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase));
-            else
-                RenderTrackListReCOM(filtered);
-        }
+         private void TrackSortComboBoxKH1_SelectionChanged(object sender, SelectionChangedEventArgs e)
+         {
+            ReapplyCurrentTabFilterAndSort();
+         }
+         private void TrackSortComboBoxKH2_SelectionChanged(object sender, SelectionChangedEventArgs e)
+         {
+            ReapplyCurrentTabFilterAndSort();
+         }
+         private void TrackSortComboBoxBBS_SelectionChanged(object sender, SelectionChangedEventArgs e)
+         {
+            ReapplyCurrentTabFilterAndSort();
+         }
+         private void TrackSortComboBoxReCOM_SelectionChanged(object sender, SelectionChangedEventArgs e)
+         {
+            ReapplyCurrentTabFilterAndSort();
+         }
 
-        private void TrackSortComboBoxDDD_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_tracksDDD == null) return;
-            var filtered = ApplyFilter(_tracksDDD, GetSearchTextDDD());
-            if (TrackSortComboBoxDDD.SelectedIndex == 1)
-            {
-                // Orden alfabético, los vacíos al final (usando el mayor valor Unicode)
-                var ordered = filtered
-                    .OrderBy(t => string.IsNullOrWhiteSpace(t.Description) ? "\uFFFF" : t.Description, StringComparer.CurrentCultureIgnoreCase)
-                    .ThenBy(t => t.PcNumber);
-                RenderTrackListDDD(ordered);
-            }
-            else
-            {
-                RenderTrackListDDD(filtered);
-            }
-        }
+         private void TrackSortComboBoxDDD_SelectionChanged(object sender, SelectionChangedEventArgs e)
+         {
+            ReapplyCurrentTabFilterAndSort();
+         }
 
         #endregion
 
@@ -1394,7 +1459,7 @@ namespace KingdomHeartsCustomMusic
         private void TrackSearchTextBoxKH1_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_tracksKH1 == null) return;
-            var filtered = ApplyFilter(_tracksKH1, GetSearchTextKH1());
+            var filtered = ApplyFilterWithAssigned(_tracksKH1, GetSearchTextKH1(), _pathValuesKH1, ShowAssignedOnlyKH1.IsChecked == true);
             if (TrackSortComboBoxKH1.SelectedIndex == 1)
                 filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
             RenderTrackListKH1(filtered);
@@ -1402,7 +1467,7 @@ namespace KingdomHeartsCustomMusic
         private void TrackSearchTextBoxKH2_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_tracksKH2 == null) return;
-            var filtered = ApplyFilter(_tracksKH2, GetSearchTextKH2());
+            var filtered = ApplyFilterWithAssigned(_tracksKH2, GetSearchTextKH2(), _pathValuesKH2, ShowAssignedOnlyKH2.IsChecked == true);
             if (TrackSortComboBoxKH2.SelectedIndex == 1)
                 filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
             RenderTrackListKH2(filtered);
@@ -1410,7 +1475,7 @@ namespace KingdomHeartsCustomMusic
         private void TrackSearchTextBoxBBS_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_tracksBBS == null) return;
-            var filtered = ApplyFilter(_tracksBBS, GetSearchTextBBS());
+            var filtered = ApplyFilterWithAssigned(_tracksBBS, GetSearchTextBBS(), _pathValuesBBS, ShowAssignedOnlyBBS.IsChecked == true);
             if (TrackSortComboBoxBBS.SelectedIndex == 1)
                 filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
             RenderTrackListBBS(filtered);
@@ -1418,7 +1483,7 @@ namespace KingdomHeartsCustomMusic
         private void TrackSearchTextBoxReCOM_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_tracksReCOM == null) return;
-            var filtered = ApplyFilter(_tracksReCOM, GetSearchTextReCOM());
+            var filtered = ApplyFilterWithAssigned(_tracksReCOM, GetSearchTextReCOM(), _pathValuesReCOM, ShowAssignedOnlyReCOM.IsChecked == true);
             if (TrackSortComboBoxReCOM.SelectedIndex == 1)
                 filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
             RenderTrackListReCOM(filtered);
@@ -1426,7 +1491,7 @@ namespace KingdomHeartsCustomMusic
         private void TrackSearchTextBoxDDD_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_tracksDDD == null) return;
-            var filtered = ApplyFilter(_tracksDDD, GetSearchTextDDD());
+            var filtered = ApplyFilterWithAssigned(_tracksDDD, GetSearchTextDDD(), _pathValuesDDD, ShowAssignedOnlyDDD.IsChecked == true);
             if (TrackSortComboBoxDDD.SelectedIndex == 1)
             {
                 filtered = filtered
@@ -1434,6 +1499,85 @@ namespace KingdomHeartsCustomMusic
                     .ThenBy(t => t.PcNumber);
             }
             RenderTrackListDDD(filtered);
+        }
+
+        private void UpdateShowAssignedOnlyVisibility()
+        {
+            // KH1
+            ShowAssignedOnlyKH1.Visibility = _pathValuesKH1.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            // KH2
+            ShowAssignedOnlyKH2.Visibility = _pathValuesKH2.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            // BBS
+            ShowAssignedOnlyBBS.Visibility = _pathValuesBBS.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            // ReCOM
+            ShowAssignedOnlyReCOM.Visibility = _pathValuesReCOM.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            // DDD
+            ShowAssignedOnlyDDD.Visibility = _pathValuesDDD.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private IEnumerable<TrackInfo> ApplyFilterWithAssigned(IEnumerable<TrackInfo> source, string filter, Dictionary<string, string> pathMap, bool showAssignedOnly)
+        {
+            var filtered = ApplyFilter(source, filter);
+            if (!showAssignedOnly) return filtered;
+            return filtered.Where(t => !string.IsNullOrWhiteSpace(t.PcNumber) && pathMap.ContainsKey(t.PcNumber));
+        }
+
+        private void ReapplyCurrentTabFilterAndSort()
+        {
+            var selectedTab = MainTabControl.SelectedItem as TabItem;
+            string tabHeader = selectedTab?.Header.ToString() ?? "";
+            if (tabHeader.Equals("Kingdom Hearts I"))
+            {
+                var filtered = ApplyFilterWithAssigned(_tracksKH1, GetSearchTextKH1(), _pathValuesKH1, ShowAssignedOnlyKH1.IsChecked == true);
+                if (TrackSortComboBoxKH1.SelectedIndex == 1)
+                    filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
+                RenderTrackListKH1(filtered);
+            }
+            else if (tabHeader.Equals("Kingdom Hearts II"))
+            {
+                var filtered = ApplyFilterWithAssigned(_tracksKH2, GetSearchTextKH2(), _pathValuesKH2, ShowAssignedOnlyKH2.IsChecked == true);
+                if (TrackSortComboBoxKH2.SelectedIndex == 1)
+                    filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
+                RenderTrackListKH2(filtered);
+            }
+            else if (tabHeader.Equals("Birth by Sleep"))
+            {
+                var filtered = ApplyFilterWithAssigned(_tracksBBS, GetSearchTextBBS(), _pathValuesBBS, ShowAssignedOnlyBBS.IsChecked == true);
+                if (TrackSortComboBoxBBS.SelectedIndex == 1)
+                    filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
+                RenderTrackListBBS(filtered);
+            }
+            else if (tabHeader.Equals("Chain of Memories"))
+            {
+                var filtered = ApplyFilterWithAssigned(_tracksReCOM, GetSearchTextReCOM(), _pathValuesReCOM, ShowAssignedOnlyReCOM.IsChecked == true);
+                if (TrackSortComboBoxReCOM.SelectedIndex == 1)
+                    filtered = filtered.OrderBy(t => t.Description, StringComparer.CurrentCultureIgnoreCase);
+                RenderTrackListReCOM(filtered);
+            }
+            else if (tabHeader.Equals("Dream Drop Distance"))
+            {
+                var filtered = ApplyFilterWithAssigned(_tracksDDD, GetSearchTextDDD(), _pathValuesDDD, ShowAssignedOnlyDDD.IsChecked == true);
+                if (TrackSortComboBoxDDD.SelectedIndex == 1)
+                {
+                    filtered = filtered
+                        .OrderBy(t => string.IsNullOrWhiteSpace(t.Description) ? "\uFFFF" : t.Description, StringComparer.CurrentCultureIgnoreCase)
+                        .ThenBy(t => t.PcNumber);
+                }
+                RenderTrackListDDD(filtered);
+            }
+        }
+
+        // Checkbox change handlers
+        private void ShowAssignedOnlyKH1_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
+        private void ShowAssignedOnlyKH2_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
+        private void ShowAssignedOnlyBBS_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
+        private void ShowAssignedOnlyReCOM_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
+        private void ShowAssignedOnlyDDD_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
+
+        // Hook visibility updates from AddTrackRow persistence
+        private void AfterTextChangeUpdateAssignedVisibility()
+        {
+            UpdateShowAssignedOnlyVisibility();
         }
     }
 }

@@ -25,8 +25,11 @@ namespace KingdomHeartsCustomMusic.utils
         private static string OggEncPath(string encoderDir) => Path.Combine(ResolveToolsPath(encoderDir), "oggenc", "oggenc.exe");
         private static string AdpcmEncPath(string encoderDir) => Path.Combine(ResolveToolsPath(encoderDir), "adpcmencode3", "adpcmencode3.exe");
 
-        public static void Encode(string inputScdTemplate, string inputWav, int quality, bool fullLoop, string encoderDir)
+        public static void Encode(string inputScdTemplate, string inputWav, int quality, bool fullLoop, string encoderDir, Action<int>? progress = null)
         {
+            void Report(int p) { try { progress?.Invoke(Math.Max(0, Math.Min(100, p))); } catch { } }
+
+            Report(0);
             Logger.Log($"ManagedSingleEncoder.Encode start | template='{inputScdTemplate}', wav='{inputWav}', quality={quality}, fullLoop={fullLoop}, encoderDir='{encoderDir}'");
             var outputDir = Path.Combine(encoderDir, "output");
             Directory.CreateDirectory(outputDir);
@@ -82,28 +85,36 @@ namespace KingdomHeartsCustomMusic.utils
                     if (codec == 0x6)
                     {
                         // Vorbis path
+                        Report(5);
                         // Get Loop from tags
                         int LoopStart_Sample = searchTag("LoopStart", wav);
                         int Total_Samples = searchTag("LoopEnd", wav);
                         Logger.Log($"Loop tags | LoopStart={LoopStart_Sample}, LoopEnd={Total_Samples}");
                         if (fullLoop)
                         {
-                            // fallback to full loop by reading WAV fmt/data chunks
                             GetFullLoopFromWav(wav, out LoopStart_Sample, out Total_Samples);
                             Logger.Log($"FullLoop override | LoopStart={LoopStart_Sample}, TotalSamples={Total_Samples}");
                         }
+                        // Encode Vorbis
+                        Report(15);
                         WavtoOGG(inputWav, LoopStart_Sample, Total_Samples, quality, ogg);
+                        Report(60); // after oggenc returns
                         string oggPath = Path.ChangeExtension(inputWav, ".ogg");
                         Logger.Log($"OGG expected at '{oggPath}' (exists={File.Exists(oggPath)})");
+                        // Build SCD entry
                         newEntry = OGGtoSCD(wav, entry, oggPath, LoopStart_Sample, Total_Samples);
+                        Report(85);
                     }
                     else
                     {
                         // MSADPCM path
+                        Report(10);
                         WavtoMSADPCM(inputWav, adpcm, encoderDir);
+                        Report(60);
                         string msadpcmPath = Path.Combine(encoderDir, "adpcm" + $"{Path.GetFileNameWithoutExtension(inputWav)}.wav");
                         Logger.Log($"MSADPCM expected at '{msadpcmPath}' (exists={File.Exists(msadpcmPath)})");
                         newEntry = MSADPCMtoSCD(wav, entry, msadpcmPath);
+                        Report(85);
                     }
                 }
                 else
@@ -120,6 +131,7 @@ namespace KingdomHeartsCustomMusic.utils
 
             byte[] finalSCD = new byte[file_size];
             Array.Copy(oldSCD, finalSCD, entry_offsets[0]);
+            Report(90);
             for (int i = 0; i < headers_entries; i++)
             {
                 Write(finalSCD, entry_offsets[i], 32, (int)headers_offset + i * 0x04);
@@ -128,6 +140,7 @@ namespace KingdomHeartsCustomMusic.utils
             Write(finalSCD, file_size, 32, 0x10);
             string outputPath = Path.Combine(outputDir, "original.scd");
             File.WriteAllBytes(outputPath, finalSCD);
+            Report(100);
             Logger.Log($"ManagedSingleEncoder.Encode done | wrote '{outputPath}', size={finalSCD.Length}");
         }
 
@@ -164,6 +177,8 @@ namespace KingdomHeartsCustomMusic.utils
             p.StartInfo.UseShellExecute = false;
             p.StartInfo.RedirectStandardOutput = true;
             p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.CreateNoWindow = true;
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             p.OutputDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) sbOut.AppendLine(e.Data); };
             p.ErrorDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) sbErr.AppendLine(e.Data); };
 
@@ -318,7 +333,11 @@ namespace KingdomHeartsCustomMusic.utils
             p.StartInfo.FileName = adpcmEncPath;
             p.StartInfo.Arguments = $" \"{inputWAV}\" \"{outputWAV}\"";
             p.StartInfo.WorkingDirectory = Path.GetDirectoryName(inputWAV) ?? Environment.CurrentDirectory;
-            p.StartInfo.UseShellExecute = false; p.StartInfo.RedirectStandardOutput = true; p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.UseShellExecute = false; 
+            p.StartInfo.RedirectStandardOutput = true; 
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.CreateNoWindow = true;
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             p.OutputDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) sbOut.AppendLine(e.Data); };
             p.ErrorDataReceived += (s, e) => { if (!string.IsNullOrEmpty(e.Data)) sbErr.AppendLine(e.Data); };
             Logger.Log($"Run adpcmencode3 | exe='{p.StartInfo.FileName}', args='{p.StartInfo.Arguments}', cwd='{p.StartInfo.WorkingDirectory}'");
