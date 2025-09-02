@@ -12,6 +12,11 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Reflection;
+using System.Text;
+using System.Security.Cryptography;
+using System.Text.Json.Serialization;
 
 namespace KingdomHeartsCustomMusic
 {
@@ -60,6 +65,10 @@ namespace KingdomHeartsCustomMusic
         private static readonly Regex YouTubeRegex = new(
             @"^(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[^\s]+$",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        // GitHub update settings
+        private const string GitHubOwner = "jmtdev0";
+        private const string GitHubRepo = "KingdomHeartsCustomMusic";
 
         public MainWindow()
         {
@@ -1137,7 +1146,7 @@ namespace KingdomHeartsCustomMusic
                 Logger.Log("Resolved snapshot ready for processing");
 
                 // Setup tools from embedded resources (después de confirmar overwrite)
-                string tempToolsDir = Path.Combine(Path.GetTempPath(), "KingdomHeartsCustomMusic_Tools");
+                string tempToolsDir = Path.GetTempPath();
                 var toolsSetup = EmbeddedResourceManager.SetupTools(tempToolsDir);
                 Logger.Log($"Tools setup - Encoder: {toolsSetup.HasSingleEncoder}, SCD: {toolsSetup.HasOriginalScd}, PatchManager: {toolsSetup.HasPatchManager}");
 
@@ -1578,6 +1587,215 @@ namespace KingdomHeartsCustomMusic
         private void AfterTextChangeUpdateAssignedVisibility()
         {
             UpdateShowAssignedOnlyVisibility();
+        }
+
+        private async void UpdateMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                GeneratePatchButton.IsEnabled = false;
+                ProgressText.Text = "Comprobando actualizaciones...";
+
+                var latest = await GetLatestReleaseInfoAsync();
+                if (latest == null)
+                {
+                    MessageBox.Show("No se pudo obtener información de la release más reciente.", "Actualizar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                Version current = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0,0,0,0);
+                if (!Version.TryParse(latest.TagName?.TrimStart('v') ?? "0.0.0", out var latestVersion))
+                {
+                    latestVersion = new Version(0,0,0,0);
+                }
+
+                if (latestVersion <= current)
+                {
+                    MessageBox.Show($"No hay actualizaciones. Versión actual: {current}", "Actualizar", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                // Buscar asset .exe
+                var asset = latest.Assets?.FirstOrDefault(a => a.Name != null && a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
+                if (asset == null)
+                {
+                    MessageBox.Show("No se encontró un .exe en los assets de la última release.", "Actualizar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Descargar
+                ProgressText.Text = "Descargando actualización...";
+                var tmp = Path.Combine(Path.GetTempPath(), "khcm_update");
+                Directory.CreateDirectory(tmp);
+                var tmpExe = Path.Combine(tmp, asset.Name!);
+                await DownloadFileAsync(asset.BrowserDownloadUrl!, tmpExe);
+
+                // Verificar tamaño mínimo
+                if (!File.Exists(tmpExe) || new FileInfo(tmpExe).Length == 0)
+                {
+                    MessageBox.Show("La descarga falló o el archivo está vacío.", "Actualizar", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // SHA256 verification: try to find a checksum asset or parse release body
+                string? expectedHash = null;
+                var checksumAsset = latest.Assets?.FirstOrDefault(a => a.Name != null && (
+                    a.Name.EndsWith(".sha256", StringComparison.OrdinalIgnoreCase) ||
+                    a.Name.EndsWith(".sha256.txt", StringComparison.OrdinalIgnoreCase) ||
+                    a.Name.EndsWith(".sha256sum", StringComparison.OrdinalIgnoreCase) ||
+                    a.Name.Equals(asset.Name + ".sha256", StringComparison.OrdinalIgnoreCase) ||
+                    a.Name.Equals(asset.Name + ".sha256.txt", StringComparison.OrdinalIgnoreCase)
+                ));
+
+                if (checksumAsset != null)
+                {
+                    var tmpChk = Path.Combine(tmp, checksumAsset.Name!);
+                    await DownloadFileAsync(checksumAsset.BrowserDownloadUrl!, tmpChk);
+                    try
+                    {
+                        var txt = File.ReadAllText(tmpChk);
+                        // Try to find a line that references the exe name
+                        foreach (var line in txt.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            if (line.IndexOf(asset.Name ?? string.Empty, StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                var m = Regex.Match(line, @"\b([A-Fa-f0-9]{64})\b");
+                                if (m.Success) { expectedHash = m.Groups[1].Value; break; }
+                            }
+                        }
+                        if (expectedHash == null)
+                        {
+                            var m = Regex.Match(txt, "\\b([A-Fa-f0-9]{64})\\b");
+                            if (m.Success) expectedHash = m.Groups[1].Value;
+                        }
+                    }
+                    catch { /* ignore parsing errors */ }
+                }
+
+                // Fallback: try to parse release body for a SHA256 next to filename or alone
+                if (expectedHash == null && !string.IsNullOrWhiteSpace(latest.Body))
+                {
+                    var body = latest.Body!;
+                    foreach (var line in body.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (line.IndexOf(asset.Name ?? string.Empty, StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            var m = Regex.Match(line, "\\b([A-Fa-f0-9]{64})\\b");
+                            if (m.Success) { expectedHash = m.Groups[1].Value; break; }
+                        }
+                    }
+                    if (expectedHash == null)
+                    {
+                        var m = Regex.Match(body, "\\b([A-Fa-f0-9]{64})\\b");
+                        if (m.Success) expectedHash = m.Groups[1].Value;
+                    }
+                }
+
+                if (expectedHash == null)
+                {
+                    var ask = MessageBox.Show("No se encontró una suma SHA256 para esta release. ¿Continuar sin verificación?",
+                                              "Verificación SHA256",
+                                              MessageBoxButton.YesNo,
+                                              MessageBoxImage.Warning);
+                    if (ask != MessageBoxResult.Yes)
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    // Compute SHA256 of downloaded file
+                    string computed;
+                    using (var fs = File.OpenRead(tmpExe))
+                    using (var sha = SHA256.Create())
+                    {
+                        var hash = await sha.ComputeHashAsync(fs);
+                        computed = string.Concat(hash.Select(b => b.ToString("x2")));
+                    }
+                    if (!string.Equals(computed, expectedHash, StringComparison.OrdinalIgnoreCase))
+                    {
+                        MessageBox.Show($"SHA256 mismatch:\nExpected: {expectedHash}\nComputed: {computed}", "Actualizar", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                }
+
+                // Lanzar actualizador por lotes
+                ProgressText.Text = "Actualizando... reiniciando la aplicación";
+                var currentExe = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath!;
+
+                var bat = Path.Combine(tmp, "update.bat");
+                var batContents = new StringBuilder();
+                batContents.AppendLine("@echo off");
+                batContents.AppendLine("ping 127.0.0.1 -n 2 >nul");
+                batContents.AppendLine($":loop");
+                batContents.AppendLine($"tasklist /FI \"PID eq {Process.GetCurrentProcess().Id}\" | find \"{Path.GetFileName(currentExe)}\" >nul");
+                batContents.AppendLine("if %ERRORLEVEL%==0 (");
+                batContents.AppendLine("    timeout /t 1 >nul");
+                batContents.AppendLine("    goto loop");
+                batContents.AppendLine(")");
+                batContents.AppendLine($"copy /Y \"{tmpExe}\" \"{currentExe}\"");
+                batContents.AppendLine($"start \"\" \"{currentExe}\"");
+                batContents.AppendLine($"del \"{tmpExe}\"");
+                batContents.AppendLine($"del \"%~f0\"");
+
+                File.WriteAllText(bat, batContents.ToString(), Encoding.ASCII);
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = bat,
+                    UseShellExecute = true,
+                    WorkingDirectory = tmp
+                };
+
+                Process.Start(psi);
+                Application.Current.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Actualizar", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                GeneratePatchButton.IsEnabled = true;
+                ProgressText.Text = string.Empty;
+            }
+        }
+
+        private static readonly HttpClient _http = new(new HttpClientHandler { AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate });
+
+        private async Task<GitHubRelease?> GetLatestReleaseInfoAsync()
+        {
+            var api = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
+            var req = new HttpRequestMessage(HttpMethod.Get, api);
+            req.Headers.UserAgent.ParseAdd("KHCM-Updater/1.0");
+
+            var resp = await _http.SendAsync(req);
+            if (!resp.IsSuccessStatusCode) return null;
+            var json = await resp.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<GitHubRelease>(json);
+        }
+
+        private async Task DownloadFileAsync(string url, string dest)
+        {
+            using var resp = await _http.GetAsync(url);
+            resp.EnsureSuccessStatusCode();
+            await using var fs = new FileStream(dest, FileMode.Create, FileAccess.Write, FileShare.None);
+            await resp.Content.CopyToAsync(fs);
+        }
+
+        private class GitHubRelease
+        {
+            [JsonPropertyName("tag_name")]
+            public string? TagName { get; set; }
+            [JsonPropertyName("body")]
+            public string? Body { get; set; }
+            public List<GitHubAsset>? Assets { get; set; }
+        }
+        private class GitHubAsset
+        {
+            public string? Name { get; set; }
+            [JsonPropertyName("browser_download_url")]
+            public string? BrowserDownloadUrl { get; set; }
         }
     }
 }

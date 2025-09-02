@@ -255,6 +255,7 @@
         <Menu DockPanel.Dock="Top" Background="#FF2D2D30" Foreground="White">
             <MenuItem Header="Instructions" Click="InstructionsMenuItem_Click" AutomationProperties.Name="Instructions"/>
             <MenuItem Header="Credits" Click="CreditsMenuItem_Click" AutomationProperties.Name="Credits"/>
+            <MenuItem Header="Update" Click="UpdateMenuItem_Click" AutomationProperties.Name="Update"/>
         </Menu>
 
         <!-- Main Content -->
