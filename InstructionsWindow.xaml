@@ -8,6 +8,9 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
         <StackPanel>
             <TextBlock Text="How to Use Kingdom Hearts Music Patcher" FontSize="20" FontWeight="Bold" Margin="0,0,0,15" Foreground="#FF007ACC" TextAlignment="Justify"/>
+            <TextBlock x:Name="VersionSubtitle" Text="Version: " FontSize="12" FontStyle="Italic" Margin="0,0,0,10" Foreground="#FFAAAAAA"/>
+            <!-- Invisible hover area: tooltip shows 'Patatín' when hovered -->
+            <Border x:Name="HiddenHover" Width="18" Height="18" Background="Transparent" HorizontalAlignment="Right" Margin="0,0,0,10" Cursor="Hand" ToolTip="Patatín"/>
             <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" TextAlignment="Justify">
                 This application allows you to create custom patches to change the music in Kingdom Hearts I and II for PC. Music changes are applied using patches, which replace the game's audio files.
             </TextBlock>

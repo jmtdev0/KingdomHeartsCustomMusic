@@ -26,7 +26,16 @@ namespace KingdomHeartsCustomMusic.utils
                 var fileName = $"app-{DateTime.Now:yyyyMMdd-HHmmss}.log";
                 _logFilePath = Path.Combine(logsDir, fileName);
                 _initialized = true;
-                Log($"Logger initialized. Log file: {_logFilePath}");
+                // Log the application version at startup
+                try
+                {
+                    var version = KingdomHeartsCustomMusic.AppInfo.GetVersion();
+                    Log($"Logger initialized. Log file: {_logFilePath}");
+                    Log($"Application version: {version}");
+                }
+                catch {
+                    Log($"Logger initialized. Log file: {_logFilePath}");
+                }
             }
             catch
             {
