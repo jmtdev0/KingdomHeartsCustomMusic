@@ -24,17 +24,16 @@
     <DebuggerSupport>false</DebuggerSupport>
     <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PackageIcon>128.png</PackageIcon>
+
+    <!-- Ensure Windows application icon is embedded in the final EXE -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Exclude reference Program for SingleEncoder from compilation -->
   <ItemGroup>
     <Compile Remove="utils\SingleEncoder\SingleEncoder_Program.cs" />
   </ItemGroup>
-
-  <!-- Use app icon if present -->
-  <PropertyGroup Condition="Exists('Assets/app.ico')">
-    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-  </PropertyGroup>
 
   <ItemGroup>
     <None Remove="resources\All Games Track List - BBS.csv" />
@@ -82,16 +81,17 @@
     <EmbeddedResource Include="utils\KHPCPatchManager.exe" Condition="Exists('utils\KHPCPatchManager.exe')" />
   </ItemGroup>
 
-  <!-- Include the app icon as a WPF Resource only when it exists -->
-  <ItemGroup>
-    <Resource Include="Assets\app.ico" Condition="Exists('Assets/app.ico')" />
-  </ItemGroup>
-
   <!-- Package References -->
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Assets\128.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
