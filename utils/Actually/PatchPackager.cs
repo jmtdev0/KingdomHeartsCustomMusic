@@ -45,7 +45,7 @@ namespace KingdomHeartsCustomMusic.utils
                 gameVersion = "Kingdom Hearts II";
             else if (patchFinalPath.EndsWith("bbspcpatch"))
                 gameVersion = "Birth by Sleep";
-            else if (patchFinalPath.EndsWith("recompcpatch"))
+            else if (patchFinalPath.EndsWith("compcpatch"))
                 gameVersion = "Chain of Memories";
             else if (patchFinalPath.EndsWith("dddpcpatch"))
                 gameVersion = "Dream Drop Distance";

@@ -1119,7 +1119,7 @@ namespace KingdomHeartsCustomMusic
                 string gameExtension = isKH1 ? "kh1pcpatch" :
                                      isKH2 ? "kh2pcpatch" : 
                                      isBBS ? "bbspcpatch" :
-                                     isReCOM ? "recompcpatch" :
+                                     isReCOM ? "compcpatch" :
                                      "dddpcpatch";
 
                 string patchZip = Path.Combine(outputDir, "KHCustomPatch.zip");
@@ -1614,7 +1614,7 @@ namespace KingdomHeartsCustomMusic
 
                 // Aviso al usuario con recomendación positiva
                 var result = MessageBox.Show(
-                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\n\nUpdating is recommended to improve the application's functionality.",
+                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\n\nUpdating is recommended to improve the application's functionality.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
                     "Update available",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Information);
@@ -1770,13 +1770,13 @@ namespace KingdomHeartsCustomMusic
 
                 if (latestVersion <= current)
                 {
-                    MessageBox.Show($"No updates available. Current version: {current}", "Update", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"You're up to date! Current version: {current}", "Update", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
                 // Ask user for confirmation before downloading the update
                 var ask = MessageBox.Show(
-                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\nUpdating is recommended to improve the application's functionality.",
+                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\nUpdating is recommended to improve the application's functionality.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
                     "Update available",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);
