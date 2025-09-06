@@ -14,7 +14,8 @@ namespace KingdomHeartsCustomMusic.utils
     string encoderDir,
     string scdTemplate,
     string patchBasePath,
-    Action<int,int,string,int>? onProgress = null)
+    Action<int,int,string,int>? onProgress = null,
+    bool isReCOM = false)
         {
             var includedTracks = new List<TrackInfo>();
 
@@ -25,7 +26,7 @@ namespace KingdomHeartsCustomMusic.utils
                 .ToDictionary(g => g.Key, g => g.Select(tb => tb.Track).ToList());
 
             Logger.Log($"ProcessTracks: distinct input files: {trackGroups.Count}");
-            Logger.Log($"ProcessTracks: encoderDir='{encoderDir}', scdTemplate='{scdTemplate}', patchBasePath='{patchBasePath}'");
+            Logger.Log($"ProcessTracks: encoderDir='{encoderDir}', scdTemplate='{scdTemplate}', patchBasePath='{patchBasePath}', isReCOM={isReCOM}");
 
             int totalEncodes = trackGroups.Count;
             int completedEncodes = 0; // number of completed items
@@ -67,21 +68,35 @@ namespace KingdomHeartsCustomMusic.utils
 
                     try
                     {
-                        Logger.Log($"Calling ManagedSingleEncoder.Encode with template='{scdTemplate}'");
-                        // Relay sub-progress from the encoder to the UI
-                        ManagedSingleEncoder.Encode(
-                            scdTemplate,
-                            encoderWavPath,
-                            quality: 10,
-                            fullLoop: true,
-                            encoderDir: encoderDir,
-                            progress: p => onProgress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
-                        );
+                        if (isReCOM)
+                        {
+                            Logger.Log($"Calling ManagedSingleEncoder_ReCOM.Encode with template='{scdTemplate}'");
+                            ManagedSingleEncoder_ReCOM.Encode(
+                                scdTemplate,
+                                encoderWavPath,
+                                quality: 10,
+                                fullLoop: true,
+                                encoderDir: encoderDir,
+                                progress: p => onProgress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
+                            );
+                        }
+                        else
+                        {
+                            Logger.Log($"Calling ManagedSingleEncoder.Encode with template='{scdTemplate}'");
+                            ManagedSingleEncoder.Encode(
+                                scdTemplate,
+                                encoderWavPath,
+                                quality: 10,
+                                fullLoop: true,
+                                encoderDir: encoderDir,
+                                progress: p => onProgress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
+                            );
+                        }
                         scdBuilt = true;
                     }
                     catch (Exception exSingle)
                     {
-                        Logger.Log($"Managed SingleEncoder failed. Exception: {exSingle}");
+                        Logger.Log($"Managed encoder failed. Exception: {exSingle}");
                         throw new Exception("SingleEncoder failed. The fallback has been disabled because its output is not supported by the game. Please ensure the SCD template matches the expected version and tools (oggenc/adpcmencode3) are available.", exSingle);
                     }
 
@@ -140,9 +155,9 @@ namespace KingdomHeartsCustomMusic.utils
                 {
                     // Para BBS, ReCOM y DDD, usar solo LocationBgm ya que no tienen LocationDat separado
                     bool isBBS = track.Folder.Contains("original\\sound\\win\\bgm");
-                    bool isReCOM = track.Folder.Contains("original\\STREAM");
+                    bool isReCOMTrack = track.Folder.Contains("original\\STREAM");
                     bool isDDD = track.Folder.Contains("original\\sound\\jp\\output\\BGM");
-                    bool isSpecialFormat = isBBS || isReCOM || isDDD;
+                    bool isSpecialFormat = isBBS || isReCOMTrack || isDDD;
 
                     // Helper local function to copy to a target path
                     void CopyTo(string targetPath)
@@ -239,7 +254,7 @@ namespace KingdomHeartsCustomMusic.utils
                                     fileName
                                 );
                             }
-                            else if (isReCOM)
+                            else if (isReCOMTrack)
                             {
                                 // ReCOM: usar nombre de archivo del CSV si está presente, de lo contrario, usar pcNumber.win32.scd
                                 var fileName = !string.IsNullOrWhiteSpace(track.FileName) ? track.FileName! : ResolveRecomFileName();

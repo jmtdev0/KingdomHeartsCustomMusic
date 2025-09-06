@@ -1245,7 +1245,8 @@ namespace KingdomHeartsCustomMusic
                         encoderDir,
                         scdTemplate,
                         patchBasePath,
-                        ProgressCallback
+                        ProgressCallback,
+                        isReCOM: isReCOM
                     );
                     Logger.Log($"ProcessTracks: completed. Included tracks: {includedTracks.Count}");
 
