@@ -865,8 +865,8 @@
                                Grid.Column="1"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Center"
-                               FontSize="13"
-                               Foreground="#FFAAAAAA"
+                               FontSize="15"
+                               Foreground="LightSteelBlue"
                                AutomationProperties.LiveSetting="Polite"
                                Text=""/>
 

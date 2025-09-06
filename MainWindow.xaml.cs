@@ -606,6 +606,8 @@ namespace KingdomHeartsCustomMusic
                 if (config?.Tracks != null)
                 {
                     ApplyLoadedConfig(config.Tracks);
+                    // If loaded config only contains assignments for exactly one game, switch to that tab
+                    SwitchToTabIfSingleGame(config.Tracks);
                     MessageBox.Show("✅ Configuration loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
@@ -1738,12 +1740,14 @@ namespace KingdomHeartsCustomMusic
                 Process.Start(psi);
                 Application.Current.Shutdown();
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating: {ex.Message}", "Update", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
             finally
             {
-                if (GeneratePatchButton != null)
-                    GeneratePatchButton.IsEnabled = true;
-                if (ProgressText != null)
-                    ProgressText.Text = string.Empty;
+                GeneratePatchButton.IsEnabled = true;
+                ProgressText.Text = string.Empty;
             }
         }
 
@@ -1906,14 +1910,6 @@ namespace KingdomHeartsCustomMusic
             }
         }
 
-        private async Task DownloadFileAsync(string url, string dest)
-        {
-             using var resp = await _http.GetAsync(url);
-             resp.EnsureSuccessStatusCode();
-             await using var fs = new FileStream(dest, FileMode.Create, FileAccess.Write, FileShare.None);
-             await resp.Content.CopyToAsync(fs);
-        }
-
         private async Task<GitHubRelease?> GetLatestReleaseInfoAsync()
         {
             var api = $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest";
@@ -1981,6 +1977,56 @@ namespace KingdomHeartsCustomMusic
              public string? Name { get; set; }
              [JsonPropertyName("browser_download_url")]
              public string? BrowserDownloadUrl { get; set; }
+        }
+
+        // If the loaded configuration has assignments for exactly one game, select that tab automatically.
+        private void SwitchToTabIfSingleGame(Dictionary<string, Dictionary<string, string>> tracks)
+        {
+            if (tracks == null) return;
+
+            var nonEmpty = tracks
+                .Where(kv => kv.Value != null && kv.Value.Values.Any(v => !string.IsNullOrWhiteSpace(v)))
+                .Select(kv => kv.Key?.Trim().ToLowerInvariant())
+                .Where(k => !string.IsNullOrEmpty(k))
+                .ToList();
+
+            if (nonEmpty.Count != 1) return;
+
+            var key = nonEmpty[0];
+            int idx = key switch
+            {
+                "kh1" => 0,
+                "kh2" => 1,
+                "bbs" => 2,
+                "recom" => 3,
+                "ddd" => 4,
+                _ => -1
+            };
+
+            if (idx >= 0 && MainTabControl != null)
+            {
+                try
+                {
+                    MainTabControl.SelectedIndex = idx;
+                    UpdateGeneratePatchButtonText();
+                }
+                catch { }
+            }
+        }
+
+        // Helper to download a remote file to disk using the shared HttpClient
+        private static async Task DownloadFileAsync(string url, string destination)
+        {
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            req.Headers.UserAgent.ParseAdd("KHCM-Updater/1.0");
+            using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+            resp.EnsureSuccessStatusCode();
+
+            var dir = Path.GetDirectoryName(destination);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+            await using var fs = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None);
+            await resp.Content.CopyToAsync(fs);
         }
     }
 }
