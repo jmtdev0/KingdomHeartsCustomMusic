@@ -30,7 +30,6 @@ kh2_sixth,,original\vagstream,GM1_Asteroid,Asteroids Attack,Gummi Ship
 kh2_fifth,,original\bgm,142,Crossing the Finish Line,Gummi Ship
 kh2_fifth,,original\bgm,101,Waltz Of The Damned,Beast Castle Field
 kh2_fifth,,original\bgm,104,Dance Of The Daring,Beast Castle Battle
-kh2_fifth,,original\bgm,625,Thresholder,Boss
 kh2_fifth,,original\bgm,098,Hesitation,Cutscene
 kh2_fifth,,original\bgm,131,Dance to the Death,Event Battle/Boss
 kh2_fifth,,original\bgm,132,Beauty and the Beast,Cutscene
@@ -91,17 +90,12 @@ kh2_fifth,,original\bgm,110,The Encounter,Event Battle/Boss
 kh2_fifth,,original\bgm,135,Space Paranoids,Space Paranoids Field
 kh2_fifth,,original\bgm,136,Byte Bashing,Space Paranoids Battle
 kh2_fifth,,original\bgm,085,Byte Striking,Light Cycle
-kh2_fifth,,original\bgm,621,The Experiment/Hostile Program,Boss
 kh2_fifth,,original\bgm,068,Cavern Of Remembrance,Cavern Of Remembrance Field
 kh2_fifth,,original\bgm,069,Deep Anxiety,Cavern Of Remembrance Battle
-kh2_fifth,,original\bgm,620,Transport to Remembrance Battle,
 kh2_fifth,,original\bgm,063,The 13th Reflection,Boss
 kh2_fifth,,original\bgm,111,Sinister Shadows,Event Battle/Boss
-kh2_fifth,,original\bgm,600,1000 Heartless Battle,
-kh2_fifth,,original\bgm,614,Final Fantasy Gauntlet (Before 1000 Heartless Battle),
 kh2_fifth,,original\bgm,185,The 13th Dilemma,Boss
 kh2_fifth,,original\bgm,188,One Winged Angel,Boss
-kh2_fifth,,original\bgm,601,Riku in Summit (The Land of Dragons),
 kh2_sixth,,original\vagstream,GM5_Senkan,Battleship Bravery,Gummi Ship
 kh2_fifth,,original\bgm,054,Sacred Moon,The World That Never Was Field
 kh2_fifth,,original\bgm,055,Deep Drive,The World That Never Was Battle
@@ -113,15 +107,4 @@ kh2_fifth,,original\bgm,059,A Fight To The Death,Boss
 kh2_fifth,,original\bgm,060,Darkness Of The Unknown (Part 1),Boss
 kh2_fifth,,original\bgm,061,Darkness Of The Unknown (Part 2),Boss
 kh2_fifth,,original\bgm,062,Darkness Of The Unknown (Part 3),Boss
-kh2_fifth,,original\bgm,602,Data Xigbar,
-kh2_fifth,,original\bgm,603,Data Xaldin,
-kh2_fifth,,original\bgm,604,Data Vexen,
-kh2_fifth,,original\bgm,605,Data Lexaeus,
-kh2_fifth,,original\bgm,606,Data Zexion,
-kh2_fifth,,original\bgm,607,Data Saix,
-kh2_fifth,,original\bgm,609,Data Demyx,
-kh2_fifth,,original\bgm,610,Data Luxord,
-kh2_fifth,,original\bgm,611,Data Marluxia,
-kh2_fifth,,original\bgm,612,Data Larxene,
-kh2_fifth,,original\bgm,613,Data Final Xemnas,
 kh2_sixth,,original\vagstream,End_Piano,Dearly Beloved Reprise,Battle Report
