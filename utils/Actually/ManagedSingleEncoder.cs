@@ -153,12 +153,12 @@ namespace KingdomHeartsCustomMusic.utils
             int datapos = SearchBytePattern(0, wav, datPattern);
             if (typepos != -1 && datapos != -1)
             {
-                short type = BitConverter.ToInt16(wav, typepos + 20);
+                short blockAlign = BitConverter.ToInt16(wav, typepos + 20);
                 int datasize = BitConverter.ToInt32(wav, datapos + 4);
                 if (datasize < wav.Length)
                 {
                     loopStart = 0;
-                    totalSamples = datasize / type;
+                    totalSamples = datasize / blockAlign; // sample count per channel
                 }
             }
         }
@@ -234,11 +234,12 @@ namespace KingdomHeartsCustomMusic.utils
             //Find Loop Offsets by scanning granule counts (best effort)
             int LoopStart = 0;
             int LoopEnd = (Total_Samples != -1) ? streamSize : 0;
-            if (LoopStart_Sample != -1)
+            if (LoopStart_Sample > 0)
             {
                 for (int i = 0; i < page_offsets.Count; i++)
                 {
                     int idx = page_offsets[i];
+                    if (idx <= vorbis_header_size) continue; // skip header pages
                     if (idx + 6 < ogg.Length)
                     {
                         uint pageGranuleLow32 = Read(ogg, 32, idx + 6);
@@ -249,6 +250,10 @@ namespace KingdomHeartsCustomMusic.utils
                         }
                     }
                 }
+            }
+            else
+            {
+                LoopStart = 0; // when LoopStart sample is 0, ensure byte offset is 0
             }
             Logger.Log($"OGGtoSCD | LoopStart={LoopStart}, LoopEnd={LoopEnd}, streamSize={streamSize}");
 
@@ -351,17 +356,76 @@ namespace KingdomHeartsCustomMusic.utils
             Logger.Log($"MSADPCMtoSCD | path='{msadpcmPath}', exists={File.Exists(msadpcmPath)}");
             byte[] msadpcm = File.ReadAllBytes(msadpcmPath);
             uint meta_offset = 0; uint extradata_offset = meta_offset + 0x20;
+            // Base stream facts
+            byte[] pattern = new byte[] { 0x64, 0x61, 0x74, 0x61 }; // 'data'
+            int data_offset = SearchBytePattern(0, msadpcm, pattern) + 8; // skip 'data' + size
+            int streamSize = msadpcm.Length - data_offset;
+
+            // Channels & Sample rate from WAV header
             uint Channels = Read(msadpcm, 8, 0x16); uint Sample_Rate = Read(msadpcm, 32, 0x18);
             Write(entry, (int)Channels, 8, (int)meta_offset + 0x04);
             Write(entry, (int)Sample_Rate, 32, (int)meta_offset + 0x08);
-            byte[] pattern = new byte[] { 0x64, 0x61, 0x74, 0x61 };
-            int data_offset = SearchBytePattern(0, msadpcm, pattern) + 8;
-            Write(entry, msadpcm.Length - data_offset, 32, (int)meta_offset);
+
+            // Stream size
+            Write(entry, streamSize, 32, (int)meta_offset);
+
+            // Derive loop info from WAV tags if present, otherwise default to full-loop
+            int LoopStart_Sample = searchTag("LoopStart", wav);
+            int Total_Samples = searchTag("LoopEnd", wav);
+            if (LoopStart_Sample == -1 || Total_Samples == -1)
+            {
+                GetFullLoopFromWav(wav, out LoopStart_Sample, out Total_Samples);
+                Logger.Log($"MSADPCM loop (fallback full loop) | LoopStart={LoopStart_Sample}, TotalSamples={Total_Samples}");
+            }
+            else
+            {
+                Logger.Log($"MSADPCM loop (from tags) | LoopStart={LoopStart_Sample}, TotalSamples={Total_Samples}");
+            }
+
+            // Write byte offsets for loop (start at 0, end at end of stream)
+            int LoopStart = 0;
+            int LoopEnd = streamSize;
+            Write(entry, LoopStart, 32, (int)meta_offset + 0x10);
+            Write(entry, LoopEnd, 32, (int)meta_offset + 0x14);
+
+            // Write aux info (sample-based) if available in template
+            uint aux_chunk_count = Read(entry, 32, (int)meta_offset + 0x1c);
+            Logger.Log($"MSADPCM aux_chunk_count={aux_chunk_count}");
+            uint aux_chunk_size = 0;
+            if (aux_chunk_count > 0)
+            {
+                aux_chunk_size = Read(entry, 32, (int)extradata_offset + 0x04);
+                Logger.Log($"MSADPCM aux_chunk_size={aux_chunk_size}, extradata_offset(before)={extradata_offset}");
+                extradata_offset = extradata_offset + aux_chunk_size;
+                uint mark_entries = Read(entry, 32, (int)meta_offset + 0x30);
+                Logger.Log($"MSADPCM mark_entries={mark_entries}");
+                Write(entry, LoopStart_Sample, 32, (int)meta_offset + 0x28);
+                Write(entry, Total_Samples, 32, (int)meta_offset + 0x2C);
+                if (mark_entries == 1)
+                {
+                    int mark = searchTag("MARK1", wav);
+                    Write(entry, mark != -1 ? mark : LoopStart_Sample, 32, (int)meta_offset + 0x34);
+                }
+                else
+                {
+                    for (int i = 0; i < mark_entries; i++)
+                    {
+                        int mark = searchTag("MARK" + (i + 1), wav);
+                        Write(entry, mark != -1 ? mark : 0, 32, (int)meta_offset + 0x34 + i * 0x04);
+                    }
+                }
+            }
+            else
+            {
+                Logger.Log("MSADPCM template has no aux chunk; loop may not be supported for this template.");
+            }
+
+            // Build final entry
             int file_size = (int)(extradata_offset + 0x32 + msadpcm.Length - data_offset);
             while (file_size % 16 != 0) file_size++;
             byte[] newEntry = new byte[file_size];
             Array.Copy(entry, newEntry, extradata_offset);
-            Array.Copy(msadpcm, 0x14, newEntry, extradata_offset, 0x32);
+            Array.Copy(msadpcm, 0x14, newEntry, extradata_offset, 0x32); // copy fmt chunk details
             Array.Copy(msadpcm, data_offset, newEntry, extradata_offset + 0x32, msadpcm.Length - data_offset);
             try { File.Delete(msadpcmPath); } catch { }
             Logger.Log($"MSADPCMtoSCD | newEntrySize={newEntry.Length}");

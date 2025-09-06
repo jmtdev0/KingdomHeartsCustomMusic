@@ -349,17 +349,8 @@
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             
-                                            <Button Grid.Column="0"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
-
                                             <CheckBox x:Name="SelectAllCheckBox"
-                                                      Grid.Column="1"
+                                                      Grid.Column="0"
                                                       Content="Select All Tracks"
                                                       VerticalAlignment="Center"
                                                       Checked="SelectAllCheckBox_Checked"
@@ -368,6 +359,16 @@
                                                       Foreground="White"
                                                       FontWeight="SemiBold"
                                                       AutomationProperties.Name="Select All Tracks"/>
+
+                                            <Button Grid.Column="1"
+                                                    Content="🎶 Assign Song to Selected Tracks"
+                                                    HorizontalAlignment="Left"
+                                                    Click="AssignToSelectedButton_Click"
+                                                    Style="{StaticResource ModernButtonStyle}"
+                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
+                                            
+
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -446,17 +447,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
-
                                             <CheckBox x:Name="SelectAllCheckBoxKH2"
-                                                      Grid.Column="1"
+                                                      Grid.Column="0"
                                                       Content="Select All Tracks"
                                                       VerticalAlignment="Center"
                                                       Checked="SelectAllCheckBox_Checked"
@@ -465,6 +457,15 @@
                                                       Foreground="White"
                                                       FontWeight="SemiBold"
                                                       AutomationProperties.Name="Select All Tracks"/>
+
+                                            <Button Grid.Column="1"
+                                                    Content="🎶 Assign Song to Selected Tracks"
+                                                    HorizontalAlignment="Left"
+                                                    Click="AssignToSelectedButton_Click"
+                                                    Style="{StaticResource ModernButtonStyle}"
+                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
+                                            
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -546,17 +547,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
-
                                             <CheckBox x:Name="SelectAllCheckBoxBBS"
-                                                      Grid.Column="1"
+                                                      Grid.Column="0"
                                                       Content="Select All Tracks"
                                                       VerticalAlignment="Center"
                                                       Checked="SelectAllCheckBox_Checked"
@@ -565,6 +557,15 @@
                                                       Foreground="White"
                                                       FontWeight="SemiBold"
                                                       AutomationProperties.Name="Select All Tracks"/>
+
+                                            <Button Grid.Column="1"
+                                                    Content="🎶 Assign Song to Selected Tracks"
+                                                    HorizontalAlignment="Left"
+                                                    Click="AssignToSelectedButton_Click"
+                                                    Style="{StaticResource ModernButtonStyle}"
+                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
+                                            
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -649,17 +650,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
-
                                             <CheckBox x:Name="SelectAllCheckBoxReCOM"
-                                                      Grid.Column="1"
+                                                      Grid.Column="0"
                                                       Content="Select All Tracks"
                                                       VerticalAlignment="Center"
                                                       Checked="SelectAllCheckBox_Checked"
@@ -668,6 +660,16 @@
                                                       Foreground="White"
                                                       FontWeight="SemiBold"
                                                       AutomationProperties.Name="Select All Tracks"/>
+
+                                            <Button Grid.Column="1"
+                                                    Content="🎶 Assign Song to Selected Tracks"
+                                                    HorizontalAlignment="Left"
+                                                    Click="AssignToSelectedButton_Click"
+                                                    Style="{StaticResource ModernButtonStyle}"
+                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
+                                            
+
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -750,17 +752,8 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <Button Grid.Column="0"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
-
                                             <CheckBox x:Name="SelectAllCheckBoxDDD"
-                                                      Grid.Column="1"
+                                                      Grid.Column="0"
                                                       Content="Select All Tracks"
                                                       VerticalAlignment="Center"
                                                       Checked="SelectAllCheckBox_Checked"
@@ -769,6 +762,16 @@
                                                       Foreground="White"
                                                       FontWeight="SemiBold"
                                                       AutomationProperties.Name="Select All Tracks"/>
+
+                                            <Button Grid.Column="1"
+                                                    Content="🎶 Assign Song to Selected Tracks"
+                                                    HorizontalAlignment="Left"
+                                                    Click="AssignToSelectedButton_Click"
+                                                    Style="{StaticResource ModernButtonStyle}"
+                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
+                                            
+
                                         </Grid>
                                     </StackPanel>
                                 </Border>

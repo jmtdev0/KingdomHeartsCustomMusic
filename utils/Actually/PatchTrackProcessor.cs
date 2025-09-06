@@ -60,6 +60,10 @@ namespace KingdomHeartsCustomMusic.utils
                     File.Copy(tempWavPath, encoderWavPath, overwrite: true);
                     Logger.Log($"Copied WAV to encoder dir: '{encoderWavPath}' (exists: {File.Exists(encoderWavPath)})");
 
+                    // Detect target game for this group (any ReCOM track in the group => treat as ReCOM)
+                    bool groupIsRecom = tracks.Any(t => t.Folder.Contains("original\\STREAM"));
+                    Logger.Log($"Group target game detected: ReCOM={groupIsRecom}");
+
                     // In-process encoding using managed SingleEncoder implementation
                     bool scdBuilt = false;
                     string outputDir = Path.Combine(encoderDir, "output");
@@ -67,13 +71,13 @@ namespace KingdomHeartsCustomMusic.utils
 
                     try
                     {
-                        Logger.Log($"Calling ManagedSingleEncoder.Encode with template='{scdTemplate}'");
+                        Logger.Log($"Calling ManagedSingleEncoder.Encode with template='{scdTemplate}', fullLoop={(groupIsRecom ? "true" : "false")} ");
                         // Relay sub-progress from the encoder to the UI
                         ManagedSingleEncoder.Encode(
                             scdTemplate,
                             encoderWavPath,
                             quality: 10,
-                            fullLoop: true,
+                            fullLoop: groupIsRecom, // limit automatic full-loop to ReCOM to avoid affecting games already working
                             encoderDir: encoderDir,
                             progress: p => onProgress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
                         );
@@ -150,6 +154,12 @@ namespace KingdomHeartsCustomMusic.utils
                         Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
                         File.Copy(sourceScd, targetPath, overwrite: true);
                         Logger.Log($"SCD copied: '{sourceScd}' -> '{targetPath}'");
+
+                        // Diagnostics: dump header info for ReCOM to verify loop fields/codec
+                        if (isReCOM)
+                        {
+                            try { DumpScdLoopInfo(targetPath, track); } catch { }
+                        }
                     }
 
                     // Resolve filenames using CSV when available
@@ -315,6 +325,39 @@ namespace KingdomHeartsCustomMusic.utils
 
 
             return includedTracks;
+        }
+
+        // Diagnostics: parse SCD header and log codec and loop-related fields to help debug ReCOM looping
+        private static void DumpScdLoopInfo(string scdPath, TrackInfo track)
+        {
+            try
+            {
+                byte[] data = File.ReadAllBytes(scdPath);
+                uint tables_offset = Read(data, 16, 0x0e);
+                uint headers_entries = Read(data, 16, (int)tables_offset + 0x04);
+                uint headers_offset = Read(data, 32, (int)tables_offset + 0x0c);
+                uint first_entry = Read(data, 32, (int)headers_offset);
+                uint codec = Read(data, 32, (int)first_entry + 0x0c);
+                int loopStartBytes = (int)Read(data, 32, (int)first_entry + 0x10);
+                int loopEndBytes = (int)Read(data, 32, (int)first_entry + 0x14);
+                int auxCount = (int)Read(data, 32, (int)first_entry + 0x1c);
+                int loopStartSamples = (int)Read(data, 32, (int)first_entry + 0x28);
+                int loopEndSamples = (int)Read(data, 32, (int)first_entry + 0x2C);
+                Logger.Log($"[SCD-DIAG][{track.FileName ?? track.PcNumber}:{track.Description}] codec=0x{codec:X}, loopBytes=({loopStartBytes},{loopEndBytes}), auxCount={auxCount}, loopSamples=({loopStartSamples},{loopEndSamples}) @ '{scdPath}'");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[SCD-DIAG] Failed dumping '{scdPath}': {ex.Message}");
+            }
+        }
+
+        private static uint Read(byte[] file, int bits, int position)
+        {
+            int bytes = bits / 8;
+            if (position < 0 || position + bytes > file.Length) return 0;
+            uint num = 0;
+            for (int i = 0; i < bytes; i++) num |= (uint)(file[position + i] << (8 * i));
+            return num;
         }
     }
 
