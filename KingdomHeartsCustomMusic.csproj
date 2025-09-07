@@ -39,6 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Assets\128.png" />
     <None Remove="resources\All Games Track List - BBS.csv" />
     <None Remove="resources\All Games Track List - DDD.csv" />
     <None Remove="resources\All Games Track List - KH1.csv" />
@@ -86,6 +87,10 @@
 
   <!-- Ensure the app icon is included as a WPF Resource so pack URIs like 'Assets/app.ico' resolve at runtime -->
   <ItemGroup>
+    <Resource Include="Assets\128.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </Resource>
     <Resource Include="Assets\app.ico" />
   </ItemGroup>
 
@@ -94,12 +99,6 @@
     <PackageReference Include="ClosedXML" Version="0.104.2" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="WpfAnimatedGif" Version="2.0.2" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Assets\128.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
   </ItemGroup>
 
 </Project>

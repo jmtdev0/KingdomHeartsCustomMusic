@@ -8,7 +8,7 @@
         Foreground="White"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
-        Icon="Assets\app.ico">
+        Icon="pack://application:,,,/Assets/app.ico">
 
     <Window.Resources>
         <!-- Focus visual style used by multiple controls -->
