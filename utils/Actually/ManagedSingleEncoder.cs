@@ -234,11 +234,13 @@ namespace KingdomHeartsCustomMusic.utils
             //Find Loop Offsets by scanning granule counts (best effort)
             int LoopStart = 0;
             int LoopEnd = (Total_Samples != -1) ? streamSize : 0;
-            if (LoopStart_Sample != -1)
+            if (LoopStart_Sample > 0)
             {
+                // Only consider pages after the vorbis header pages
                 for (int i = 0; i < page_offsets.Count; i++)
                 {
                     int idx = page_offsets[i];
+                    if (idx <= vorbis_header_size) continue; // skip header pages
                     if (idx + 6 < ogg.Length)
                     {
                         uint pageGranuleLow32 = Read(ogg, 32, idx + 6);
@@ -249,6 +251,11 @@ namespace KingdomHeartsCustomMusic.utils
                         }
                     }
                 }
+            }
+            else
+            {
+                // When LoopStart_Sample is 0 or unknown, default to 0 offset to avoid negative values
+                LoopStart = 0;
             }
             Logger.Log($"OGGtoSCD | LoopStart={LoopStart}, LoopEnd={LoopEnd}, streamSize={streamSize}");
 
