@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using System.IO.Compression;
-using static KingdomHeartsCustomMusic.utils.TrackListLoader;
+using static KingdomHeartsMusicPatcher.utils.TrackListLoader;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     public static class PatchPackager
     {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     using System;
     using System.Collections.Generic;

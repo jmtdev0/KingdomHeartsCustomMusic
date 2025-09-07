@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Navigation;
 
-namespace KingdomHeartsCustomMusic
+namespace KingdomHeartsMusicPatcher
 {
     public partial class CreditsWindow : Window
     {
@@ -18,6 +20,17 @@ namespace KingdomHeartsCustomMusic
                 e.Handled = true;
                 Close();
             }
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true };
+                Process.Start(psi);
+            }
+            catch { }
+            e.Handled = true;
         }
     }
 }

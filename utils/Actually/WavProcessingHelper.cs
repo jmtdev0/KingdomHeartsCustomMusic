@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     public static class WavProcessingHelper
     {

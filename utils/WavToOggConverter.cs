@@ -1,8 +1,9 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     public static class WavToOggConverter
     {

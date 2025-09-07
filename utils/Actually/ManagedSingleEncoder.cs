@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     // Minimal managed rehost of SingleEncoder's Main flow for a single WAV/SCD encode.
     // It expects tools/oggenc/oggenc.exe and tools/adpcmencode3/adpcmencode3.exe under encoderDir.

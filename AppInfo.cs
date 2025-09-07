@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace KingdomHeartsCustomMusic
+namespace KingdomHeartsMusicPatcher
 {
     public static class AppInfo
     {

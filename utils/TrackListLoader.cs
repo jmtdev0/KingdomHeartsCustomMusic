@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     public static class TrackListLoader
     {

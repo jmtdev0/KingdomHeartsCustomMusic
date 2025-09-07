@@ -1,67 +1,60 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Windows;
-using static KingdomHeartsCustomMusic.utils.TrackListLoader;
 using System.Text;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
-
-
-    public static class PatchTrackProcessor
+    internal static class PatchTrackProcessor
     {
-        public static List<TrackInfo> ProcessTracks(
-    List<(TrackInfo Track, string FilePath)> trackBindings,
-    string encoderDir,
-    string scdTemplate,
-    string patchBasePath,
-    Action<int,int,string,int>? onProgress = null,
-    bool isReCOM = false)
+        public static List<TrackListLoader.TrackInfo> ProcessTracks(
+            List<(TrackListLoader.TrackInfo Track, string Value)> snapshot,
+            string encoderDir,
+            string scdTemplate,
+            string patchBasePath,
+            Action<int, int, string, int>? progress,
+            bool isReCOM)
         {
-            var includedTracks = new List<TrackInfo>();
+            var includedTracks = new List<TrackListLoader.TrackInfo>();
 
-            // 1. Group by audio file (distinct songs to encode)
-            var trackGroups = trackBindings
-                .Where(tb => !string.IsNullOrWhiteSpace(tb.FilePath) && File.Exists(tb.FilePath))
-                .GroupBy(tb => tb.FilePath)
+            var trackGroups = snapshot
+                .Where(tb => !string.IsNullOrWhiteSpace(tb.Value) && File.Exists(tb.Value))
+                .GroupBy(tb => tb.Value)
                 .ToDictionary(g => g.Key, g => g.Select(tb => tb.Track).ToList());
 
             Logger.Log($"ProcessTracks: distinct input files: {trackGroups.Count}");
             Logger.Log($"ProcessTracks: encoderDir='{encoderDir}', scdTemplate='{scdTemplate}', patchBasePath='{patchBasePath}', isReCOM={isReCOM}");
 
             int totalEncodes = trackGroups.Count;
-            int completedEncodes = 0; // number of completed items
-            // Initial status: before encoding starts
-            onProgress?.Invoke(0, totalEncodes, "Preparing", 0);
-            onProgress?.Invoke(0, totalEncodes, "Encoding", 0);
+            int completedEncodes = 0;
+            progress?.Invoke(0, totalEncodes, "Preparing", 0);
+            progress?.Invoke(0, totalEncodes, "Encoding", 0);
 
-            // 2. For each distinct audio: generate SCD only once
-            var generatedScds = new Dictionary<string, string>(); // filePath -> generated SCD path
+            var generatedScds = new Dictionary<string, string>();
 
             foreach (var kvp in trackGroups)
             {
                 string filePath = kvp.Key;
-                List<TrackInfo> tracks = kvp.Value;
+                List<TrackListLoader.TrackInfo> tracks = kvp.Value;
 
                 try
                 {
-                    // Report current progress BEFORE starting this encode
-                    onProgress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", 0);
+                    progress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", 0);
 
                     Logger.Log($"Encoding source: '{filePath}' for {tracks.Count} track(s)");
 
-                    // Convert to WAV if needed
                     string tempWavPath = WavProcessingHelper.EnsureWavFormat(filePath);
                     Logger.Log($"WAV ready at: '{tempWavPath}' (exists: {File.Exists(tempWavPath)})");
 
                     int totalSamples = WavSampleAnalyzer.GetTotalSamples(tempWavPath);
                     Logger.Log($"Total samples: {totalSamples}");
 
-                    // Copy to encoder directory
                     string encoderWavPath = Path.Combine(encoderDir, "music.wav");
                     File.Copy(tempWavPath, encoderWavPath, overwrite: true);
                     Logger.Log($"Copied WAV to encoder dir: '{encoderWavPath}' (exists: {File.Exists(encoderWavPath)})");
 
-                    // In-process encoding using managed SingleEncoder implementation
                     bool scdBuilt = false;
                     string outputDir = Path.Combine(encoderDir, "output");
                     Directory.CreateDirectory(outputDir);
@@ -77,7 +70,7 @@ namespace KingdomHeartsCustomMusic.utils
                                 quality: 10,
                                 fullLoop: true,
                                 encoderDir: encoderDir,
-                                progress: p => onProgress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
+                                progress: p => progress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
                             );
                         }
                         else
@@ -89,7 +82,7 @@ namespace KingdomHeartsCustomMusic.utils
                                 quality: 10,
                                 fullLoop: true,
                                 encoderDir: encoderDir,
-                                progress: p => onProgress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
+                                progress: p => progress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
                             );
                         }
                         scdBuilt = true;
@@ -100,7 +93,6 @@ namespace KingdomHeartsCustomMusic.utils
                         throw new Exception("SingleEncoder failed. The fallback has been disabled because its output is not supported by the game. Please ensure the SCD template matches the expected version and tools (oggenc/adpcmencode3) are available.", exSingle);
                     }
 
-                    // Save the generated SCD
                     string generatedScdPath = Path.Combine(encoderDir, "output", "original.scd");
                     Logger.Log($"Expecting encoder output: '{generatedScdPath}', exists: {File.Exists(generatedScdPath)}");
                     if (!scdBuilt || !File.Exists(generatedScdPath))
@@ -109,7 +101,6 @@ namespace KingdomHeartsCustomMusic.utils
                         throw new Exception($"Encoder did not produce output at '{generatedScdPath}'");
                     }
 
-                    // Move it to a temporary path identifiable by hash or name
                     string hash = Path.GetFileNameWithoutExtension(filePath).GetHashCode().ToString("X");
                     string renamedScd = Path.Combine(encoderDir, "output", $"generated_{hash}.scd");
                     File.Copy(generatedScdPath, renamedScd, overwrite: true);
@@ -117,13 +108,11 @@ namespace KingdomHeartsCustomMusic.utils
 
                     generatedScds[filePath] = renamedScd;
 
-                    // Cleanup temporary files
                     try { File.Delete(tempWavPath); } catch { }
                     try { File.Delete(encoderWavPath); } catch { }
 
-                    // Encoding for this item completed successfully
                     completedEncodes++;
-                    onProgress?.Invoke(completedEncodes, totalEncodes, "Encoding", 100);
+                    progress?.Invoke(completedEncodes, totalEncodes, "Encoding", 100);
                 }
                 catch (Exception ex)
                 {
@@ -138,28 +127,24 @@ namespace KingdomHeartsCustomMusic.utils
 
             Logger.Log($"Generated SCDs: {generatedScds.Count}");
 
-            // Helper to detect KH2 location identifiers
             static bool IsKh2Location(string loc)
             {
                 if (string.IsNullOrWhiteSpace(loc)) return false;
-                return loc.IndexOf("kh2", System.StringComparison.OrdinalIgnoreCase) >= 0;
+                return loc.IndexOf("kh2", StringComparison.OrdinalIgnoreCase) >= 0;
             }
 
-            // 3. For each track: copy the generated SCD to its corresponding path
-            foreach (var (track, filePath) in trackBindings)
+            foreach (var (track, filePath) in snapshot)
             {
                 if (string.IsNullOrWhiteSpace(filePath) || !generatedScds.TryGetValue(filePath, out string sourceScd))
                     continue;
 
                 try
                 {
-                    // Para BBS, ReCOM y DDD, usar solo LocationBgm ya que no tienen LocationDat separado
                     bool isBBS = track.Folder.Contains("original\\sound\\win\\bgm");
                     bool isReCOMTrack = track.Folder.Contains("original\\STREAM");
                     bool isDDD = track.Folder.Contains("original\\sound\\jp\\output\\BGM");
                     bool isSpecialFormat = isBBS || isReCOMTrack || isDDD;
 
-                    // Helper local function to copy to a target path
                     void CopyTo(string targetPath)
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
@@ -167,19 +152,17 @@ namespace KingdomHeartsCustomMusic.utils
                         Logger.Log($"SCD copied: '{sourceScd}' -> '{targetPath}'");
                     }
 
-                    // Resolve filenames using CSV when available
                     string ResolveBbsFileName()
                     {
                         if (!string.IsNullOrWhiteSpace(track.FileName))
-                            return track.FileName!; 
+                            return track.FileName!;
                         return $"music{track.PcNumber.PadLeft(3, '0')}.win32.scd";
                     }
                     string ResolveRecomFileName()
                     {
-                        // ReCOM filenames end with .win32.scd per analysis CSV
                         if (!string.IsNullOrWhiteSpace(track.FileName))
                             return track.FileName!;
-                        return $"{track.PcNumber}.win32.scd"; // fallback
+                        return $"{track.PcNumber}.win32.scd";
                     }
                     string ResolveDddFileName()
                     {
@@ -210,7 +193,6 @@ namespace KingdomHeartsCustomMusic.utils
                         {
                             if (datIsKh2)
                             {
-                                // KH2 layout: put the .win32.scd directly under folder
                                 datPath = Path.Combine(
                                     patchBasePath,
                                     track.LocationDat,
@@ -235,7 +217,6 @@ namespace KingdomHeartsCustomMusic.utils
 
                     if (!string.IsNullOrWhiteSpace(track.LocationBgm))
                     {
-                        // BBS can especificar múltiples ubicaciones separadas por comas (ej."bbs_first, bbs_fourth")
                         var bgmLocations = isBBS
                             ? track.LocationBgm.Split(',').Select(s => s.Trim()).Where(s => !string.IsNullOrWhiteSpace(s)).ToArray()
                             : new[] { track.LocationBgm };
@@ -256,7 +237,6 @@ namespace KingdomHeartsCustomMusic.utils
                             }
                             else if (isReCOMTrack)
                             {
-                                // ReCOM: usar nombre de archivo del CSV si está presente, de lo contrario, usar pcNumber.win32.scd
                                 var fileName = !string.IsNullOrWhiteSpace(track.FileName) ? track.FileName! : ResolveRecomFileName();
                                 bgmPath = Path.Combine(
                                     patchBasePath,
@@ -267,7 +247,6 @@ namespace KingdomHeartsCustomMusic.utils
                             }
                             else if (isDDD)
                             {
-                                // DDD: usa el mapeo de nombre de archivo cuando está disponible; de lo contrario, usa musicXXX.win32.scd
                                 var fileName = !string.IsNullOrWhiteSpace(track.FileName) ? ResolveDddFileName() : $"music{track.PcNumber.PadLeft(3, '0')}.win32.scd";
                                 bgmPath = Path.Combine(
                                     patchBasePath,
@@ -278,7 +257,6 @@ namespace KingdomHeartsCustomMusic.utils
                             }
                             else if (track.Folder.Contains("vagstream"))
                             {
-                                // Verificar si es vagstream (caso especial de KH2)
                                 bgmPath = Path.Combine(
                                     patchBasePath,
                                     loc,
@@ -290,7 +268,6 @@ namespace KingdomHeartsCustomMusic.utils
                             {
                                 if (locIsKh2)
                                 {
-                                    // KH2: no extra subfolder
                                     bgmPath = Path.Combine(
                                         patchBasePath,
                                         loc,
@@ -300,7 +277,6 @@ namespace KingdomHeartsCustomMusic.utils
                                 }
                                 else
                                 {
-                                    // Formato estándar (KH1)
                                     bgmPath = Path.Combine(
                                         patchBasePath,
                                         loc,
@@ -328,9 +304,7 @@ namespace KingdomHeartsCustomMusic.utils
                 }
             }
 
-
             return includedTracks;
         }
     }
-
 }

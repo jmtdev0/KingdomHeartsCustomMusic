@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     public static class Logger
     {
@@ -29,7 +29,7 @@ namespace KingdomHeartsCustomMusic.utils
                 // Log the application version at startup
                 try
                 {
-                    var version = KingdomHeartsCustomMusic.AppInfo.GetVersion();
+                    var version = KingdomHeartsMusicPatcher.AppInfo.GetVersion();
                     Log($"Logger initialized. Log file: {_logFilePath}");
                     Log($"Application version: {version}");
                 }

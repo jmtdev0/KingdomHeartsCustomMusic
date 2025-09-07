@@ -1,4 +1,4 @@
-﻿using KingdomHeartsCustomMusic.utils;
+﻿using KingdomHeartsMusicPatcher.utils;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using static KingdomHeartsCustomMusic.utils.TrackListLoader;
+using static KingdomHeartsMusicPatcher.utils.TrackListLoader;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -18,7 +18,7 @@ using System.Text;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
-namespace KingdomHeartsCustomMusic
+namespace KingdomHeartsMusicPatcher
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -513,6 +513,17 @@ namespace KingdomHeartsCustomMusic
                 File.WriteAllText(dialog.FileName, json);
                 MessageBox.Show("✅ Configuration saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
+        }
+
+        // Ensure this helper exists
+        private void UpdateShowAssignedOnlyVisibility()
+        {
+            bool AnyAssigned(Dictionary<string, string> map) => map.Values.Any(v => !string.IsNullOrWhiteSpace(v));
+            if (ShowAssignedOnlyKH1 != null) ShowAssignedOnlyKH1.Visibility = AnyAssigned(_pathValuesKH1) ? Visibility.Visible : Visibility.Collapsed;
+            if (ShowAssignedOnlyKH2 != null) ShowAssignedOnlyKH2.Visibility = AnyAssigned(_pathValuesKH2) ? Visibility.Visible : Visibility.Collapsed;
+            if (ShowAssignedOnlyBBS != null) ShowAssignedOnlyBBS.Visibility = AnyAssigned(_pathValuesBBS) ? Visibility.Visible : Visibility.Collapsed;
+            if (ShowAssignedOnlyReCOM != null) ShowAssignedOnlyReCOM.Visibility = AnyAssigned(_pathValuesReCOM) ? Visibility.Visible : Visibility.Collapsed;
+            if (ShowAssignedOnlyDDD != null) ShowAssignedOnlyDDD.Visibility = AnyAssigned(_pathValuesDDD) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void ApplyLoadedConfig(Dictionary<string, Dictionary<string, string>> config)
@@ -1476,6 +1487,24 @@ namespace KingdomHeartsCustomMusic
                                         .Contains(filter, StringComparison.CurrentCultureIgnoreCase));
         }
 
+        private IEnumerable<TrackInfo> ApplyFilterWithAssigned(IEnumerable<TrackInfo> source, string filter, Dictionary<string, string> pathMap, bool showAssignedOnly)
+        {
+            IEnumerable<TrackInfo> query = source;
+            if (!string.IsNullOrWhiteSpace(filter))
+            {
+                query = query.Where(t =>
+                    (!string.IsNullOrWhiteSpace(t.Description) && t.Description.IndexOf(filter, System.StringComparison.CurrentCultureIgnoreCase) >= 0)
+                    || (!string.IsNullOrWhiteSpace(t.PcNumber) && t.PcNumber.IndexOf(filter, System.StringComparison.CurrentCultureIgnoreCase) >= 0));
+            }
+            if (showAssignedOnly)
+            {
+                query = query.Where(t => !string.IsNullOrWhiteSpace(t.PcNumber)
+                                          && pathMap.TryGetValue(t.PcNumber, out var v)
+                                          && !string.IsNullOrWhiteSpace(v));
+            }
+            return query;
+        }
+
         private void TrackSearchTextBoxKH1_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_tracksKH1 == null) return;
@@ -1519,27 +1548,6 @@ namespace KingdomHeartsCustomMusic
                     .ThenBy(t => t.PcNumber);
             }
             RenderTrackListDDD(filtered);
-        }
-
-        private void UpdateShowAssignedOnlyVisibility()
-        {
-            // KH1
-            ShowAssignedOnlyKH1.Visibility = _pathValuesKH1.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-            // KH2
-            ShowAssignedOnlyKH2.Visibility = _pathValuesKH2.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-            // BBS
-            ShowAssignedOnlyBBS.Visibility = _pathValuesBBS.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-            // ReCOM
-            ShowAssignedOnlyReCOM.Visibility = _pathValuesReCOM.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-            // DDD
-            ShowAssignedOnlyDDD.Visibility = _pathValuesDDD.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
-        private IEnumerable<TrackInfo> ApplyFilterWithAssigned(IEnumerable<TrackInfo> source, string filter, Dictionary<string, string> pathMap, bool showAssignedOnly)
-        {
-            var filtered = ApplyFilter(source, filter);
-            if (!showAssignedOnly) return filtered;
-            return filtered.Where(t => !string.IsNullOrWhiteSpace(t.PcNumber) && pathMap.ContainsKey(t.PcNumber));
         }
 
         private void ReapplyCurrentTabFilterAndSort()
@@ -1587,7 +1595,6 @@ namespace KingdomHeartsCustomMusic
             }
         }
 
-        // Checkbox change handlers
         private void ShowAssignedOnlyKH1_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
         private void ShowAssignedOnlyKH2_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
         private void ShowAssignedOnlyBBS_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
@@ -1617,7 +1624,7 @@ namespace KingdomHeartsCustomMusic
 
                 // Aviso al usuario con recomendación positiva
                 var result = MessageBox.Show(
-                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\n\nUpdating is recommended to improve the application's functionality.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
+                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\n\nUpdating is recommended to improve the application's functionality.\n\nIf you choose to update, the application will download the new .exe, replace the existing .exe with the downloaded file, and automatically close and restart the application to run the new version.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
                     "Update available",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Information);
@@ -1738,7 +1745,7 @@ namespace KingdomHeartsCustomMusic
                     UseShellExecute = true,
                     WorkingDirectory = tmpDir
                 };
-                Process.Start(psi);
+                Process.Start( psi);
                 Application.Current.Shutdown();
             }
             catch (Exception ex)
@@ -1781,7 +1788,7 @@ namespace KingdomHeartsCustomMusic
 
                 // Ask user for confirmation before downloading the update
                 var ask = MessageBox.Show(
-                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\nUpdating is recommended to improve the application's functionality.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
+                    $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\n\nUpdating is recommended to improve the application's functionality.\n\nIf you choose to update, the application will download the new .exe, replace the existing .exe with the downloaded file, and automatically close and restart the application to run the new version.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
                     "Update available",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question);

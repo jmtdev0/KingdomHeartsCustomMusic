@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     // Specialised managed encoder for ReCOM SCDs only.
     // Mirrors ManagedSingleEncoder but applies ReCOM-specific behavior.

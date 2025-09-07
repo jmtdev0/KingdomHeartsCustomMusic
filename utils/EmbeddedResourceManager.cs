@@ -1,11 +1,11 @@
 using System.IO;
 using System.Reflection;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     public static class EmbeddedResourceManager
     {
-        private static readonly string TempDir = Path.Combine(Path.GetTempPath(), "KingdomHeartsCustomMusic");
+        private static readonly string TempDir = Path.Combine(Path.GetTempPath(), "KingdomHeartsMusicPatcher");
 
         /// <summary>
         /// Extrae un recurso embebido a un archivo temporal
@@ -16,8 +16,8 @@ namespace KingdomHeartsCustomMusic.utils
         public static string ExtractEmbeddedResource(string resourceName, string tempFileName)
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var fullResourceName = $"KingdomHeartsCustomMusic.{resourceName.Replace('\\', '.').Replace('/', '.')}";
-            
+            var fullResourceName = $"KingdomHeartsMusicPatcher.{resourceName.Replace('\\', '.').Replace('/', '.')}";
+
             using var stream = assembly.GetManifestResourceStream(fullResourceName);
             if (stream == null)
             {
@@ -26,9 +26,9 @@ namespace KingdomHeartsCustomMusic.utils
 
             // Crear directorio temporal para la aplicación
             Directory.CreateDirectory(TempDir);
-            
+
             string tempFilePath = Path.Combine(TempDir, tempFileName);
-            
+
             // Solo extraer si el archivo no existe o es diferente
             bool needsExtraction = true;
             if (File.Exists(tempFilePath))
@@ -45,7 +45,7 @@ namespace KingdomHeartsCustomMusic.utils
                 using var fileStream = File.Create(tempFilePath);
                 stream.CopyTo(fileStream);
             }
-            
+
             return tempFilePath;
         }
 
@@ -58,7 +58,7 @@ namespace KingdomHeartsCustomMusic.utils
         public static string ExtractEmbeddedResourceToPath(string resourceName, string targetPath)
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var fullResourceName = $"KingdomHeartsCustomMusic.{resourceName.Replace('\\', '.').Replace('/', '.')}";
+            var fullResourceName = $"KingdomHeartsMusicPatcher.{resourceName.Replace('\\', '.').Replace('/', '.')}";
 
             using var stream = assembly.GetManifestResourceStream(fullResourceName);
             if (stream == null)
@@ -72,7 +72,7 @@ namespace KingdomHeartsCustomMusic.utils
             {
                 Directory.CreateDirectory(directory);
             }
-            
+
             // Solo extraer si el archivo no existe o es diferente
             bool needsExtraction = true;
             if (File.Exists(targetPath))
@@ -89,7 +89,7 @@ namespace KingdomHeartsCustomMusic.utils
                 using var fileStream = File.Create(targetPath);
                 stream.CopyTo(fileStream);
             }
-            
+
             return targetPath;
         }
 
@@ -101,7 +101,7 @@ namespace KingdomHeartsCustomMusic.utils
         public static bool ResourceExists(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var fullResourceName = $"KingdomHeartsCustomMusic.{resourceName.Replace('\\', '.').Replace('/', '.')}";
+            var fullResourceName = $"KingdomHeartsMusicPatcher.{resourceName.Replace('\\', '.').Replace('/', '.')}";
 
             using var stream = assembly.GetManifestResourceStream(fullResourceName);
             return stream != null;
@@ -115,7 +115,7 @@ namespace KingdomHeartsCustomMusic.utils
         {
             string kh1Path = ExtractEmbeddedResource("resources.All Games Track List - KH1.xlsx", "All Games Track List - KH1.xlsx");
             string kh2Path = ExtractEmbeddedResource("resources.All Games Track List - KH2.xlsx", "All Games Track List - KH2.xlsx");
-            
+
             return (kh1Path, kh2Path);
         }
 
@@ -314,10 +314,10 @@ namespace KingdomHeartsCustomMusic.utils
         public string ToolsDirectory { get; set; } = "";
         public string EncoderDirectory { get; set; } = "";
         public string ToolsSubDirectory { get; set; } = "";
-        
+
         public bool HasSingleEncoder { get; set; }
         public string SingleEncoderPath { get; set; } = "";
-        
+
         // Genérico (compatibilidad hacia atrás)
         public bool HasOriginalScd { get; set; }
         public string OriginalScdPath { get; set; } = "";
@@ -333,10 +333,10 @@ namespace KingdomHeartsCustomMusic.utils
         public string OriginalScdReCOMPath { get; set; } = "";
         public bool HasOriginalScdDDD { get; set; }
         public string OriginalScdDDDPath { get; set; } = "";
-        
+
         public bool HasAdpcmEncode { get; set; }
         public bool HasOggEnc { get; set; }
-        
+
         public bool HasPatchManager { get; set; }
         public string PatchManagerPath { get; set; } = "";
 
@@ -353,11 +353,11 @@ namespace KingdomHeartsCustomMusic.utils
         public bool IsCompleteSetup =>
             (HasOriginalScd || HasOriginalScdKH1 || HasOriginalScdKH2 || HasOriginalScdBBS || HasOriginalScdReCOM || HasOriginalScdDDD)
             && (HasOggEnc || HasAdpcmEncode);
-        
+
         public List<string> GetMissingTools()
         {
             var missing = new List<string>();
-            
+
             if (!(HasOriginalScd || HasOriginalScdKH1 || HasOriginalScdKH2 || HasOriginalScdBBS || HasOriginalScdReCOM || HasOriginalScdDDD))
                 missing.Add("original.scd");
             if (!HasAdpcmEncode)
@@ -370,7 +370,7 @@ namespace KingdomHeartsCustomMusic.utils
                 missing.Add("yt-dlp.exe");
             if (!HasFfmpeg)
                 missing.Add("ffmpeg.exe");
-                
+
             return missing;
         }
     }

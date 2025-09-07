@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace KingdomHeartsCustomMusic.utils
+namespace KingdomHeartsMusicPatcher.utils
 {
     internal static class DotnetRuntimeBootstrap
     {

@@ -6,7 +6,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using WpfAnimatedGif;
 
-namespace KingdomHeartsCustomMusic
+namespace KingdomHeartsMusicPatcher
 {
     public partial class MemeWindow : Window
     {

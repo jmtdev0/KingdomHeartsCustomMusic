@@ -1,9 +1,8 @@
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
-using System.Text.RegularExpressions;
-using System.Linq;
 
-namespace KingdomHeartsCustomMusic
+namespace KingdomHeartsMusicPatcher
 {
     public partial class InstructionsWindow : Window
     {
@@ -13,25 +12,22 @@ namespace KingdomHeartsCustomMusic
             PreviewKeyDown += OnPreviewKeyDownCloseOnEsc;
             try
             {
-                var full = AppInfo.GetVersion() ?? string.Empty;
-                var m = Regex.Match(full, @"\d+\.\d+\.\d+");
-                string shortVer;
-                if (m.Success)
-                {
-                    shortVer = m.Value;
-                }
-                else
-                {
-                    var parts = full.Split('.');
-                    if (parts.Length >= 3)
-                        shortVer = string.Join('.', parts.Take(3));
-                    else
-                        shortVer = full;
-                }
-
-                VersionSubtitle.Text = $"Version: {shortVer}";
+                var raw = AppInfo.GetVersion() ?? string.Empty;
+                string versionOnly = ExtractSimpleVersion(raw);
+                VersionRun.Text = string.IsNullOrWhiteSpace(versionOnly) ? "unknown" : versionOnly;
             }
             catch { }
+        }
+
+        private static string ExtractSimpleVersion(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+            var m = Regex.Match(raw, "\\d+(?:\\.\\d+){1,3}");
+            if (!m.Success) return raw;
+            var parts = m.Value.Split('.');
+            if (parts.Length >= 3)
+                return $"{parts[0]}.{parts[1]}.{parts[2]}";
+            return m.Value;
         }
 
         private void OnPreviewKeyDownCloseOnEsc(object sender, KeyEventArgs e)

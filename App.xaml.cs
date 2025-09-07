@@ -1,7 +1,7 @@
 ﻿using System.Windows;
-using KingdomHeartsCustomMusic.utils;
+using KingdomHeartsMusicPatcher.utils;
 
-namespace KingdomHeartsCustomMusic
+namespace KingdomHeartsMusicPatcher
 {
     /// <summary>
     /// Interaction logic for App.xaml
