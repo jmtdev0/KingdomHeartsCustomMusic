@@ -88,7 +88,7 @@
       <List MarkerStyle="Disc">
         <ListItem>
           <Paragraph FontSize="13">
-            <Hyperlink NavigateUri="https://github.com/AntonioDePau" RequestNavigate="Hyperlink_RequestNavigate">Xeeynamo and other contributors</Hyperlink>
+            <Hyperlink NavigateUri="https://github.com/Xeeynamo/KingdomSaveEditor/graphs/contributors" RequestNavigate="Hyperlink_RequestNavigate">Xeeynamo and other contributors</Hyperlink>
           </Paragraph>
         </ListItem>
       </List>
