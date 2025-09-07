@@ -11,10 +11,10 @@
     <RootNamespace>KingdomHeartsMusicPatcher</RootNamespace>
 
     <!-- Application version (used to generate assembly attributes) -->
-    <Version>1.2.3</Version>
-    <AssemblyVersion>1.2.3.0</AssemblyVersion>
-    <FileVersion>1.2.3.0</FileVersion>
-    <InformationalVersion>1.2.3</InformationalVersion>
+    <Version>1.2.4</Version>
+    <AssemblyVersion>1.2.4.0</AssemblyVersion>
+    <FileVersion>1.2.4.0</FileVersion>
+    <InformationalVersion>1.2.4</InformationalVersion>
 
     <!-- Single File Publishing Configuration - Self Contained with Compression -->
     <PublishSingleFile>true</PublishSingleFile>

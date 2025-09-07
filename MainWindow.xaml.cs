@@ -8,6 +8,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging; // added
+using System.Windows.Interop; // diagnostics/fallback
+using System.Windows.Resources; // diagnostics for pack resources
 using static KingdomHeartsMusicPatcher.utils.TrackListLoader;
 using System.Threading.Tasks;
 using System.Linq;
@@ -80,16 +82,98 @@ namespace KingdomHeartsMusicPatcher
             Logger.Initialize();
             InitializeComponent();
 
-            // Force-set icon at runtime via pack URI as an extra safeguard
+            // Icon diagnostics + assignment to help investigate taskbar icon issues
             try
             {
-                var uri = new Uri("pack://application:,,,/Assets/app.ico", UriKind.Absolute);
-                // Prefer IconBitmapDecoder to pick best frame from .ico
-                var decoder = new IconBitmapDecoder(uri, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                var frame = decoder.Frames.FirstOrDefault();
-                if (frame != null) this.Icon = frame;
+                var exePath = Process.GetCurrentProcess().MainModule?.FileName
+                              ?? Environment.ProcessPath
+                              ?? Assembly.GetExecutingAssembly().Location;
+
+                Logger.Log("[Icon] Diagnostics start");
+                Logger.Log($"[Icon] EXE: {exePath}");
+                Logger.Log($"[Icon] OS: {Environment.OSVersion}, 64-bit: {Environment.Is64BitProcess}");
+
+                // 1) Try pack resource (WPF Resource)
+                var packUri = new Uri("pack://application:,,,/Assets/app.ico", UriKind.Absolute);
+                System.Windows.Resources.StreamResourceInfo? sri = null;
+                try
+                {
+                    sri = Application.GetResourceStream(packUri);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogException("[Icon] GetResourceStream failed", ex);
+                }
+
+                if (sri?.Stream != null)
+                {
+                    Logger.Log($"[Icon] pack resource found. Length={sri.Stream.Length} bytes");
+                    try
+                    {
+                        var decoder = new IconBitmapDecoder(packUri, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                        Logger.Log($"[Icon] ICO frames={decoder.Frames.Count}");
+                        foreach (var f in decoder.Frames.Select((f, i) => new { f, i }))
+                        {
+                            Logger.Log($"[Icon] Frame#{f.i}: {f.f.PixelWidth}x{f.f.PixelHeight} - {f.f.Format}");
+                        }
+
+                        // Prefer largest frame
+                        var frame = decoder.Frames.OrderByDescending(f => f.PixelWidth).FirstOrDefault();
+                        if (frame != null)
+                        {
+                            this.Icon = frame;
+                            Logger.Log($"[Icon] Assigned from pack: {frame.PixelWidth}x{frame.PixelHeight}");
+                        }
+                        else
+                        {
+                            Logger.Log("[Icon] No frames in ICO decoder");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogException("[Icon] IconBitmapDecoder failed", ex);
+                    }
+                }
+                else
+                {
+                    Logger.Log("[Icon] pack resource not found: Assets/app.ico (WPF Resource)");
+                }
+
+                // 2) Fallback: extract associated icon from EXE (Win32)
+                if (this.Icon == null)
+                {
+                    try
+                    {
+                        using var assoc = System.Drawing.Icon.ExtractAssociatedIcon(exePath!);
+                        if (assoc != null)
+                        {
+                            var bmp = Imaging.CreateBitmapSourceFromHIcon(
+                                assoc.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                            bmp.Freeze();
+                            this.Icon = bmp;
+                            Logger.Log($"[Icon] Assigned from EXE associated icon: {bmp.PixelWidth}x{bmp.PixelHeight}");
+                        }
+                        else
+                        {
+                            Logger.Log("[Icon] ExtractAssociatedIcon returned null");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogException("[Icon] ExtractAssociatedIcon failed", ex);
+                    }
+                }
+
+                // Final state
+                if (this.Icon is BitmapSource bs)
+                    Logger.Log($"[Icon] Final Window.Icon: {bs.PixelWidth}x{bs.PixelHeight}");
+                else
+                    Logger.Log("[Icon] Final Window.Icon is null or non-BitmapSource");
             }
-            catch { /* ignore icon errors */ }
+            catch (Exception ex)
+            {
+                Logger.LogException("[Icon] Unexpected error assigning icon", ex);
+            }
 
             // Defer load to avoid NRE on named elements
             Loaded += async (_, __) =>
@@ -1686,7 +1770,7 @@ namespace KingdomHeartsMusicPatcher
                 batContents.AppendLine($"copy /Y \"{tmpExe}\" \"{currentExe}\"");
                 batContents.AppendLine($"start \"\" \"{currentExe}\"");
                 batContents.AppendLine($"del \"{tmpExe}\"");
-                batContents.AppendLine($"del \"%~f0\"");
+                batContents.AppendLine("del \"%~f0\"");
                 File.WriteAllText(bat, batContents.ToString(), Encoding.ASCII);
 
                 var psi = new ProcessStartInfo
@@ -1843,7 +1927,7 @@ namespace KingdomHeartsMusicPatcher
                 batContents.AppendLine($"copy /Y \"{tmpExe}\" \"{currentExe}\"");
                 batContents.AppendLine($"start \"\" \"{currentExe}\"");
                 batContents.AppendLine($"del \"{tmpExe}\"");
-                batContents.AppendLine($"del \"%~f0\"");
+                batContents.AppendLine("del \"%~f0\"");
 
                 File.WriteAllText(bat, batContents.ToString(), Encoding.ASCII);
 
