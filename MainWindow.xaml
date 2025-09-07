@@ -7,7 +7,8 @@
         FontFamily="Segoe UI" 
         Foreground="White"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResizeWithGrip"
+        Icon="Assets\app.ico">
 
     <Window.Resources>
         <!-- Focus visual style used by multiple controls -->

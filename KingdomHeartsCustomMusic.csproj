@@ -84,6 +84,11 @@
     <EmbeddedResource Include="utils\KHPCPatchManager.exe" Condition="Exists('utils\KHPCPatchManager.exe')" />
   </ItemGroup>
 
+  <!-- Ensure the app icon is included as a WPF Resource so pack URIs like 'Assets/app.ico' resolve at runtime -->
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
   <!-- Package References -->
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.104.2" />
