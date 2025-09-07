@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging; // added
 using static KingdomHeartsMusicPatcher.utils.TrackListLoader;
 using System.Threading.Tasks;
 using System.Linq;
@@ -17,6 +18,7 @@ using System.Reflection;
 using System.Text;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
+using System.Threading;
 
 namespace KingdomHeartsMusicPatcher
 {
@@ -48,7 +50,7 @@ namespace KingdomHeartsMusicPatcher
         private readonly HashSet<string> _selectedPcNumbersReCOM = new();
         private readonly HashSet<string> _selectedPcNumbersDDD = new();
 
-        // NEW: Persist entered paths per tab (keyed by PcNumber) so filtering doesn't lose values
+        // Persist entered paths per tab (keyed by PcNumber)
         private readonly Dictionary<string, string> _pathValuesKH1 = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _pathValuesKH2 = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _pathValuesBBS = new(StringComparer.OrdinalIgnoreCase);
@@ -77,34 +79,43 @@ namespace KingdomHeartsMusicPatcher
         {
             Logger.Initialize();
             InitializeComponent();
-            
-            // Diferir la carga hasta que el árbol visual esté listo (evita NRE por nombres no materializados)
+
+            // Force-set icon at runtime via pack URI as an extra safeguard
+            try
+            {
+                var uri = new Uri("pack://application:,,,/Assets/app.ico", UriKind.Absolute);
+                // Prefer IconBitmapDecoder to pick best frame from .ico
+                var decoder = new IconBitmapDecoder(uri, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                var frame = decoder.Frames.FirstOrDefault();
+                if (frame != null) this.Icon = frame;
+            }
+            catch { /* ignore icon errors */ }
+
+            // Defer load to avoid NRE on named elements
             Loaded += async (_, __) =>
             {
                 try
                 {
                     LoadTracks();
-                    // Comprobación silenciosa de actualización al iniciar (solo avisa si hay una nueva versión)
                     await CheckForUpdatesOnStartupAsync();
                 }
-                catch { /* errores ya registrados/mostrados donde corresponda */ }
+                catch { }
             };
 
-            // Hacer que los ComboBox se desplieguen al hacer clic en cualquier parte
+            // Make ComboBoxes open on click
             TrackSortComboBoxKH1!.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
             TrackSortComboBoxKH2!.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
             TrackSortComboBoxBBS!.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
             TrackSortComboBoxReCOM!.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
             TrackSortComboBoxDDD!.PreviewMouseLeftButtonDown += ComboBox_PreviewMouseLeftButtonDown;
 
-            // Cambiar el texto del botón de generación de parche según la pestaña activa
+            // Update button text per tab
             MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
             UpdateGeneratePatchButtonText();
         }
 
         private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Esperar a que el cambio de pestaña se complete antes de actualizar el texto
             Dispatcher.BeginInvoke(new Action(UpdateGeneratePatchButtonText), System.Windows.Threading.DispatcherPriority.Background);
         }
 
@@ -130,20 +141,19 @@ namespace KingdomHeartsMusicPatcher
                 var selectedTab = MainTabControl.SelectedItem as TabItem;
                 if (selectedTab != null)
                 {
-                    if (selectedTab.Header.ToString().Equals("Kingdom Hearts I"))
+                    if (selectedTab.Header!.ToString()!.Equals("Kingdom Hearts I"))
                         GeneratePatchButton.Content = "✨ Generate Music Patch (KH1)";
-                    else if (selectedTab.Header.ToString().Equals("Kingdom Hearts II"))
+                    else if (selectedTab.Header!.ToString()!.Equals("Kingdom Hearts II"))
                         GeneratePatchButton.Content = "✨ Generate Music Patch (KH2)";
-                    else if (selectedTab.Header.ToString().Equals("Birth by Sleep"))
+                    else if (selectedTab.Header!.ToString()!.Equals("Birth by Sleep"))
                         GeneratePatchButton.Content = "✨ Generate Music Patch (BBS)";
-                    else if (selectedTab.Header.ToString().Equals("Chain of Memories"))
+                    else if (selectedTab.Header!.ToString()!.Equals("Chain of Memories"))
                         GeneratePatchButton.Content = "✨ Generate Music Patch (ReCOM)";
-                    else if (selectedTab.Header.ToString().Equals("Dream Drop Distance"))
+                    else if (selectedTab.Header!.ToString()!.Equals("Dream Drop Distance"))
                         GeneratePatchButton.Content = "✨ Generate Music Patch (DDD)";
                 }
             }
 
-            // Set default Patch Name for the active tab when empty or when it currently holds another default
             if (PatchNameTextBox != null)
             {
                 var defaultName = GetDefaultPatchNameForSelectedTab();
@@ -165,12 +175,11 @@ namespace KingdomHeartsMusicPatcher
         }
 
         #region XAML initialization
-
         private void LoadTracks()
         {
             try
             {
-                // Obtener la raíz del proyecto (no la carpeta bin)
+                // Project root (not bin dir)
                 var projectRoot = System.IO.Path.GetFullPath(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
                 var kh1Csv = Path.Combine(projectRoot, "resources", "All Games Track List - KH1.csv");
                 var kh2Csv = Path.Combine(projectRoot, "resources", "All Games Track List - KH2.csv");
@@ -198,7 +207,7 @@ namespace KingdomHeartsMusicPatcher
 
         private void RenderTrackListKH1(IEnumerable<TrackInfo> tracks)
         {
-            if (WorldListPanelKH1 == null) return; // safety
+            if (WorldListPanelKH1 == null) return;
             WorldListPanelKH1.Children.Clear();
             _trackBindingsKH1.Clear();
             _trackCheckboxesKH1.Clear();
@@ -264,22 +273,20 @@ namespace KingdomHeartsMusicPatcher
             Dictionary<TrackInfo, CheckBox> selectionMap,
             Dictionary<string, string> pathMap)
         {
-            // Create a modern styled border container for each track
             var trackBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromRgb(37, 37, 38)), // #FF252526
+                Background = new SolidColorBrush(Color.FromRgb(37, 37, 38)),
                 CornerRadius = new CornerRadius(6),
                 Padding = new Thickness(15, 12, 15, 12),
                 Margin = new Thickness(0, 0, 0, 8)
             };
 
             var row = new Grid();
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) }); // Checkbox
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(300) }); // Track name
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }); // Path textbox
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto }); // Browse button auto-size
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(300) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-            // Checkbox with modern styling
             var checkBox = new CheckBox
             {
                 VerticalAlignment = VerticalAlignment.Center,
@@ -289,24 +296,20 @@ namespace KingdomHeartsMusicPatcher
             Grid.SetColumn(checkBox, 0);
             selectionMap[track] = checkBox;
 
-            // Determine selection set by selectionMap reference
             HashSet<string> selectionSet = _selectedPcNumbersKH1;
             if (ReferenceEquals(selectionMap, _trackCheckboxesKH2)) selectionSet = _selectedPcNumbersKH2;
             else if (ReferenceEquals(selectionMap, _trackCheckboxesBBS)) selectionSet = _selectedPcNumbersBBS;
             else if (ReferenceEquals(selectionMap, _trackCheckboxesReCOM)) selectionSet = _selectedPcNumbersReCOM;
             else if (ReferenceEquals(selectionMap, _trackCheckboxesDDD)) selectionSet = _selectedPcNumbersDDD;
 
-            // Apply persisted selection
             if (!string.IsNullOrEmpty(track.PcNumber) && selectionSet.Contains(track.PcNumber))
             {
                 checkBox.IsChecked = true;
             }
 
-            // Keep selectionSet in sync
             checkBox.Checked += (s, e) => { if (!string.IsNullOrEmpty(track.PcNumber)) selectionSet.Add(track.PcNumber); };
             checkBox.Unchecked += (s, e) => { if (!string.IsNullOrEmpty(track.PcNumber)) selectionSet.Remove(track.PcNumber); };
 
-            // Track description with better typography
             var label = new TextBlock
             {
                 Foreground = Brushes.White,
@@ -319,21 +322,19 @@ namespace KingdomHeartsMusicPatcher
             };
             Grid.SetColumn(label, 1);
 
-            // Modern styled textbox
             var textbox = new TextBox
             {
                 Margin = new Thickness(0, 0, 15, 0),
                 VerticalAlignment = VerticalAlignment.Center,
-                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)), // #FF2D2D30
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                 Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)), // #FF404040
+                BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(8, 6, 8, 6),
                 FontSize = 11
             };
             Grid.SetColumn(textbox, 2);
 
-            // Initialize from persisted map
             if (!string.IsNullOrWhiteSpace(track.PcNumber) && pathMap.TryGetValue(track.PcNumber!, out var stored))
             {
                 textbox.Text = stored ?? string.Empty;
@@ -345,15 +346,15 @@ namespace KingdomHeartsMusicPatcher
                 var value = textbox.Text?.Trim() ?? string.Empty;
                 if (!string.IsNullOrWhiteSpace(value) && YouTubeRegex.IsMatch(value))
                 {
-                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(220, 20, 60)); // red for YouTube URL
+                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(220, 20, 60));
                 }
                 else if (!string.IsNullOrWhiteSpace(value) && File.Exists(value))
                 {
-                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(255, 193, 7)); // folder-like yellow for file path
+                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(255, 193, 7));
                 }
                 else
                 {
-                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)); // default gray
+                    textbox.BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64));
                 }
 
                 if (!string.IsNullOrEmpty(track.PcNumber))
@@ -362,23 +363,20 @@ namespace KingdomHeartsMusicPatcher
                     else pathMap[track.PcNumber] = value;
                 }
 
-                // Update visibility of the "Hide empty tracks" checkbox for all tabs
                 UpdateShowAssignedOnlyVisibility();
             };
 
-            // Accessibility
             System.Windows.Automation.AutomationProperties.SetLabeledBy(checkBox, label);
             System.Windows.Automation.AutomationProperties.SetName(checkBox, $"Select track: {track.Description}");
             System.Windows.Automation.AutomationProperties.SetLabeledBy(textbox, label);
             System.Windows.Automation.AutomationProperties.SetName(textbox, $"Audio file path or YouTube URL for: {track.Description}");
 
-            // Browse button
             var button = new Button
             {
                 Content = "📁 Browse / YouTube URL",
-                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)), // #FF2D2D30
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 48)),
                 Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)), // #FF404040
+                BorderBrush = new SolidColorBrush(Color.FromRgb(64, 64, 64)),
                 BorderThickness = new Thickness(1),
                 Padding = new Thickness(12, 6, 12, 6),
                 FontSize = 11,
@@ -401,7 +399,7 @@ namespace KingdomHeartsMusicPatcher
                 };
                 if (dialog.ShowDialog() == true)
                 {
-                    textbox.Text = dialog.FileName; // TextChanged will persist in pathMap
+                    textbox.Text = dialog.FileName;
                     System.Windows.Automation.AutomationProperties.SetHelpText(textbox, $"Selected file: {dialog.FileName}");
                 }
             };
@@ -419,11 +417,9 @@ namespace KingdomHeartsMusicPatcher
             containerPanel.Children.Add(trackBorder);
             bindingList.Add((Track: track, PathTextBox: textbox));
         }
-
         #endregion
 
         #region Button events
-
         private void SaveConfigButton_Click(object sender, RoutedEventArgs e)
         {
             string? ResolveCanonicalPc(IEnumerable<TrackInfo> tracks, string rawKey)
@@ -558,11 +554,10 @@ namespace KingdomHeartsMusicPatcher
 
                         if (resolvedPc == null)
                         {
-                            // Try unpadded match
-                            var unpadded = num.ToString();
+                            var unpadded = num.ToString(); // fixed var name
                             var bindingUnpadded = bindings.FirstOrDefault(b => b.Track.PcNumber != null && b.Track.PcNumber.TrimStart('0').Equals(unpadded.TrimStart('0'), StringComparison.OrdinalIgnoreCase));
                             if (bindingUnpadded.Track != null)
-                                resolvedPc = bindingUnpadded.Track.PcNumber;
+                                resolvedPc = bindingUnpadded.Track.PcNumber; // fixed var name
                         }
                     }
 
@@ -617,7 +612,6 @@ namespace KingdomHeartsMusicPatcher
                 if (config?.Tracks != null)
                 {
                     ApplyLoadedConfig(config.Tracks);
-                    // If loaded config only contains assignments for exactly one game, switch to that tab
                     SwitchToTabIfSingleGame(config.Tracks);
                     MessageBox.Show("✅ Configuration loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -628,10 +622,8 @@ namespace KingdomHeartsMusicPatcher
             }
         }
 
-
         private void SelectAllCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            // Select all checkboxes for the active tab
             var selectedTab = MainTabControl.SelectedItem as TabItem;
             string tabHeader = selectedTab?.Header.ToString() ?? "";
 
@@ -659,7 +651,6 @@ namespace KingdomHeartsMusicPatcher
 
         private void SelectAllCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            // Deselect all checkboxes for the active tab
             var selectedTab = MainTabControl.SelectedItem as TabItem;
             string tabHeader = selectedTab?.Header.ToString() ?? "";
 
@@ -698,7 +689,6 @@ namespace KingdomHeartsMusicPatcher
 
             string selectedFile = dialog.FileName;
 
-            // Check which tab we are on
             var selectedTab = MainTabControl.SelectedItem as TabItem;
             string tabHeader = selectedTab?.Header.ToString() ?? "";
 
@@ -732,7 +722,7 @@ namespace KingdomHeartsMusicPatcher
             }
             else
             {
-                return; // Tab no reconocida
+                return;
             }
 
             int assignedCount = 0;
@@ -745,13 +735,11 @@ namespace KingdomHeartsMusicPatcher
                 }
             }
 
-            // Deselect all checkboxes after applying
             foreach (var checkbox in checkboxes.Values)
             {
                 checkbox.IsChecked = false;
             }
 
-            // Show feedback message
             if (assignedCount > 0)
             {
                 MessageBox.Show($"🎵 Audio file assigned to {assignedCount} track(s)!", "Assignment Complete", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -765,7 +753,6 @@ namespace KingdomHeartsMusicPatcher
                 var uri = new Uri(url.Trim());
                 if (uri.Host.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
                 {
-                    // https://youtu.be/ID or /ID?si=...
                     var seg = uri.AbsolutePath.Trim('/');
                     return string.IsNullOrWhiteSpace(seg) ? null : seg;
                 }
@@ -815,12 +802,10 @@ namespace KingdomHeartsMusicPatcher
             Directory.CreateDirectory(downloadsDir);
             Logger.Log($"Downloads directory: {downloadsDir}");
 
-            // Setup tools to get yt-dlp path (extracted to temp utils)
             var toolsSetup = EmbeddedResourceManager.SetupTools(Path.Combine(Path.GetTempPath(), "KingdomHeartsCustomMusic_Tools"));
             string ytDlpPath = toolsSetup.HasYtDlp ? toolsSetup.YtDlpPath : string.Empty;
             Logger.Log($"yt-dlp available: {toolsSetup.HasYtDlp}, path: {ytDlpPath}");
 
-            // Try to locate ffmpeg
             string? ffmpegPath = null;
             if (toolsSetup.HasFfmpeg && File.Exists(toolsSetup.FfmpegPath))
             {
@@ -837,7 +822,6 @@ namespace KingdomHeartsMusicPatcher
                 }
                 else
                 {
-                    // Search PATH
                     try
                     {
                         var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
@@ -863,7 +847,6 @@ namespace KingdomHeartsMusicPatcher
                 return downloads;
             }
 
-            // Regex to capture percentages like " 12.3%" or "99%"
             var percentRegex = new Regex(@"(?<!\d)(?<num>\d{1,3})(?:\.\d+)?%", RegexOptions.Compiled);
 
             int index = 0;
@@ -1014,10 +997,9 @@ namespace KingdomHeartsMusicPatcher
             try
             {
                 Logger.Log("GeneratePatchButton_Click: started");
-                // Detectar la pestaña activa correctamente
                 var selectedTab = MainTabControl.SelectedItem as TabItem;
                 string tabHeader = selectedTab?.Header.ToString() ?? "";
-                
+
                 bool isKH1 = tabHeader.Equals("Kingdom Hearts I");
                 bool isKH2 = tabHeader.Equals("Kingdom Hearts II");
                 bool isBBS = tabHeader.Equals("Birth by Sleep");
@@ -1026,9 +1008,8 @@ namespace KingdomHeartsMusicPatcher
 
                 Logger.Log($"Tab flags - KH1:{isKH1}, KH2:{isKH2}, BBS:{isBBS}, ReCOM:{isReCOM}, DDD:{isDDD}");
 
-                // Usar la lista de tracks correspondiente
                 List<(TrackInfo Track, TextBox PathTextBox)> currentTrackBindings;
-                
+
                 if (isKH1)
                     currentTrackBindings = _trackBindingsKH1;
                 else if (isKH2)
@@ -1040,7 +1021,7 @@ namespace KingdomHeartsMusicPatcher
                 else if (isDDD)
                     currentTrackBindings = _trackBindingsDDD;
                 else
-                    return; // Tab no reconocida
+                    return;
 
                 var selectedTracks = currentTrackBindings
                     .Where(t => !string.IsNullOrWhiteSpace(t.PathTextBox.Text))
@@ -1054,7 +1035,6 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                // Confirmación antes de comenzar el proceso pesado
                 var confirm = MessageBox.Show(
                     "Patch generation can take several minutes, especially if you included multiple YouTube URLs.\n\nDo you want to continue?",
                     "Confirm Patch Generation",
@@ -1067,21 +1047,17 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                // Snapshot previo (antes de descargar)
                 var bindingsSnapshot = currentTrackBindings
                     .Select(t => (t.Track, t.PathTextBox.Text))
                     .ToList();
 
                 Logger.Log($"Bindings snapshot count: {bindingsSnapshot.Count}");
 
-                // Preparar rutas de salida y comprobar overwrite ANTES de descargar YouTube
                 string appDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
-                // Carpeta de salida bajo 'Generated Patches/Patches'
                 string rootDir = Path.Combine(appDir, "Generated Patches");
                 Directory.CreateDirectory(rootDir);
                 string outputDir = Path.Combine(rootDir, "Patches");
 
-                // Obtener nombre de parche (personalizado o por defecto de la pestaña)
                 string? patchNameInput = PatchNameTextBox.Text?.Trim();
                 if (string.IsNullOrWhiteSpace(patchNameInput))
                 {
@@ -1089,7 +1065,6 @@ namespace KingdomHeartsMusicPatcher
                 }
                 string baseFileName = patchNameInput!;
 
-                // Migración de carpetas antiguas (appDir\patches/appDir\Patches) a la nueva ruta
                 try
                 {
                     string legacyLowercase = Path.Combine(appDir, "patches");
@@ -1130,7 +1105,7 @@ namespace KingdomHeartsMusicPatcher
                 Directory.CreateDirectory(outputDir);
 
                 string gameExtension = isKH1 ? "kh1pcpatch" :
-                                     isKH2 ? "kh2pcpatch" : 
+                                     isKH2 ? "kh2pcpatch" :
                                      isBBS ? "bbspcpatch" :
                                      isReCOM ? "compcpatch" :
                                      "dddpcpatch";
@@ -1139,7 +1114,6 @@ namespace KingdomHeartsMusicPatcher
                 string patchFinal = Path.Combine(outputDir, $"{baseFileName}.{gameExtension}");
                 Logger.Log($"Planned output - patchZip: {patchZip}, patchFinal: {patchFinal}");
 
-                // Confirm overwrite si el destino ya existe (antes de descargar YouTube)
                 if (File.Exists(patchFinal))
                 {
                     Logger.Log("Destination patch already exists; asking for overwrite (pre-download)");
@@ -1155,23 +1129,19 @@ namespace KingdomHeartsMusicPatcher
                     }
                 }
 
-                // Descargar YouTube primero (si procede)
                 ProgressText.Text = "Downloading YouTube audio 0/0";
                 var urlToFile = await EnsureYouTubeDownloadsAsync(bindingsSnapshot);
                 Logger.Log($"URL to file resolved: {urlToFile.Count}");
 
-                // Reemplazar URLs por rutas locales
                 var resolvedSnapshot = bindingsSnapshot
                     .Select(b => (b.Track, Value: urlToFile.TryGetValue(b.Item2, out var path) ? path : b.Item2))
                     .ToList();
                 Logger.Log("Resolved snapshot ready for processing");
 
-                // Setup tools from embedded resources (después de confirmar overwrite)
                 string tempToolsDir = Path.GetTempPath();
                 var toolsSetup = EmbeddedResourceManager.SetupTools(tempToolsDir);
                 Logger.Log($"Tools setup - Encoder: {toolsSetup.HasSingleEncoder}, SCD: {toolsSetup.HasOriginalScd}, PatchManager: {toolsSetup.HasPatchManager}");
 
-                // Elegir template original.scd por juego cuando esté disponible
                 string scdTemplate = toolsSetup.OriginalScdPath;
                 if (isKH1 && toolsSetup.HasOriginalScdKH1) scdTemplate = toolsSetup.OriginalScdKH1Path;
                 else if (isKH2 && toolsSetup.HasOriginalScdKH2) scdTemplate = toolsSetup.OriginalScdKH2Path;
@@ -1179,13 +1149,12 @@ namespace KingdomHeartsMusicPatcher
                 else if (isReCOM && toolsSetup.HasOriginalScdReCOM) scdTemplate = toolsSetup.OriginalScdReCOMPath;
                 else if (isDDD && toolsSetup.HasOriginalScdDDD) scdTemplate = toolsSetup.OriginalScdDDDPath;
 
-                // Check if we have the minimum required tools
                 if (!toolsSetup.IsCompleteSetup)
                 {
                     var missing = toolsSetup.GetMissingTools();
                     Logger.Log($"Missing tools: {string.Join(", ", missing)}");
                     var message = "❌ Missing required tools for patch generation!\n\n";
-                    
+
                     if (missing.Contains("SingleEncoder.exe") || missing.Contains("original.scd"))
                     {
                         message += "🔴 Critical missing files:\n";
@@ -1193,7 +1162,7 @@ namespace KingdomHeartsMusicPatcher
                             message += $"  • {tool}\n";
                         message += "\n";
                     }
-                    
+
                     if (missing.Any(t => t != "SingleEncoder.exe" && t != "original.scd"))
                     {
                         message += "⚠️ Optional missing files:\n";
@@ -1201,7 +1170,7 @@ namespace KingdomHeartsMusicPatcher
                             message += $"  • {tool}\n";
                         message += "\n";
                     }
-                    
+
                     message += "📋 To complete setup:\n" +
                                "1. Obtain the missing files from KHPCSoundTools\n" +
                                "2. Place them in your project's utils/ folder\n" +
@@ -1210,17 +1179,15 @@ namespace KingdomHeartsMusicPatcher
                                "• https://github.com/OpenKH/KHPCSoundTools\n" +
                                "• Kingdom Hearts modding community\n\n" +
                                "💡 Once embedded, these tools will be included in your .exe!";
-                    
+
                     MessageBox.Show(message, "Setup Required", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-                // Use the extracted tools
                 string encoderDir = toolsSetup.EncoderDirectory;
                 string patchBasePath = Path.Combine(encoderDir, "patches");
                 Logger.Log($"Paths - encoderDir: {encoderDir}, scdTemplate: {scdTemplate}, patchBasePath: {patchBasePath}");
 
-                // Wire progress callback with item-level percentage
                 void ProgressCallback(int current, int total, string phase, int itemPercent)
                 {
                     Dispatcher.Invoke(() =>
@@ -1232,7 +1199,6 @@ namespace KingdomHeartsMusicPatcher
                         }
                         if (phase == "Encoding")
                         {
-                            // Clamp percent and show at least 1% while running to avoid 0% -> Done
                             int pct = Math.Max(0, Math.Min(100, itemPercent));
                             ProgressText.Text = $"Encoding ({current}/{total}, {pct}%)";
                         }
@@ -1334,10 +1300,9 @@ namespace KingdomHeartsMusicPatcher
         {
             try
             {
-                // Setup tools from embedded resources
                 string tempToolsDir = Path.Combine(Path.GetTempPath(), "KingdomHeartsCustomMusic_Tools");
                 var toolsSetup = EmbeddedResourceManager.SetupTools(tempToolsDir);
-                
+
                 if (!toolsSetup.HasPatchManager)
                 {
                     MessageBox.Show(
@@ -1353,7 +1318,7 @@ namespace KingdomHeartsMusicPatcher
                         MessageBoxImage.Warning);
                     return;
                 }
-                
+
                 var psi = new ProcessStartInfo
                 {
                     FileName = toolsSetup.PatchManagerPath,
@@ -1377,8 +1342,8 @@ namespace KingdomHeartsMusicPatcher
             _creditsClickCount++;
             if (_creditsClickCount >= 15)
             {
-                _creditsClickCount = 0; // reset counter
-                if (TryShowMeme()) return; // show meme instead of credits
+                _creditsClickCount = 0;
+                if (TryShowMeme()) return;
             }
 
             var win = new CreditsWindow();
@@ -1391,7 +1356,7 @@ namespace KingdomHeartsMusicPatcher
             _creditsClickCount++;
             if (_creditsClickCount >= 15)
             {
-                _creditsClickCount = 0; // reset counter
+                _creditsClickCount = 0;
                 if (TryShowMeme()) return;
             }
 
@@ -1404,12 +1369,10 @@ namespace KingdomHeartsMusicPatcher
         {
             try
             {
-                // 1) Next to the executable
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 string exeMemes = Path.Combine(baseDir, "memes");
                 if (Directory.Exists(exeMemes)) return exeMemes;
 
-                // 2) Project root (when running from IDE)
                 var projectRoot = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", ".."));
                 string rootMemes = Path.Combine(projectRoot, "memes");
                 if (Directory.Exists(rootMemes)) return rootMemes;
@@ -1444,48 +1407,37 @@ namespace KingdomHeartsMusicPatcher
             win.ShowDialog();
             return true;
         }
-
-        #endregion // End Button events
-
-        #region Sort ComboBoxes
-
-         private void TrackSortComboBoxKH1_SelectionChanged(object sender, SelectionChangedEventArgs e)
-         {
-            ReapplyCurrentTabFilterAndSort();
-         }
-         private void TrackSortComboBoxKH2_SelectionChanged(object sender, SelectionChangedEventArgs e)
-         {
-            ReapplyCurrentTabFilterAndSort();
-         }
-         private void TrackSortComboBoxBBS_SelectionChanged(object sender, SelectionChangedEventArgs e)
-         {
-            ReapplyCurrentTabFilterAndSort();
-         }
-         private void TrackSortComboBoxReCOM_SelectionChanged(object sender, SelectionChangedEventArgs e)
-         {
-            ReapplyCurrentTabFilterAndSort();
-         }
-
-         private void TrackSortComboBoxDDD_SelectionChanged(object sender, SelectionChangedEventArgs e)
-         {
-            ReapplyCurrentTabFilterAndSort();
-         }
-
         #endregion
 
-        // Search filter helpers
+        #region Sort ComboBoxes
+        private void TrackSortComboBoxKH1_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ReapplyCurrentTabFilterAndSort();
+        }
+        private void TrackSortComboBoxKH2_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ReapplyCurrentTabFilterAndSort();
+        }
+        private void TrackSortComboBoxBBS_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ReapplyCurrentTabFilterAndSort();
+        }
+        private void TrackSortComboBoxReCOM_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ReapplyCurrentTabFilterAndSort();
+        }
+        private void TrackSortComboBoxDDD_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ReapplyCurrentTabFilterAndSort();
+        }
+        #endregion
+
+        // Search & filter
         private string GetSearchTextKH1() => (TrackSearchTextBoxKH1?.Text ?? string.Empty).Trim();
         private string GetSearchTextKH2() => (TrackSearchTextBoxKH2?.Text ?? string.Empty).Trim();
         private string GetSearchTextBBS() => (TrackSearchTextBoxBBS?.Text ?? string.Empty).Trim();
         private string GetSearchTextReCOM() => (TrackSearchTextBoxReCOM?.Text ?? string.Empty).Trim();
         private string GetSearchTextDDD() => (TrackSearchTextBoxDDD?.Text ?? string.Empty).Trim();
-
-        private IEnumerable<TrackInfo> ApplyFilter(IEnumerable<TrackInfo> source, string filter)
-        {
-            if (string.IsNullOrWhiteSpace(filter)) return source;
-            return source.Where(t => (t.Description ?? string.Empty)
-                                        .Contains(filter, StringComparison.CurrentCultureIgnoreCase));
-        }
 
         private IEnumerable<TrackInfo> ApplyFilterWithAssigned(IEnumerable<TrackInfo> source, string filter, Dictionary<string, string> pathMap, bool showAssignedOnly)
         {
@@ -1601,7 +1553,6 @@ namespace KingdomHeartsMusicPatcher
         private void ShowAssignedOnlyReCOM_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
         private void ShowAssignedOnlyDDD_CheckedChanged(object sender, RoutedEventArgs e) => ReapplyCurrentTabFilterAndSort();
 
-        // Hook visibility updates from AddTrackRow persistence
         private void AfterTextChangeUpdateAssignedVisibility()
         {
             UpdateShowAssignedOnlyVisibility();
@@ -1612,7 +1563,7 @@ namespace KingdomHeartsMusicPatcher
             try
             {
                 var latest = await GetLatestReleaseInfoAsync();
-                if (latest == null) return; // silencioso si no hay información
+                if (latest == null) return;
 
                 Version current = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0, 0);
                 if (!Version.TryParse(latest.TagName?.TrimStart('v') ?? "0.0.0", out var latestVersion))
@@ -1620,9 +1571,8 @@ namespace KingdomHeartsMusicPatcher
                     latestVersion = new Version(0, 0, 0, 0);
                 }
 
-                if (latestVersion <= current) return; // ya está actualizado
+                if (latestVersion <= current) return;
 
-                // Aviso al usuario con recomendación positiva
                 var result = MessageBox.Show(
                     $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\n\nUpdating is recommended to improve the application's functionality.\n\nIf you choose to update, the application will download the new .exe, replace the existing .exe with the downloaded file, and automatically close and restart the application to run the new version.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
                     "Update available",
@@ -1631,13 +1581,11 @@ namespace KingdomHeartsMusicPatcher
 
                 if (result != MessageBoxResult.Yes) return;
 
-                // Reutilizar el flujo de actualización del menú
                 await PerformUpdateFlowAsync(latest);
             }
             catch (Exception ex)
             {
                 Logger.LogException("CheckForUpdatesOnStartupAsync error", ex);
-                // No interrumir la experiencia de inicio si falla
             }
         }
 
@@ -1646,9 +1594,8 @@ namespace KingdomHeartsMusicPatcher
             try
             {
                 GeneratePatchButton.IsEnabled = false;
-                ProgressText.Text = "Downloading update...";
+                ProgressText.Text = "Downloading update... 0%";
 
-                // Buscar asset ejecutable
                 var asset = latest.Assets?.FirstOrDefault(a => a.Name != null && a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                          ?? latest.Assets?.FirstOrDefault(a => a.Name != null && a.Name.IndexOf("exe", StringComparison.OrdinalIgnoreCase) >= 0);
 
@@ -1661,7 +1608,12 @@ namespace KingdomHeartsMusicPatcher
                 var tmp = Path.Combine(Path.GetTempPath(), "khcm_update");
                 Directory.CreateDirectory(tmp);
                 var tmpExe = Path.Combine(tmp, asset.Name!);
-                await DownloadFileAsync(asset.BrowserDownloadUrl!, tmpExe);
+
+                var progress = new Progress<int>(p =>
+                {
+                    ProgressText.Text = $"Downloading update... {p}%";
+                });
+                await DownloadFileAsync(asset.BrowserDownloadUrl!, tmpExe, progress);
 
                 if (!File.Exists(tmpExe) || new FileInfo(tmpExe).Length == 0)
                 {
@@ -1669,7 +1621,6 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                // Intentar localizar checksum opcional
                 string? expectedHash = null;
                 var checksumAsset = latest.Assets?.FirstOrDefault(a => a.Name != null && (
                     a.Name.EndsWith(".sha256", StringComparison.OrdinalIgnoreCase) ||
@@ -1719,7 +1670,6 @@ namespace KingdomHeartsMusicPatcher
                     }
                 }
 
-                // Crear script de actualización y reiniciar
                 ProgressText.Text = "Updating... restarting application";
                 var currentExe = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath!;
                 var tmpDir = Path.GetDirectoryName(tmpExe)!;
@@ -1745,7 +1695,7 @@ namespace KingdomHeartsMusicPatcher
                     UseShellExecute = true,
                     WorkingDirectory = tmpDir
                 };
-                Process.Start( psi);
+                Process.Start(psi);
                 Application.Current.Shutdown();
             }
             catch (Exception ex)
@@ -1759,7 +1709,6 @@ namespace KingdomHeartsMusicPatcher
             }
         }
 
-        // Update menu handler (bound in XAML)
         private async void UpdateMenuItem_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -1774,10 +1723,10 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                Version current = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0,0,0,0);
+                Version current = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0, 0);
                 if (!Version.TryParse(latest.TagName?.TrimStart('v') ?? "0.0.0", out var latestVersion))
                 {
-                    latestVersion = new Version(0,0,0,0);
+                    latestVersion = new Version(0, 0, 0, 0);
                 }
 
                 if (latestVersion <= current)
@@ -1786,7 +1735,6 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                // Ask user for confirmation before downloading the update
                 var ask = MessageBox.Show(
                     $"A new version is available (current: {current}, latest: {latestVersion}).\n\nDo you want to download and install it now?\n\nUpdating is recommended to improve the application's functionality.\n\nIf you choose to update, the application will download the new .exe, replace the existing .exe with the downloaded file, and automatically close and restart the application to run the new version.\n\nIf the update does not complete successfully, you can download a previous release from:\nhttps://github.com/jmtdev0/KingdomHeartsCustomMusic/releases",
                     "Update available",
@@ -1798,7 +1746,6 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                // Find executable asset (be flexible)
                 var asset = latest.Assets?.FirstOrDefault(a => a.Name != null && a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
                 if (asset == null && latest.Assets != null)
                 {
@@ -1816,11 +1763,16 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                ProgressText.Text = "Downloading update...";
+                ProgressText.Text = "Downloading update... 0%";
                 var tmp = Path.Combine(Path.GetTempPath(), "khcm_update");
                 Directory.CreateDirectory(tmp);
                 var tmpExe = Path.Combine(tmp, asset.Name!);
-                await DownloadFileAsync(asset.BrowserDownloadUrl!, tmpExe);
+
+                var progress = new Progress<int>(p =>
+                {
+                    ProgressText.Text = $"Downloading update... {p}%";
+                });
+                await DownloadFileAsync(asset.BrowserDownloadUrl!, tmpExe, progress);
 
                 if (!File.Exists(tmpExe) || new FileInfo(tmpExe).Length == 0)
                 {
@@ -1828,7 +1780,6 @@ namespace KingdomHeartsMusicPatcher
                     return;
                 }
 
-                // Try to locate checksum asset
                 string? expectedHash = null;
                 var checksumAsset = latest.Assets?.FirstOrDefault(a => a.Name != null && (
                     a.Name.EndsWith(".sha256", StringComparison.OrdinalIgnoreCase) ||
@@ -1878,7 +1829,6 @@ namespace KingdomHeartsMusicPatcher
                     }
                 }
 
-                // Replace current exe with downloaded
                 var currentExe = Process.GetCurrentProcess().MainModule?.FileName ?? Environment.ProcessPath!;
                 var bat = Path.Combine(tmp, "update.bat");
                 var batContents = new StringBuilder();
@@ -1949,11 +1899,11 @@ namespace KingdomHeartsMusicPatcher
                     release.Assets = new List<GitHubAsset>();
                     foreach (var a in assetsEl.EnumerateArray())
                     {
-                         string? name = null;
-                         string? url = null;
-                         if (a.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String) name = nameEl.GetString();
-                         if (a.TryGetProperty("browser_download_url", out var urlEl) && urlEl.ValueKind == JsonValueKind.String) url = urlEl.GetString();
-                         if (!string.IsNullOrEmpty(name)) release.Assets.Add(new GitHubAsset { Name = name, BrowserDownloadUrl = url });
+                        string? name = null;
+                        string? url = null;
+                        if (a.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String) name = nameEl.GetString();
+                        if (a.TryGetProperty("browser_download_url", out var urlEl) && urlEl.ValueKind == JsonValueKind.String) url = urlEl.GetString();
+                        if (!string.IsNullOrEmpty(name)) release.Assets.Add(new GitHubAsset { Name = name, BrowserDownloadUrl = url });
                     }
                     Logger.Log($"Parsed assets count: {release.Assets.Count}");
                 }
@@ -1974,20 +1924,19 @@ namespace KingdomHeartsMusicPatcher
 
         private class GitHubRelease
         {
-             [JsonPropertyName("tag_name")]
-             public string? TagName { get; set; }
-             [JsonPropertyName("body")]
-             public string? Body { get; set; }
-             public List<GitHubAsset>? Assets { get; set; }
+            [JsonPropertyName("tag_name")]
+            public string? TagName { get; set; }
+            [JsonPropertyName("body")]
+            public string? Body { get; set; }
+            public List<GitHubAsset>? Assets { get; set; }
         }
         private class GitHubAsset
         {
-             public string? Name { get; set; }
-             [JsonPropertyName("browser_download_url")]
-             public string? BrowserDownloadUrl { get; set; }
+            public string? Name { get; set; }
+            [JsonPropertyName("browser_download_url")]
+            public string? BrowserDownloadUrl { get; set; }
         }
 
-        // If the loaded configuration has assignments for exactly one game, select that tab automatically.
         private void SwitchToTabIfSingleGame(Dictionary<string, Dictionary<string, string>> tracks)
         {
             if (tracks == null) return;
@@ -2022,19 +1971,45 @@ namespace KingdomHeartsMusicPatcher
             }
         }
 
-        // Helper to download a remote file to disk using the shared HttpClient
-        private static async Task DownloadFileAsync(string url, string destination)
+        private static async Task DownloadFileAsync(string url, string destination, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.UserAgent.ParseAdd("KHCM-Updater/1.0");
-            using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+            using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             resp.EnsureSuccessStatusCode();
 
             var dir = Path.GetDirectoryName(destination);
             if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
 
-            await using var fs = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None);
-            await resp.Content.CopyToAsync(fs);
+            var contentLength = resp.Content.Headers.ContentLength;
+            await using var input = await resp.Content.ReadAsStreamAsync(cancellationToken);
+            await using var fs = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None, 81920, useAsync: true);
+
+            var buffer = new byte[81920];
+            long totalRead = 0;
+            int lastPct = -1;
+            while (true)
+            {
+                int read = await input.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken);
+                if (read == 0) break;
+                await fs.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                totalRead += read;
+
+                if (contentLength.HasValue && contentLength.Value > 0 && progress != null)
+                {
+                    int pct = (int)Math.Floor((double)totalRead * 100 / contentLength.Value);
+                    if (pct != lastPct)
+                    {
+                        lastPct = pct;
+                        progress.Report(Math.Min(100, Math.Max(0, pct)));
+                    }
+                }
+            }
+
+            if (contentLength.HasValue && progress != null)
+            {
+                progress.Report(100);
+            }
         }
     }
 }
