@@ -21,6 +21,7 @@ using System.Text;
 using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System; // for IntPtr
 
 namespace KingdomHeartsMusicPatcher
 {
@@ -29,16 +30,19 @@ namespace KingdomHeartsMusicPatcher
     /// </summary>
     public partial class MainWindow : Window
     {
+        // Region: fields restored for bindings, state and updater
         private readonly List<(TrackInfo Track, TextBox PathTextBox)> _trackBindingsKH1 = new();
         private readonly List<(TrackInfo Track, TextBox PathTextBox)> _trackBindingsKH2 = new();
         private readonly List<(TrackInfo Track, TextBox PathTextBox)> _trackBindingsBBS = new();
         private readonly List<(TrackInfo Track, TextBox PathTextBox)> _trackBindingsReCOM = new();
         private readonly List<(TrackInfo Track, TextBox PathTextBox)> _trackBindingsDDD = new();
+
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH1 = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesKH2 = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesBBS = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesReCOM = new();
         private readonly Dictionary<TrackInfo, CheckBox> _trackCheckboxesDDD = new();
+
         private List<TrackInfo> _tracksKH1 = new();
         private List<TrackInfo> _tracksKH2 = new();
         private List<TrackInfo> _tracksBBS = new();
@@ -76,6 +80,27 @@ namespace KingdomHeartsMusicPatcher
 
         // Shared HttpClient for GitHub requests
         private static readonly HttpClient _http = new(new HttpClientHandler { AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate });
+
+        // P/Invoke to force native window icon for taskbar/title bar
+        private const int WM_SETICON = 0x0080;
+        private const int ICON_SMALL = 0;
+        private const int ICON_BIG = 1;
+        private const int GCLP_HICON = -14;
+        private const int GCLP_HICONSM = -34;
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SetClassLongPtrW")]
+        private static extern IntPtr SetClassLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SetClassLongW")] // 32-bit fallback
+        private static extern IntPtr SetClassLongPtr32(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr CopyIcon(IntPtr hIcon);
+
+        private static IntPtr SetClassLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+            => IntPtr.Size == 8 ? SetClassLongPtr64(hWnd, nIndex, dwNewLong) : SetClassLongPtr32(hWnd, nIndex, dwNewLong);
 
         public MainWindow()
         {
@@ -196,6 +221,48 @@ namespace KingdomHeartsMusicPatcher
             // Update button text per tab
             MainTabControl.SelectionChanged += MainTabControl_SelectionChanged;
             UpdateGeneratePatchButtonText();
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            try
+            {
+                var hwnd = new WindowInteropHelper(this).Handle;
+                Logger.Log($"[Icon] OnSourceInitialized hwnd=0x{hwnd.ToInt64():X}");
+
+                var exePath = Process.GetCurrentProcess().MainModule?.FileName
+                              ?? Environment.ProcessPath
+                              ?? Assembly.GetExecutingAssembly().Location;
+
+                using var assoc = System.Drawing.Icon.ExtractAssociatedIcon(exePath!);
+                if (assoc != null)
+                {
+                    var hIcon = CopyIcon(assoc.Handle);
+                    if (hIcon != IntPtr.Zero)
+                    {
+                        var prevBig = SendMessage(hwnd, WM_SETICON, new IntPtr(ICON_BIG), hIcon);
+                        var prevSmall = SendMessage(hwnd, WM_SETICON, new IntPtr(ICON_SMALL), hIcon);
+                        Logger.Log($"[Icon] WM_SETICON set. prevBig=0x{prevBig.ToInt64():X}, prevSmall=0x{prevSmall.ToInt64():X}");
+
+                        var clsBig = SetClassLongPtr(hwnd, GCLP_HICON, hIcon);
+                        var clsSmall = SetClassLongPtr(hwnd, GCLP_HICONSM, hIcon);
+                        Logger.Log($"[Icon] SetClassLongPtr set. classBigPrev=0x{clsBig.ToInt64():X}, classSmallPrev=0x{clsSmall.ToInt64():X}");
+                    }
+                    else
+                    {
+                        Logger.Log("[Icon] CopyIcon returned NULL");
+                    }
+                }
+                else
+                {
+                    Logger.Log("[Icon] ExtractAssociatedIcon returned null (OnSourceInitialized)");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException("[Icon] OnSourceInitialized native icon set failed", ex);
+            }
         }
 
         private void MainTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
