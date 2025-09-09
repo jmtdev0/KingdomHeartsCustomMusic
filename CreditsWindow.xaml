@@ -46,11 +46,22 @@
 
       <Paragraph FontSize="13" Margin ="30 0 0 0">
         KHMP emulates the SingleEncoder implementation available at
-        <Run> </Run>
-        <Hyperlink NavigateUri="https://github.com/Leinxad/KHPCSoundTools/tree/main/SingleEncoder" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/Leinxad/KHPCSoundTools/tree/main/SingleEncoder</Hyperlink>
-        <Run Text=". Thanks to KHPCSoundTools' documentation, track lists and the exact paths where each specific track must be placed when generating patches were obtained. The KH1, KH2, KH:BBS, KH:ReCOM and KH:DDD lists can be found here: "/>
-        <Hyperlink NavigateUri="https://docs.google.com/spreadsheets/d/1JMAhUSeEf3r-njF2-8EBX8mUDVa0xaLs/edit?gid=1851343023#gid=1851343023" RequestNavigate="Hyperlink_RequestNavigate">Google Sheets (track lists)</Hyperlink>
-        <Run Text="."/>
+        <Hyperlink NavigateUri="https://github.com/Leinxad/KHPCSoundTools/tree/main/SingleEncoder" RequestNavigate="Hyperlink_RequestNavigate">
+          https://github.com/Leinxad/KHPCSoundTools/tree/main/SingleEncoder
+        </Hyperlink>.
+        Thanks to KHPCSoundTools' documentation, track lists and the exact paths where each specific track must be placed when generating patches were obtained.
+        The KH1, KH2, KH:BBS, KH:ReCOM and KH:DDD lists can be found here:
+        <Hyperlink NavigateUri="https://docs.google.com/spreadsheets/d/1JMAhUSeEf3r-njF2-8EBX8mUDVa0xaLs/edit?gid=1851343023#gid=1851343023" RequestNavigate="Hyperlink_RequestNavigate">
+          Google Sheets (track lists)
+        </Hyperlink>.
+      </Paragraph>
+      <Paragraph FontSize="13" Margin ="30 10 0 0">
+        The “chronological order” referred to in the default option configured in the track ordering combo corresponds to the order in which the songs are listed in these official YouTube playlists (for example,
+        <Hyperlink NavigateUri="https://www.youtube.com/playlist?list=OLAK5uy_n_kAUk8IBMPh3lx0w9VsWptrA2vK-9WME" RequestNavigate="Hyperlink_RequestNavigate">
+          this one for KH1
+        </Hyperlink>).
+        This order matches the order in which the songs are first heard while progressing through the game’s story.
+        If you notice that a song is out of place, it is possible, as this order has not been thoroughly reviewed.
       </Paragraph>
 
       <Paragraph FontSize="13">

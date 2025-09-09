@@ -16,6 +16,7 @@
             <Paragraph FontStyle="Italic" FontSize="12" Foreground="#FFAAAAAA">
                 <Run>Version:</Run>
                 <Run x:Name="VersionRun" />
+                <Run>(tested on Epic Games as of September 8, 2025)</Run>
             </Paragraph>
 
             <!-- Purpose paragraph added -->

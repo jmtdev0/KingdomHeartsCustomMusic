@@ -732,7 +732,7 @@
                     </Border>
                 </TabItem>
 
-                <TabItem Header="Dream Drop Distance" Style="{StaticResource ModernTabItemStyle}">
+                <TabItem Header="Dream Drop Distance" Style="{StaticResource ModernTabItemStyle}" Visibility="Collapsed">
                     <Border Background="#FF252526" CornerRadius="0,8,8,8" Padding="20">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
