@@ -16,7 +16,7 @@
             <Paragraph FontStyle="Italic" FontSize="12" Foreground="#FFAAAAAA">
                 <Run>Version:</Run>
                 <Run x:Name="VersionRun" />
-                <Run>(tested on Epic Games as of September 8, 2025)</Run>
+                <Run>(tested on Epic Games as of September 10, 2025)</Run>
             </Paragraph>
 
             <!-- Purpose paragraph added -->
@@ -25,7 +25,7 @@
             </Paragraph>
 
             <Paragraph TextAlignment="Justify" Margin="0,0,0,12">
-                ⚠️ Important notice: changes applied to the game's music cannot be undone unless you have a backup of the files in the "KH_1.5_2.5\\Image\\en" folder, or you reinstall the game or verify the game files. At least when using Epic Games, reinstalling or verifying the files does not remove saved game data.
+                ⚠️ Important notice: changes applied to the game's music cannot be undone unless you have a backup of the files in the "KH_1.5_2.5\\Image\\en" folder, or you reinstall the game or verify the game files. At least when using Epic Games, reinstalling or verifying the files does not remove saved game data. If, after installing a patch, the game keeps crashing when you try to start it, you will probably need to perform one of these actions. Unless you apply a previous working patch and you get lucky and the game files are fixed. 
             </Paragraph>
 
             <Paragraph FontWeight="SemiBold" FontSize="18">Steps to generate and apply a patch:</Paragraph>
@@ -39,8 +39,6 @@
 
             <Paragraph FontWeight="SemiBold" FontSize="18">Additional notes</Paragraph>
 
-            
-
             <Paragraph TextAlignment="Justify">• Patches cannot be applied correctly if the game is being executed. If you have only the KINGDOM HEARTS HD 1.5+2.5 ReMIX launcher open, that is usually fine.</Paragraph>
             <Paragraph TextAlignment="Justify">• Patches are generated per game. A single patch cannot modify songs for both KH1 and KH2 simultaneously, for instance.</Paragraph>
             <Paragraph TextAlignment="Justify">• You can create a patch that changes a single song, several songs, or every song in the game. If you want to do this last thing, the 'Select All Tracks' option combined with 'Assign Song to Selected Tracks' can be useful.</Paragraph>
@@ -50,6 +48,11 @@
             </Paragraph>
             <Paragraph TextAlignment="Justify">• Local audio files supported: .mp3, .mp4 and .wav.</Paragraph>
 
+            <!-- Report Bugs section -->
+            <Paragraph FontWeight="SemiBold" FontSize="18" Margin="0,20,0,0">Report Bugs</Paragraph>
+            <Paragraph TextAlignment="Justify">If you experience a problem, crash or incorrect behavior while using the application, it can be reported here: 
+                <Hyperlink NavigateUri="https://github.com/jmtdev0/KingdomHeartsCustomMusic/issues/1" RequestNavigate="Hyperlink_RequestNavigate">GitHub Bug Report Thread</Hyperlink>.
+            </Paragraph>
         </FlowDocument>
     </FlowDocumentScrollViewer>
 </Window>

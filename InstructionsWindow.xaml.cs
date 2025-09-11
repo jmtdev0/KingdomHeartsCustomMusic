@@ -1,6 +1,8 @@
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
+using System.Diagnostics; // added for Process.Start
+using System.Windows.Navigation; // for RequestNavigateEventArgs
 
 namespace KingdomHeartsMusicPatcher
 {
@@ -37,6 +39,16 @@ namespace KingdomHeartsMusicPatcher
                 e.Handled = true;
                 Close();
             }
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            }
+            catch { }
+            e.Handled = true;
         }
     }
 }
