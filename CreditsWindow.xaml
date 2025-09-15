@@ -84,6 +84,21 @@
       </Paragraph>
 
       <Paragraph FontSize="13">
+        <Run Text="- yt-dlp "/>
+        <Run Text="("/>
+        <Hyperlink NavigateUri="https://github.com/yt-dlp/yt-dlp" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/yt-dlp/yt-dlp</Hyperlink>
+        <Run Text=") is embedded in KHMP and enables downloading music directly from YouTube."/>
+      </Paragraph>
+      
+      <List MarkerStyle="Disc">
+        <ListItem>
+          <Paragraph FontSize="13">
+            <Hyperlink NavigateUri="https://github.com/yt-dlp/yt-dlp/graphs/contributors" RequestNavigate="Hyperlink_RequestNavigate">yt-dlp contributors</Hyperlink>
+          </Paragraph>
+        </ListItem>
+      </List>
+      
+      <Paragraph FontSize="13">
         <Run Text="- Sonic Music Mods, by "/>
         <Hyperlink NavigateUri="https://next.nexusmods.com/profile/SpaceBoiStreams/mods" RequestNavigate="Hyperlink_RequestNavigate">SpaceBoiStreams</Hyperlink>
         <Run Text=". These mods have served as guidance to be able to evaluate the patches created by KHMP and to check whether paths, packaging, and file names were correct."/>
@@ -93,7 +108,8 @@
         <Run Text="- KingdomSaveEditor"/>
         <Run Text="("/>
         <Hyperlink NavigateUri="https://github.com/Xeeynamo/KingdomSaveEditor" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/Xeeynamo/KingdomSaveEditor</Hyperlink>
-        <Run Text="), used for testing all games."/>
+        <Run Text=")"/>
+        <Run Text=", used for testing all games."/>
       </Paragraph>
 
       <List MarkerStyle="Disc">
@@ -126,6 +142,7 @@
         <Hyperlink NavigateUri="https://docs.google.com/spreadsheets/d/1-NfkF8It6kt6P2ZIppO1FLzLqZye3RMaOJU79_BbAuo/edit?gid=1689200989#gid=1689200989" RequestNavigate="Hyperlink_RequestNavigate">
           KH2FM PC Music Rando - Custom Song Packs
         </Hyperlink>
+        <Run Text=". Another very cool improvement would be the possibility to replace the game's music in real time, without needing to create patch files or to close the game to apply them."/>
       </Paragraph>
 
       <Paragraph FontSize="12" Foreground="#FFAAAAAA">
