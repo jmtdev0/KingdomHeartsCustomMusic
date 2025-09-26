@@ -32,7 +32,7 @@ namespace KingdomHeartsMusicPatcher.utils
             progress?.Invoke(0, totalEncodes, "Preparing", 0);
             progress?.Invoke(0, totalEncodes, "Encoding", 0);
 
-            var generatedScds = new Dictionary<string, string>();
+            var generatedScds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var kvp in trackGroups)
             {
@@ -45,11 +45,39 @@ namespace KingdomHeartsMusicPatcher.utils
 
                     Logger.Log($"Encoding source: '{filePath}' for {tracks.Count} track(s)");
 
+                    var ext = Path.GetExtension(filePath).ToLowerInvariant();
+                    if (ext == ".scd")
+                    {
+                        Logger.Log($"Input is .scd; skipping encode and using directly: '{filePath}'");
+                        generatedScds[filePath] = filePath;
+                        completedEncodes++;
+                        progress?.Invoke(completedEncodes, totalEncodes, "Encoding", 100);
+                        continue;
+                    }
+
                     string tempWavPath = WavProcessingHelper.EnsureWavFormat(filePath);
-                    Logger.Log($"WAV ready at: '{tempWavPath}' (exists: {File.Exists(tempWavPath)})");
+                    bool shouldDeleteTempWav = !string.Equals(tempWavPath, filePath, StringComparison.OrdinalIgnoreCase);
+                    Logger.Log($"WAV ready at: '{tempWavPath}' (exists: {File.Exists(tempWavPath)}), willDeleteTemp={shouldDeleteTempWav}");
 
                     int totalSamples = WavSampleAnalyzer.GetTotalSamples(tempWavPath);
                     Logger.Log($"Total samples: {totalSamples}");
+
+                    // Decide fullLoop based on presence of loop points
+                    bool hasLoopPoints = false;
+                    try
+                    {
+                        if (string.Equals(ext, ".wav", StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasLoopPoints = WavSampleAnalyzer.HasLoopPoints(filePath, out _, out _);
+                        }
+                        else
+                        {
+                            hasLoopPoints = WavSampleAnalyzer.HasLoopPoints(tempWavPath, out _, out _);
+                        }
+                    }
+                    catch { }
+                    bool fullLoop = !hasLoopPoints;
+                    Logger.Log($"Loop detection: hasLoopPoints={hasLoopPoints}, fullLoop={fullLoop}");
 
                     string encoderWavPath = Path.Combine(encoderDir, "music.wav");
                     File.Copy(tempWavPath, encoderWavPath, overwrite: true);
@@ -68,7 +96,7 @@ namespace KingdomHeartsMusicPatcher.utils
                                 scdTemplate,
                                 encoderWavPath,
                                 quality: 10,
-                                fullLoop: true,
+                                fullLoop: fullLoop,
                                 encoderDir: encoderDir,
                                 progress: p => progress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
                             );
@@ -80,7 +108,7 @@ namespace KingdomHeartsMusicPatcher.utils
                                 scdTemplate,
                                 encoderWavPath,
                                 quality: 10,
-                                fullLoop: true,
+                                fullLoop: fullLoop,
                                 encoderDir: encoderDir,
                                 progress: p => progress?.Invoke(completedEncodes + 1, totalEncodes, "Encoding", p)
                             );
@@ -108,7 +136,10 @@ namespace KingdomHeartsMusicPatcher.utils
 
                     generatedScds[filePath] = renamedScd;
 
-                    try { File.Delete(tempWavPath); } catch { }
+                    if (shouldDeleteTempWav)
+                    {
+                        try { File.Delete(tempWavPath); } catch { }
+                    }
                     try { File.Delete(encoderWavPath); } catch { }
 
                     completedEncodes++;

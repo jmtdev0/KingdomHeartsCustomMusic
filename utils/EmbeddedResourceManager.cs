@@ -7,6 +7,37 @@ namespace KingdomHeartsMusicPatcher.utils
     {
         private static readonly string TempDir = Path.Combine(Path.GetTempPath(), "KingdomHeartsMusicPatcher");
 
+        private static Stream? OpenResourceStream(string resourceName)
+        {
+            // Normalize separators
+            var normalized = resourceName.Replace('\\', '.').Replace('/', '.');
+            var assembly = Assembly.GetExecutingAssembly();
+
+            // 1) Try exact logical name (when <LogicalName> was used)
+            var s = assembly.GetManifestResourceStream(normalized);
+            if (s != null) return s;
+
+            // 2) Try prefixed with RootNamespace
+            var prefixed = $"KingdomHeartsMusicPatcher.{normalized}";
+            s = assembly.GetManifestResourceStream(prefixed);
+            if (s != null) return s;
+
+            // 3) Try EndsWith match (last resort, to tolerate minor mismatches)
+            try
+            {
+                foreach (var name in assembly.GetManifestResourceNames())
+                {
+                    if (name.EndsWith(normalized, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        s = assembly.GetManifestResourceStream(name);
+                        if (s != null) return s;
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
+
         /// <summary>
         /// Extrae un recurso embebido a un archivo temporal
         /// </summary>
@@ -15,18 +46,15 @@ namespace KingdomHeartsMusicPatcher.utils
         /// <returns>Ruta completa del archivo temporal creado</returns>
         public static string ExtractEmbeddedResource(string resourceName, string tempFileName)
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var fullResourceName = $"KingdomHeartsMusicPatcher.{resourceName.Replace('\\', '.').Replace('/', '.')}";
-
-            using var stream = assembly.GetManifestResourceStream(fullResourceName);
+            using var stream = OpenResourceStream(resourceName);
             if (stream == null)
             {
-                throw new FileNotFoundException($"Embedded resource not found: {fullResourceName}");
+                Logger.Log($"[ERM] ExtractEmbeddedResource missing: {resourceName}");
+                throw new FileNotFoundException($"Embedded resource not found: {resourceName}");
             }
 
             // Crear directorio temporal para la aplicación
             Directory.CreateDirectory(TempDir);
-
             string tempFilePath = Path.Combine(TempDir, tempFileName);
 
             // Solo extraer si el archivo no existe o es diferente
@@ -57,13 +85,11 @@ namespace KingdomHeartsMusicPatcher.utils
         /// <returns>Ruta del archivo extraído</returns>
         public static string ExtractEmbeddedResourceToPath(string resourceName, string targetPath)
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var fullResourceName = $"KingdomHeartsMusicPatcher.{resourceName.Replace('\\', '.').Replace('/', '.')}";
-
-            using var stream = assembly.GetManifestResourceStream(fullResourceName);
+            using var stream = OpenResourceStream(resourceName);
             if (stream == null)
             {
-                throw new FileNotFoundException($"Embedded resource not found: {fullResourceName}");
+                Logger.Log($"[ERM] ExtractEmbeddedResourceToPath missing: {resourceName}");
+                throw new FileNotFoundException($"Embedded resource not found: {resourceName}");
             }
 
             // Crear el directorio si no existe
@@ -100,10 +126,7 @@ namespace KingdomHeartsMusicPatcher.utils
         /// <returns>True si el recurso existe</returns>
         public static bool ResourceExists(string resourceName)
         {
-            var assembly = Assembly.GetExecutingAssembly();
-            var fullResourceName = $"KingdomHeartsMusicPatcher.{resourceName.Replace('\\', '.').Replace('/', '.')}";
-
-            using var stream = assembly.GetManifestResourceStream(fullResourceName);
+            using var stream = OpenResourceStream(resourceName);
             return stream != null;
         }
 
@@ -134,6 +157,19 @@ namespace KingdomHeartsMusicPatcher.utils
         /// <returns>Información sobre qué herramientas están disponibles</returns>
         public static ToolsSetupResult SetupTools(string baseDirectory)
         {
+            try
+            {
+                var asm = Assembly.GetExecutingAssembly();
+                var names = asm.GetManifestResourceNames();
+                Logger.Log($"[ERM] Resource names count={names.Length}");
+                foreach (var n in names)
+                {
+                    if (n.Contains("vgmstream", System.StringComparison.OrdinalIgnoreCase) || n.Contains("KHPCPatchManager", System.StringComparison.OrdinalIgnoreCase))
+                        Logger.Log($"[ERM] Resource: {n}");
+                }
+            }
+            catch { }
+
             var result = new ToolsSetupResult
             {
                 BaseDirectory = baseDirectory,
@@ -148,6 +184,10 @@ namespace KingdomHeartsMusicPatcher.utils
             Directory.CreateDirectory(result.ToolsSubDirectory);
             Directory.CreateDirectory(Path.Combine(result.ToolsSubDirectory, "adpcmencode3"));
             Directory.CreateDirectory(Path.Combine(result.ToolsSubDirectory, "oggenc"));
+
+            // vgmstream dir
+            string vgmDir = Path.Combine(result.ToolsDirectory, "vgmstream");
+            Directory.CreateDirectory(vgmDir);
 
             // SingleEncoder
             if (ResourceExists("utils.SingleEncoder.SingleEncoder.exe"))
@@ -242,6 +282,10 @@ namespace KingdomHeartsMusicPatcher.utils
                     Path.Combine(result.ToolsDirectory, "KHPCPatchManager.exe"));
                 result.HasPatchManager = true;
             }
+            else
+            {
+                Logger.Log("[ERM] KHPCPatchManager not found as embedded resource (utils.KHPCPatchManager.exe)");
+            }
 
             // yt-dlp
             if (ResourceExists("utils.Actually.yt-dlp.exe"))
@@ -252,7 +296,7 @@ namespace KingdomHeartsMusicPatcher.utils
                 result.HasYtDlp = true;
             }
 
-            // ffmpeg (for yt-dlp postprocessing)
+            // ffmpeg (for yt-dlp postprocessing and decoding OGG)
             if (ResourceExists("utils.Actually.ffmpeg.exe"))
             {
                 result.FfmpegPath = ExtractEmbeddedResourceToPath(
@@ -261,10 +305,32 @@ namespace KingdomHeartsMusicPatcher.utils
                 result.HasFfmpeg = true;
             }
 
+            // vgmstream (CLI + required DLLs)
+            bool vgmRes = ResourceExists("utils.Actually.vgmstream.vgmstream-cli.exe");
+            Logger.Log($"[ERM] vgmstream-cli resource exists={vgmRes}");
+            if (vgmRes)
+            {
+                result.VgmstreamPath = ExtractEmbeddedResourceToPath(
+                    "utils.Actually.vgmstream.vgmstream-cli.exe",
+                    Path.Combine(vgmDir, "vgmstream-cli.exe"));
+                result.HasVgmstream = true;
+            }
+            // Optional/runtime DLLs bundled in repo
+            TryExtractIfExists("utils.Actually.vgmstream.avcodec-vgmstream-59.dll", Path.Combine(vgmDir, "avcodec-vgmstream-59.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.avformat-vgmstream-59.dll", Path.Combine(vgmDir, "avformat-vgmstream-59.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.avutil-vgmstream-57.dll", Path.Combine(vgmDir, "avutil-vgmstream-57.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.swresample-vgmstream-4.dll", Path.Combine(vgmDir, "swresample-vgmstream-4.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.libatrac9.dll", Path.Combine(vgmDir, "libatrac9.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.libcelt-0061.dll", Path.Combine(vgmDir, "libcelt-0061.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.libcelt-0110.dll", Path.Combine(vgmDir, "libcelt-0110.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.libg719_decode.dll", Path.Combine(vgmDir, "libg719_decode.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.libmpg123-0.dll", Path.Combine(vgmDir, "libmpg123-0.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.libspeex-1.dll", Path.Combine(vgmDir, "libspeex-1.dll"));
+            TryExtractIfExists("utils.Actually.vgmstream.libvorbis.dll", Path.Combine(vgmDir, "libvorbis.dll"));
+
             // Provision .NET 5 runtime for SingleEncoder if missing (hostfxr)
             if (result.HasSingleEncoder)
             {
-                // If hostfxr not present system-wide, provision local runtime and set DOTNET_ROOT
                 try
                 {
                     string? dotnetRoot = System.Environment.GetEnvironmentVariable("DOTNET_ROOT");
@@ -284,6 +350,21 @@ namespace KingdomHeartsMusicPatcher.utils
             }
 
             return result;
+        }
+
+        private static void TryExtractIfExists(string resourceName, string destination)
+        {
+            if (ResourceExists(resourceName))
+            {
+                try
+                {
+                    ExtractEmbeddedResourceToPath(resourceName, destination);
+                }
+                catch (System.Exception ex)
+                {
+                    Logger.Log($"[ERM] Extract failed for {resourceName}: {ex.Message}");
+                }
+            }
         }
 
         /// <summary>
@@ -348,6 +429,10 @@ namespace KingdomHeartsMusicPatcher.utils
         public bool HasFfmpeg { get; set; }
         public string FfmpegPath { get; set; } = "";
 
+        // vgmstream
+        public bool HasVgmstream { get; set; }
+        public string VgmstreamPath { get; set; } = "";
+
         // Setup is complete when we have a valid SCD template (generic or per-game)
         // and at least one encoder tool available (oggenc or adpcmencode3).
         public bool IsCompleteSetup =>
@@ -370,6 +455,8 @@ namespace KingdomHeartsMusicPatcher.utils
                 missing.Add("yt-dlp.exe");
             if (!HasFfmpeg)
                 missing.Add("ffmpeg.exe");
+            if (!HasVgmstream)
+                missing.Add("vgmstream-cli.exe");
 
             return missing;
         }

@@ -85,7 +85,27 @@ namespace KingdomHeartsMusicPatcher.utils
                         // Read loop from tags; optionally override to full loop
                         int LoopStart_Sample = searchTag("LoopStart", wav);
                         int Total_Samples = searchTag("LoopEnd", wav);
-                        Logger.Log($"[ReCOM] Loop tags | LoopStart={LoopStart_Sample}, LoopEnd={Total_Samples}");
+
+                        // If tags are missing, try RIFF smpl loop
+                        if (LoopStart_Sample == -1 || Total_Samples == -1)
+                        {
+                            if (TryGetLoopFromSmpl(wav, out int smplStart, out int smplEndInclusive))
+                            {
+                                LoopStart_Sample = smplStart;
+                                Total_Samples = smplEndInclusive >= 0 ? smplEndInclusive + 1 : -1; // convert inclusive index to count
+                                Logger.Log($"[ReCOM] SMPL loop | LoopStart={LoopStart_Sample}, LoopEndInclusive={smplEndInclusive}, LoopEndCount={Total_Samples}");
+                            }
+                        }
+
+                        // If only LoopStart present, assume loop end at EOF
+                        if (LoopStart_Sample >= 0 && Total_Samples == -1)
+                        {
+                            GetTotalSamplesFromWav(wav, out int totalCount);
+                            Total_Samples = totalCount;
+                            Logger.Log($"[ReCOM] Only LoopStart present, defaulting LoopEnd to EOF | totalSamples={totalCount}");
+                        }
+
+                        Logger.Log($"[ReCOM] Loop tags | LoopStart={LoopStart_Sample}, LoopEndCount={Total_Samples}");
                         if (fullLoop)
                         {
                             GetFullLoopFromWav(wav, out LoopStart_Sample, out Total_Samples);
@@ -158,6 +178,55 @@ namespace KingdomHeartsMusicPatcher.utils
             }
         }
 
+        private static void GetTotalSamplesFromWav(byte[] wav, out int totalSamples)
+        {
+            totalSamples = -1;
+            byte[] fmtPattern = Encoding.ASCII.GetBytes("fmt ");
+            byte[] datPattern = Encoding.ASCII.GetBytes("data");
+            int typepos = SearchBytePattern(0, wav, fmtPattern);
+            int datapos = SearchBytePattern(0, wav, datPattern);
+            if (typepos != -1 && datapos != -1)
+            {
+                short blockAlign = BitConverter.ToInt16(wav, typepos + 20);
+                int datasize = BitConverter.ToInt32(wav, datapos + 4);
+                if (datasize < wav.Length && blockAlign > 0)
+                {
+                    totalSamples = datasize / blockAlign;
+                }
+            }
+        }
+
+        private static bool TryGetLoopFromSmpl(byte[] wav, out int loopStart, out int loopEndInclusive)
+        {
+            loopStart = -1; loopEndInclusive = -1;
+            try
+            {
+                byte[] smpl = Encoding.ASCII.GetBytes("smpl");
+                int smplPos = SearchBytePattern(0, wav, smpl);
+                if (smplPos < 0 || smplPos + 8 >= wav.Length) return false;
+                int dataPos = smplPos + 8; // skip 'smpl' + chunk size (4)
+                if (dataPos + 0x24 > wav.Length) return false;
+                uint numLoops = BitConverter.ToUInt32(wav, dataPos + 0x1C);
+                int loopsBase = dataPos + 0x24;
+                for (int i = 0; i < numLoops; i++)
+                {
+                    int lp = loopsBase + i * 24; // 6 uint32 each
+                    if (lp + 24 > wav.Length) break;
+                    uint type = BitConverter.ToUInt32(wav, lp + 4);
+                    uint start = BitConverter.ToUInt32(wav, lp + 8);
+                    uint end = BitConverter.ToUInt32(wav, lp + 12);
+                    if (type == 0)
+                    {
+                        loopStart = unchecked((int)start);
+                        loopEndInclusive = unchecked((int)end);
+                        return loopStart >= 0 && loopEndInclusive >= 0;
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
         private static void WavtoOGG(string inputWAV, int LoopStart_Sample, int Total_Samples, int Quality, string oggEncPath)
         {
             var args = (LoopStart_Sample == -1 && Total_Samples == -1)
@@ -228,7 +297,9 @@ namespace KingdomHeartsMusicPatcher.utils
 
             //Find Loop Offsets by scanning granule counts (best effort)
             int LoopStart = 0;
-            int LoopEnd = (Total_Samples != -1) ? streamSize : 0;
+            int LoopEnd = 0;
+            if (Total_Samples != -1) LoopEnd = streamSize; // fallback if we can't find a closer page
+
             if (LoopStart_Sample > 0)
             {
                 for (int i = 0; i < page_offsets.Count; i++)
@@ -250,6 +321,26 @@ namespace KingdomHeartsMusicPatcher.utils
             {
                 LoopStart = 0;
             }
+
+            if (Total_Samples > 0)
+            {
+                for (int i = 0; i < page_offsets.Count; i++)
+                {
+                    int idx = page_offsets[i];
+                    if (idx <= vorbis_header_size) continue;
+                    if (idx + 6 < ogg.Length)
+                    {
+                        uint pageGranuleLow32 = Read(ogg, 32, idx + 6);
+                        if (Total_Samples <= pageGranuleLow32)
+                        {
+                            LoopEnd = idx - vorbis_header_size;
+                            break;
+                        }
+                    }
+                }
+                if (LoopEnd < LoopStart) LoopEnd = streamSize;
+            }
+
             Logger.Log($"[ReCOM] OGGtoSCD | LoopStart={LoopStart}, LoopEnd={LoopEnd}, streamSize={streamSize}");
 
             //Write LoopStart and LoopEnd

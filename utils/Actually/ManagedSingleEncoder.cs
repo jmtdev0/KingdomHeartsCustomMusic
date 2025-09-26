@@ -88,8 +88,29 @@ namespace KingdomHeartsMusicPatcher.utils
                         Report(5);
                         // Get Loop from tags
                         int LoopStart_Sample = searchTag("LoopStart", wav);
-                        int Total_Samples = searchTag("LoopEnd", wav);
-                        Logger.Log($"Loop tags | LoopStart={LoopStart_Sample}, LoopEnd={Total_Samples}");
+                        int Total_Samples = searchTag("LoopEnd", wav); // keeps legacy name: holds loop end sample count (endIndex+1)
+
+                        // If tags are missing, try reading from RIFF smpl chunk
+                        if (LoopStart_Sample == -1 || Total_Samples == -1)
+                        {
+                            if (TryGetLoopFromSmpl(wav, out int smplStart, out int smplEndInclusive))
+                            {
+                                LoopStart_Sample = smplStart;
+                                // convert inclusive end index to count (endIndex+1) to match our oggenc usage
+                                Total_Samples = smplEndInclusive >= 0 ? smplEndInclusive + 1 : -1;
+                                Logger.Log($"SMPL loop detected | LoopStart={LoopStart_Sample}, LoopEndInclusive={smplEndInclusive}, LoopEndCount={Total_Samples}");
+                            }
+                        }
+
+                        // If we only have LoopStart, assume LoopEnd at end of song
+                        if (LoopStart_Sample >= 0 && Total_Samples == -1)
+                        {
+                            GetTotalSamplesFromWav(wav, out int totalCount);
+                            Total_Samples = totalCount; // count, not last index
+                            Logger.Log($"Only LoopStart present, defaulting LoopEnd to EOF | totalSamples={totalCount}");
+                        }
+
+                        Logger.Log($"Loop sources | LoopStart={LoopStart_Sample}, LoopEndCount={Total_Samples}");
                         if (fullLoop)
                         {
                             GetFullLoopFromWav(wav, out LoopStart_Sample, out Total_Samples);
@@ -153,14 +174,65 @@ namespace KingdomHeartsMusicPatcher.utils
             int datapos = SearchBytePattern(0, wav, datPattern);
             if (typepos != -1 && datapos != -1)
             {
-                short type = BitConverter.ToInt16(wav, typepos + 20);
+                short blockAlign = BitConverter.ToInt16(wav, typepos + 20);
                 int datasize = BitConverter.ToInt32(wav, datapos + 4);
-                if (datasize < wav.Length)
+                if (datasize < wav.Length && blockAlign > 0)
                 {
                     loopStart = 0;
-                    totalSamples = datasize / type;
+                    totalSamples = datasize / blockAlign; // per-channel samples
                 }
             }
+        }
+
+        private static void GetTotalSamplesFromWav(byte[] wav, out int totalSamples)
+        {
+            totalSamples = -1;
+            byte[] fmtPattern = Encoding.ASCII.GetBytes("fmt ");
+            byte[] datPattern = Encoding.ASCII.GetBytes("data");
+            int typepos = SearchBytePattern(0, wav, fmtPattern);
+            int datapos = SearchBytePattern(0, wav, datPattern);
+            if (typepos != -1 && datapos != -1)
+            {
+                short blockAlign = BitConverter.ToInt16(wav, typepos + 20);
+                int datasize = BitConverter.ToInt32(wav, datapos + 4);
+                if (datasize < wav.Length && blockAlign > 0)
+                {
+                    totalSamples = datasize / blockAlign;
+                }
+            }
+        }
+
+        private static bool TryGetLoopFromSmpl(byte[] wav, out int loopStart, out int loopEndInclusive)
+        {
+            loopStart = -1; loopEndInclusive = -1;
+            try
+            {
+                byte[] smpl = Encoding.ASCII.GetBytes("smpl");
+                int smplPos = SearchBytePattern(0, wav, smpl);
+                if (smplPos < 0 || smplPos + 8 >= wav.Length) return false;
+                int dataPos = smplPos + 8; // skip 'smpl' + chunk size (4)
+                if (dataPos + 0x24 > wav.Length) return false;
+                uint numLoops = BitConverter.ToUInt32(wav, dataPos + 0x1C);
+                // uint samplerData = BitConverter.ToUInt32(wav, dataPos + 0x20);
+                int loopsBase = dataPos + 0x24;
+                for (int i = 0; i < numLoops; i++)
+                {
+                    int lp = loopsBase + i * 24; // 6 uint32 each
+                    if (lp + 24 > wav.Length) break;
+                    uint type = BitConverter.ToUInt32(wav, lp + 4);
+                    uint start = BitConverter.ToUInt32(wav, lp + 8);
+                    uint end = BitConverter.ToUInt32(wav, lp + 12);
+                    // type 0 = forward loop
+                    if (type == 0)
+                    {
+                        loopStart = unchecked((int)start);
+                        loopEndInclusive = unchecked((int)end);
+                        return loopStart >= 0 && loopEndInclusive >= 0;
+                    }
+                }
+            }
+            catch { }
+            return false;
         }
 
         private static void WavtoOGG(string inputWAV, int LoopStart_Sample, int Total_Samples, int Quality, string oggEncPath)
@@ -229,18 +301,20 @@ namespace KingdomHeartsMusicPatcher.utils
 
             //Write Stream Size
             int streamSize = ogg.Length - vorbis_header_size;
+            if (streamSize < 0) streamSize = 0;
             Write(entry, streamSize, 32, (int)meta_offset);
 
             //Find Loop Offsets by scanning granule counts (best effort)
             int LoopStart = 0;
-            int LoopEnd = (Total_Samples != -1) ? streamSize : 0;
-            if (LoopStart_Sample > 0)
+            int LoopEnd = 0;
+            // default: if we have a loop end sample (Total_Samples != -1) but fail to find a page, we will fall back to stream end
+            if (Total_Samples != -1) LoopEnd = streamSize;
+
+            if (LoopStart_Sample != -1)
             {
-                // Only consider pages after the vorbis header pages
                 for (int i = 0; i < page_offsets.Count; i++)
                 {
                     int idx = page_offsets[i];
-                    if (idx <= vorbis_header_size) continue; // skip header pages
                     if (idx + 6 < ogg.Length)
                     {
                         uint pageGranuleLow32 = Read(ogg, 32, idx + 6);
@@ -254,17 +328,42 @@ namespace KingdomHeartsMusicPatcher.utils
             }
             else
             {
-                // When LoopStart_Sample is 0 or unknown, default to 0 offset to avoid negative values
                 LoopStart = 0;
             }
+
+            if (Total_Samples > 0)
+            {
+                for (int i = 0; i < page_offsets.Count; i++)
+                {
+                    int idx = page_offsets[i];
+                    if (idx + 6 < ogg.Length)
+                    {
+                        uint pageGranuleLow32 = Read(ogg, 32, idx + 6);
+                        if (Total_Samples <= pageGranuleLow32)
+                        {
+                            LoopEnd = idx - vorbis_header_size;
+                            break;
+                        }
+                    }
+                }
+                // Guard: ensure LoopEnd >= LoopStart
+                if (LoopEnd < LoopStart) LoopEnd = streamSize;
+            }
+
+            // clamp loop offsets
+            if (LoopStart < 0) LoopStart = 0;
+            if (LoopStart > streamSize) LoopStart = streamSize;
+            if (LoopEnd < 0) LoopEnd = 0;
+            if (LoopEnd > streamSize) LoopEnd = streamSize;
+
             Logger.Log($"OGGtoSCD | LoopStart={LoopStart}, LoopEnd={LoopEnd}, streamSize={streamSize}");
 
             //Write LoopStart and LoopEnd
             Write(entry, LoopStart, 32, (int)meta_offset + 0x10);
             Write(entry, LoopEnd, 32, (int)meta_offset + 0x14);
-            //Write Channels and Sample Rate from first identification header bytes
-            uint Channels = Read(ogg, 8, page_offsets[0] + 0x27);
-            uint Sample_Rate = Read(ogg, 32, page_offsets[0] + 0x28);
+            //Write Channels and Sample Rate (read from identification header at fixed offsets)
+            uint Channels = Read(ogg, 8, 0x27);
+            uint Sample_Rate = Read(ogg, 32, 0x28);
             Write(entry, (int)Channels, 8, (int)meta_offset + 0x04);
             Write(entry, (int)Sample_Rate, 32, (int)meta_offset + 0x08);
             Logger.Log($"OGGtoSCD | Channels={Channels}, SampleRate={Sample_Rate}");
@@ -305,7 +404,6 @@ namespace KingdomHeartsMusicPatcher.utils
             for (int i = 0; i < page_offsets.Count; i++)
             {
                 int idx = page_offsets[i];
-                if (idx <= vorbis_header_size) continue;
                 uint current_granule = Read(ogg, 32, idx + 0x06);
                 if (current_granule - previous_granule >= 2048)
                 {

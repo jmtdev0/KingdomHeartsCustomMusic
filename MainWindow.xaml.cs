@@ -533,7 +533,7 @@ namespace KingdomHeartsMusicPatcher
                 FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
                 Cursor = System.Windows.Input.Cursors.Hand,
-                ToolTip = "You can select a local file or paste a YouTube video URL (no playlists). Example: https://www.youtube.com/watch?v=KzlhVb7iReo"
+                ToolTip = "You can select a local file (.wav, .mp3, .mp4, .scd) or paste a YouTube video URL (no playlists)."
             };
             Grid.SetColumn(button, 3);
             System.Windows.Automation.AutomationProperties.SetName(button, $"Browse file or paste YouTube URL for {track.Description}");
@@ -545,8 +545,8 @@ namespace KingdomHeartsMusicPatcher
             {
                 var dialog = new OpenFileDialog
                 {
-                    Filter = "Audio files (*.wav;*.mp3;*.mp4)|*.wav;*.mp3;*.mp4",
-                    Title = "Select Audio File"
+                    Filter = "Audio/SCD files (*.wav;*.mp3;*.mp4;*.scd)|*.wav;*.mp3;*.mp4;*.scd",
+                    Title = "Select Audio or SCD File"
                 };
                 if (dialog.ShowDialog() == true)
                 {
@@ -831,8 +831,8 @@ namespace KingdomHeartsMusicPatcher
         {
             var dialog = new OpenFileDialog
             {
-                Filter = "Audio files (*.wav;*.mp3)|*.wav;*.mp3",
-                Title = "Select Audio File for Multiple Tracks"
+                Filter = "Audio/SCD files (*.wav;*.mp3;*.mp4;*.scd)|*.wav;*.mp3;*.mp4;*.scd",
+                Title = "Select Audio or SCD File for Multiple Tracks"
             };
 
             if (dialog.ShowDialog() != true)
@@ -893,7 +893,7 @@ namespace KingdomHeartsMusicPatcher
 
             if (assignedCount > 0)
             {
-                MessageBox.Show($"🎵 Audio file assigned to {assignedCount} track(s)!", "Assignment Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"🎵 File assigned to {assignedCount} track(s)!", "Assignment Complete", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -1558,6 +1558,68 @@ namespace KingdomHeartsMusicPatcher
             win.ShowDialog();
             return true;
         }
+
+        private void TestYtDlpButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedTab = MainTabControl.SelectedItem as TabItem;
+                if (selectedTab == null || !string.Equals(selectedTab.Header?.ToString(), "Kingdom Hearts I", StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show(this, "Este test sólo se ejecuta en la pestaña de Kingdom Hearts I.", "Test yt-dlp", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                string workingDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+                string ytDlpPath = System.IO.Path.Combine(workingDir, "yt-dlp.exe");
+                if (!File.Exists(ytDlpPath))
+                {
+                    MessageBox.Show(this, "No se encontró yt-dlp.exe junto al ejecutable.", "Test yt-dlp", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                ProgressText.Text = "Ejecutando yt-dlp test...";
+                GeneratePatchButton.IsEnabled = false;
+                TestYtDlpButton.IsEnabled = false;
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = ytDlpPath,
+                    Arguments = "-x --audio-format mp3 https://www.youtube.com/watch?v=-KKLzJu5ck8",
+                    WorkingDirectory = workingDir,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                proc.OutputDataReceived += (s, ev) => { if (ev.Data != null) Logger.Log("[yt-dlp test OUT] " + ev.Data); };
+                proc.ErrorDataReceived += (s, ev) => { if (ev.Data != null) Logger.Log("[yt-dlp test ERR] " + ev.Data); };
+                proc.Exited += (s, ev) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        ProgressText.Text = proc.ExitCode == 0 ? "yt-dlp test completado" : $"yt-dlp test falló (code {proc.ExitCode})";
+                        GeneratePatchButton.IsEnabled = true;
+                        TestYtDlpButton.IsEnabled = true;
+                    });
+                    proc.Dispose();
+                };
+
+                proc.Start();
+                proc.BeginOutputReadLine();
+                proc.BeginErrorReadLine();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException("TestYtDlpButton_Click", ex);
+                MessageBox.Show(this, "Error ejecutando yt-dlp test: " + ex.Message, "Test yt-dlp", MessageBoxButton.OK, MessageBoxImage.Error);
+                ProgressText.Text = string.Empty;
+                GeneratePatchButton.IsEnabled = true;
+                if (TestYtDlpButton != null) TestYtDlpButton.IsEnabled = true;
+            }
+        }
         #endregion
 
         #region Sort ComboBoxes
@@ -1583,7 +1645,7 @@ namespace KingdomHeartsMusicPatcher
         }
         #endregion
 
-        // Search & filter
+        // Search & filter helpers
         private string GetSearchTextKH1() => (TrackSearchTextBoxKH1?.Text ?? string.Empty).Trim();
         private string GetSearchTextKH2() => (TrackSearchTextBoxKH2?.Text ?? string.Empty).Trim();
         private string GetSearchTextBBS() => (TrackSearchTextBoxBBS?.Text ?? string.Empty).Trim();
@@ -1596,8 +1658,8 @@ namespace KingdomHeartsMusicPatcher
             if (!string.IsNullOrWhiteSpace(filter))
             {
                 query = query.Where(t =>
-                    (!string.IsNullOrWhiteSpace(t.Description) && t.Description.IndexOf(filter, System.StringComparison.CurrentCultureIgnoreCase) >= 0)
-                    || (!string.IsNullOrWhiteSpace(t.PcNumber) && t.PcNumber.IndexOf(filter, System.StringComparison.CurrentCultureIgnoreCase) >= 0));
+                    (!string.IsNullOrWhiteSpace(t.Description) && t.Description.IndexOf(filter, StringComparison.CurrentCultureIgnoreCase) >= 0)
+                    || (!string.IsNullOrWhiteSpace(t.PcNumber) && t.PcNumber.IndexOf(filter, StringComparison.CurrentCultureIgnoreCase) >= 0));
             }
             if (showAssignedOnly)
             {
@@ -2122,7 +2184,7 @@ namespace KingdomHeartsMusicPatcher
             }
         }
 
-        private static async Task DownloadFileAsync(string url, string destination, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
+        private async Task DownloadFileAsync(string url, string destination, IProgress<int>? progress = null, CancellationToken cancellationToken = default)
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.UserAgent.ParseAdd("KHCM-Updater/1.0");
@@ -2160,6 +2222,46 @@ namespace KingdomHeartsMusicPatcher
             if (contentLength.HasValue && progress != null)
             {
                 progress.Report(100);
+            }
+        }
+
+        private async void ConvertScdToWavButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var ofd = new OpenFileDialog
+                {
+                    Title = "Select SCD file to convert",
+                    Filter = "SCD files (*.scd)|*.scd",
+                    CheckFileExists = true,
+                    Multiselect = false
+                };
+                if (ofd.ShowDialog() != true) return;
+
+                string scdPath = ofd.FileName;
+                string outDir = Path.GetDirectoryName(scdPath)!;
+                string wavOut = Path.Combine(outDir, Path.GetFileNameWithoutExtension(scdPath) + ".wav");
+
+                ProgressText.Text = "Converting SCD to WAV...";
+                GeneratePatchButton.IsEnabled = false;
+
+                await Task.Run(() =>
+                {
+                    ScdToWavConverter.ConvertWithLoopsPreserved(scdPath, wavOut);
+                });
+
+                ProgressText.Text = "✅ Conversion complete";
+                MessageBox.Show(this, $"WAV created:\n{wavOut}", "Conversion Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                ProgressText.Text = string.Empty;
+                Logger.LogException("ConvertScdToWavButton_Click", ex);
+                MessageBox.Show(this, $"Failed to convert SCD to WAV:\n{ex.Message}", "Conversion Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                GeneratePatchButton.IsEnabled = true;
             }
         }
     }

@@ -11,10 +11,10 @@
     <RootNamespace>KingdomHeartsMusicPatcher</RootNamespace>
 
     <!-- Application version (used to generate assembly attributes) -->
-    <Version>1.3.2</Version>
-    <AssemblyVersion>1.3.2.0</AssemblyVersion>
-    <FileVersion>1.3.2.0</FileVersion>
-    <InformationalVersion>1.3.2</InformationalVersion>
+    <Version>1.4.0</Version>
+    <AssemblyVersion>1.4.0.0</AssemblyVersion>
+    <FileVersion>1.4.0.0</FileVersion>
+    <InformationalVersion>1.4.0</InformationalVersion>
 
     <!-- Single File Publishing Configuration - Self Contained with Compression -->
     <PublishSingleFile>true</PublishSingleFile>
@@ -46,9 +46,32 @@
     <None Remove="resources\All Games Track List - KH2.csv" />
     <None Remove="resources\All Games Track List - ReCOM.csv" />
     <None Remove="utils\Actually\KHPCPatchManager.exe" />
+    <None Remove="utils\Actually\vgmstream\avcodec-vgmstream-59.dll" />
+    <None Remove="utils\Actually\vgmstream\avformat-vgmstream-59.dll" />
+    <None Remove="utils\Actually\vgmstream\avutil-vgmstream-57.dll" />
+    <None Remove="utils\Actually\vgmstream\COPYING" />
+    <None Remove="utils\Actually\vgmstream\libatrac9.dll" />
+    <None Remove="utils\Actually\vgmstream\libcelt-0061.dll" />
+    <None Remove="utils\Actually\vgmstream\libcelt-0110.dll" />
+    <None Remove="utils\Actually\vgmstream\libg719_decode.dll" />
+    <None Remove="utils\Actually\vgmstream\libmpg123-0.dll" />
+    <None Remove="utils\Actually\vgmstream\libspeex-1.dll" />
+    <None Remove="utils\Actually\vgmstream\libvorbis.dll" />
+    <None Remove="utils\Actually\vgmstream\README.md" />
+    <None Remove="utils\Actually\vgmstream\swresample-vgmstream-4.dll" />
+    <None Remove="utils\Actually\vgmstream\USAGE.md" />
+    <None Remove="utils\Actually\vgmstream\vgmstream-cli.exe" />
     <None Remove="utils\Actually\yt-dlp.exe" />
     <None Remove="utils\Actually\ffmpeg.exe" />
     <None Remove="utils\SingleEncoder\output\original.scd" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="utils\Actually\vgmstream\USAGE.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="utils\Actually\vgmstream\libmpg123-0.dll" />
   </ItemGroup>
 
   <!-- Embedded Resources - All files included in the executable -->
@@ -61,7 +84,27 @@
     <EmbeddedResource Include="resources\All Games Track List - KH2.csv" />
     <EmbeddedResource Include="resources\All Games Track List - KH2.xlsx" />
     <EmbeddedResource Include="resources\All Games Track List - ReCOM.csv" />
-    <EmbeddedResource Include="utils\Actually\KHPCPatchManager.exe" />
+
+    <!-- KHPCPatchManager: map to logical name expected by code (utils.KHPCPatchManager.exe) -->
+    <EmbeddedResource Include="utils\Actually\KHPCPatchManager.exe">
+      <LogicalName>utils.KHPCPatchManager.exe</LogicalName>
+    </EmbeddedResource>
+
+    <EmbeddedResource Include="utils\Actually\vgmstream\avcodec-vgmstream-59.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\avformat-vgmstream-59.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\avutil-vgmstream-57.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\COPYING" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\libatrac9.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\libcelt-0061.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\libcelt-0110.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\libg719_decode.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\libspeex-1.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\libvorbis.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\README.md" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\swresample-vgmstream-4.dll" />
+    <EmbeddedResource Include="utils\Actually\vgmstream\vgmstream-cli.exe">
+      <LogicalName>utils.Actually.vgmstream.vgmstream-cli.exe</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="utils\Actually\yt-dlp.exe" Condition="Exists('utils\Actually\yt-dlp.exe')" />
     <EmbeddedResource Include="utils\Actually\ffmpeg.exe" Condition="Exists('utils\Actually\ffmpeg.exe')" />
     
@@ -81,7 +124,7 @@
     <EmbeddedResource Include="utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe" Condition="Exists('utils\SingleEncoder\tools\adpcmencode3\adpcmencode3.exe')" />
     <EmbeddedResource Include="utils\SingleEncoder\tools\oggenc\oggenc.exe" Condition="Exists('utils\SingleEncoder\tools\oggenc\oggenc.exe')" />
     
-    <!-- KHPCPatchManager -->
+    <!-- KHPCPatchManager (legacy path if provided) -->
     <EmbeddedResource Include="utils\KHPCPatchManager.exe" Condition="Exists('utils\KHPCPatchManager.exe')" />
   </ItemGroup>
 

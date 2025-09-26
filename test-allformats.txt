@@ -1,0 +1,29 @@
+KH1
+
+mp3 OK
+mp4 OK
+wav (xd) OK
+wav sin loop OK
+wav con loop OK
+scd sin loop OK
+scd con loop OK
+YouTube X
+
+KH2
+
+mp3
+mp4
+wav (xd)
+wav sin loop
+wav con loop
+scd sin loop
+scd con loop
+YouTube
+
+
+---
+
+SCD del juego con loop
+SCD del juego sin loop
+WAV del juego con loop
+WAV del juego sin loop

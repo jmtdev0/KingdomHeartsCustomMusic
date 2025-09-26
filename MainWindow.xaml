@@ -34,6 +34,7 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="MinHeight" Value="36"/>
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRingStyle}"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -335,43 +336,55 @@
                                 <!-- Action Buttons Section -->
                                 <Border Background="#FF2D2D30" 
                                         CornerRadius="8" 
-                                        Padding="20" 
+                                        Padding="8" 
                                         Margin="0,0,0,20">
-                                    <StackPanel>
-                                        <TextBlock Text="🎵 Quick Actions" 
-                                                   FontSize="16" 
-                                                   FontWeight="SemiBold" 
-                                                   Margin="0,0,0,15"
-                                                   Foreground="#FF007ACC"/>
-                                        
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <CheckBox x:Name="SelectAllCheckBox"
-                                                      Grid.Column="0"
-                                                      Content="Select All Tracks"
-                                                      VerticalAlignment="Center"
-                                                      Checked="SelectAllCheckBox_Checked"
-                                                      Unchecked="SelectAllCheckBox_Unchecked"
-                                                      ToolTip="Select or deselect all tracks"
-                                                      Foreground="White"
-                                                      FontWeight="SemiBold"
-                                                      AutomationProperties.Name="Select All Tracks"/>
+                                     <Expander IsExpanded="False">
+                                        <Expander.Header>
+                                            <TextBlock Text="🎵 Quick Actions" 
+                                                       FontSize="16" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#FF007ACC"/>
+                                        </Expander.Header>
+                                        <Border Padding="20" MinHeight="80">
+                                            <Grid VerticalAlignment="Stretch">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                            <Button Grid.Column="1"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
+                                                <Button Grid.Column="0"
+                                                        Margin="0,0,20,0"
+                                                        Content="🔁 Convert SCD ➜ WAV (keep loop)"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Click="ConvertScdToWavButton_Click"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        ToolTip="Convert a SCD to WAV preserving loop points"
+                                                        AutomationProperties.Name="Convert SCD to WAV"/>
 
-                                        </Grid>
-                                    </StackPanel>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <CheckBox x:Name="SelectAllCheckBox"
+                                                              Content="Select All Tracks"
+                                                              VerticalAlignment="Center"
+                                                              Checked="SelectAllCheckBox_Checked"
+                                                              Unchecked="SelectAllCheckBox_Unchecked"
+                                                              ToolTip="Select or deselect all tracks"
+                                                              Foreground="White"
+                                                              FontWeight="SemiBold"
+                                                              Margin="0,0,12,0"
+                                                              AutomationProperties.Name="Select All Tracks"/>
+
+                                                    <Button Content="🎶 Assign Song to Selected Tracks"
+                                                            Click="AssignToSelectedButton_Click"
+                                                            Style="{StaticResource ModernButtonStyle}"
+                                                            ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                            AutomationProperties.Name="Assign Song to Selected Tracks"
+                                                            MinWidth="180"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Expander>
                                 </Border>
 
                                 <!-- Tracks Section KH1 -->
@@ -432,43 +445,58 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
 
-                                <!-- Quick Actions Section (KH2) -->
+                                <!-- Action Buttons Section (KH2) -->
                                 <Border Background="#FF2D2D30" 
                                         CornerRadius="8" 
-                                        Padding="20" 
+                                        Padding="8" 
                                         Margin="0,0,0,20">
-                                    <StackPanel>
-                                        <TextBlock Text="🎵 Quick Actions" 
-                                                   FontSize="16" 
-                                                   FontWeight="SemiBold" 
-                                                   Margin="0,0,0,15"
-                                                   Foreground="#FF007ACC"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox x:Name="SelectAllCheckBoxKH2"
-                                                      Grid.Column="0"
-                                                      Content="Select All Tracks"
-                                                      VerticalAlignment="Center"
-                                                      Checked="SelectAllCheckBox_Checked"
-                                                      Unchecked="SelectAllCheckBox_Unchecked"
-                                                      ToolTip="Select or deselect all tracks"
-                                                      Foreground="White"
-                                                      FontWeight="SemiBold"
-                                                      AutomationProperties.Name="Select All Tracks"/>
+                                     <Expander IsExpanded="False">
+                                        <Expander.Header>
+                                            <TextBlock Text="🎵 Quick Actions" 
+                                                       FontSize="16" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#FF007ACC"/>
+                                        </Expander.Header>
+                                        <Border Padding="20" MinHeight="80">
+                                            <Grid VerticalAlignment="Stretch">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                            <Button Grid.Column="1"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
-                                        </Grid>
-                                    </StackPanel>
+                                                <Button Grid.Column="0"
+                                                        Margin="0,0,20,0"
+                                                        Content="🔁 Convert SCD ➜ WAV (keep loop)"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Click="ConvertScdToWavButton_Click"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        ToolTip="Convert a SCD to WAV preserving loop points"
+                                                        AutomationProperties.Name="Convert SCD to WAV"/>
+
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <CheckBox x:Name="SelectAllCheckBoxKH2"
+                                                              Content="Select All Tracks"
+                                                              VerticalAlignment="Center"
+                                                              Checked="SelectAllCheckBox_Checked"
+                                                              Unchecked="SelectAllCheckBox_Unchecked"
+                                                              ToolTip="Select or deselect all tracks"
+                                                              Foreground="White"
+                                                              FontWeight="SemiBold"
+                                                              Margin="0,0,12,0"
+                                                              AutomationProperties.Name="Select All Tracks"/>
+
+                                                    <Button Content="🎶 Assign Song to Selected Tracks"
+                                                            Click="AssignToSelectedButton_Click"
+                                                            Style="{StaticResource ModernButtonStyle}"
+                                                            ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                            AutomationProperties.Name="Assign Song to Selected Tracks"
+                                                            MinWidth="180"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Expander>
                                 </Border>
 
                                 <!-- Tracks Section KH2 -->
@@ -532,43 +560,58 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
 
-                                <!-- Quick Actions Section (BBS) -->
+                                <!-- Action Buttons Section (BBS) -->
                                 <Border Background="#FF2D2D30" 
                                         CornerRadius="8" 
-                                        Padding="20" 
+                                        Padding="8" 
                                         Margin="0,0,0,20">
-                                    <StackPanel>
-                                        <TextBlock Text="🎵 Quick Actions" 
-                                                   FontSize="16" 
-                                                   FontWeight="SemiBold" 
-                                                   Margin="0,0,0,15"
-                                                   Foreground="#FF007ACC"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox x:Name="SelectAllCheckBoxBBS"
-                                                      Grid.Column="0"
-                                                      Content="Select All Tracks"
-                                                      VerticalAlignment="Center"
-                                                      Checked="SelectAllCheckBox_Checked"
-                                                      Unchecked="SelectAllCheckBox_Unchecked"
-                                                      ToolTip="Select or deselect all tracks"
-                                                      Foreground="White"
-                                                      FontWeight="SemiBold"
-                                                      AutomationProperties.Name="Select All Tracks"/>
+                                     <Expander IsExpanded="False">
+                                        <Expander.Header>
+                                            <TextBlock Text="🎵 Quick Actions" 
+                                                       FontSize="16" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#FF007ACC"/>
+                                        </Expander.Header>
+                                        <Border Padding="20" MinHeight="80">
+                                            <Grid VerticalAlignment="Stretch">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                            <Button Grid.Column="1"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
-                                        </Grid>
-                                    </StackPanel>
+                                                <Button Grid.Column="0"
+                                                        Margin="0,0,20,0"
+                                                        Content="🔁 Convert SCD ➜ WAV (keep loop)"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Click="ConvertScdToWavButton_Click"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        ToolTip="Convert a SCD to WAV preserving loop points"
+                                                        AutomationProperties.Name="Convert SCD to WAV"/>
+
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <CheckBox x:Name="SelectAllCheckBoxBBS"
+                                                              Content="Select All Tracks"
+                                                              VerticalAlignment="Center"
+                                                              Checked="SelectAllCheckBox_Checked"
+                                                              Unchecked="SelectAllCheckBox_Unchecked"
+                                                              ToolTip="Select or deselect all tracks"
+                                                              Foreground="White"
+                                                              FontWeight="SemiBold"
+                                                              Margin="0,0,12,0"
+                                                              AutomationProperties.Name="Select All Tracks"/>
+
+                                                    <Button Content="🎶 Assign Song to Selected Tracks"
+                                                            Click="AssignToSelectedButton_Click"
+                                                            Style="{StaticResource ModernButtonStyle}"
+                                                            ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                            AutomationProperties.Name="Assign Song to Selected Tracks"
+                                                            MinWidth="180"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Expander>
                                 </Border>
 
                                 <!-- Tracks Section BBS -->
@@ -635,44 +678,58 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
 
-                                <!-- Quick Actions Section (ReCOM) -->
+                                <!-- Action Buttons Section (ReCOM) -->
                                 <Border Background="#FF2D2D30" 
                                         CornerRadius="8" 
-                                        Padding="20" 
+                                        Padding="8" 
                                         Margin="0,0,0,20">
-                                    <StackPanel>
-                                        <TextBlock Text="🎵 Quick Actions" 
-                                                   FontSize="16" 
-                                                   FontWeight="SemiBold" 
-                                                   Margin="0,0,0,15"
-                                                   Foreground="#FF007ACC"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox x:Name="SelectAllCheckBoxReCOM"
-                                                      Grid.Column="0"
-                                                      Content="Select All Tracks"
-                                                      VerticalAlignment="Center"
-                                                      Checked="SelectAllCheckBox_Checked"
-                                                      Unchecked="SelectAllCheckBox_Unchecked"
-                                                      ToolTip="Select or deselect all tracks"
-                                                      Foreground="White"
-                                                      FontWeight="SemiBold"
-                                                      AutomationProperties.Name="Select All Tracks"/>
+                                     <Expander IsExpanded="False">
+                                        <Expander.Header>
+                                            <TextBlock Text="🎵 Quick Actions" 
+                                                       FontSize="16" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#FF007ACC"/>
+                                        </Expander.Header>
+                                        <Border Padding="20" MinHeight="80">
+                                            <Grid VerticalAlignment="Stretch">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                            <Button Grid.Column="1"
-                                                    Content="🎶 Assign Song to Selected Tracks"
-                                                    HorizontalAlignment="Left"
-                                                    Click="AssignToSelectedButton_Click"
-                                                    Style="{StaticResource ModernButtonStyle}"
-                                                    ToolTip="Select a single audio file and assign it to all checked tracks"
-                                                    AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
+                                                <Button Grid.Column="0"
+                                                        Margin="0,0,20,0"
+                                                        Content="🔁 Convert SCD ➜ WAV (keep loop)"
+                                                        VerticalAlignment="Center"
+                                                        HorizontalAlignment="Left"
+                                                        Click="ConvertScdToWavButton_Click"
+                                                        Style="{StaticResource SecondaryButtonStyle}"
+                                                        ToolTip="Convert a SCD to WAV preserving loop points"
+                                                        AutomationProperties.Name="Convert SCD to WAV"/>
 
-                                        </Grid>
-                                    </StackPanel>
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <CheckBox x:Name="SelectAllCheckBoxReCOM"
+                                                              Content="Select All Tracks"
+                                                              VerticalAlignment="Center"
+                                                              Checked="SelectAllCheckBox_Checked"
+                                                              Unchecked="SelectAllCheckBox_Unchecked"
+                                                              ToolTip="Select or deselect all tracks"
+                                                              Foreground="White"
+                                                              FontWeight="SemiBold"
+                                                              Margin="0,0,12,0"
+                                                              AutomationProperties.Name="Select All Tracks"/>
+
+                                                    <Button Content="🎶 Assign Song to Selected Tracks"
+                                                            Click="AssignToSelectedButton_Click"
+                                                            Style="{StaticResource ModernButtonStyle}"
+                                                            ToolTip="Select a single audio file and assign it to all checked tracks"
+                                                            AutomationProperties.Name="Assign Song to Selected Tracks"
+                                                            MinWidth="180"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Expander>
                                 </Border>
 
                                 <!-- Tracks Section ReCOM -->
@@ -737,23 +794,26 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel>
 
-                                <!-- Quick Actions Section (DDD) -->
+                                <!-- Action Buttons Section (DDD) -->
                                 <Border Background="#FF2D2D30" 
                                         CornerRadius="8" 
-                                        Padding="20" 
+                                        Padding="8" 
                                         Margin="0,0,0,20">
-                                    <StackPanel>
-                                        <TextBlock Text="🎵 Quick Actions" 
-                                                   FontSize="16" 
-                                                   FontWeight="SemiBold" 
-                                                   Margin="0,0,0,15"
-                                                   Foreground="#FF007ACC"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <CheckBox x:Name="SelectAllCheckBoxDDD"
+                                     <Expander IsExpanded="False">
+                                        <Expander.Header>
+                                            <TextBlock Text="🎵 Quick Actions" 
+                                                       FontSize="16" 
+                                                       FontWeight="SemiBold" 
+                                                       Foreground="#FF007ACC"/>
+                                        </Expander.Header>
+                                        <Border Padding="20" MinHeight="80">
+                                            <Grid VerticalAlignment="Stretch">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox x:Name="SelectAllCheckBoxDDD"
                                                       Grid.Column="0"
                                                       Content="Select All Tracks"
                                                       VerticalAlignment="Center"
@@ -771,10 +831,19 @@
                                                     Style="{StaticResource ModernButtonStyle}"
                                                     ToolTip="Select a single audio file and assign it to all checked tracks"
                                                     AutomationProperties.Name="Assign Song to Selected Tracks"/>
-                                            
 
+                                            <Button Grid.Column="2"
+                                                    Margin="10,0,0,0"
+                                                    Content="🔁 Convert SCD ➜ WAV (keep loop)"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Left"
+                                                    Click="ConvertScdToWavButton_Click"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    ToolTip="Convert a SCD to WAV preserving loop points"
+                                                    AutomationProperties.Name="Convert SCD to WAV"/>
                                         </Grid>
-                                    </StackPanel>
+                                    </Border>
+                                </Expander>
                                 </Border>
 
                                 <!-- Tracks Section DDD -->
@@ -847,6 +916,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Patch Name Input -->
@@ -874,9 +944,20 @@
                                AutomationProperties.LiveSetting="Polite"
                                Text=""/>
 
+                    <!-- New Test yt-dlp Button (only meaningful for KH1 tab) -->
+                    <Button x:Name="TestYtDlpButton"
+                            Grid.Column="2"
+                            Content="▶️ Test yt-dlp"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="16,12"
+                            Margin="0,0,10,0"
+                            ToolTip="Run a quick yt-dlp test download (KH1 tab)"
+                            Click="TestYtDlpButton_Click"
+                            AutomationProperties.Name="Test yt-dlp"/>
+
                     <!-- Generate Patch Button -->
                     <Button x:Name="GeneratePatchButton"
-                            Grid.Column="2"
+                            Grid.Column="3"
                             Content="✨ Generate Music Patch (KH1)"
                             Style="{StaticResource ModernButtonStyle}"
                             Click="GeneratePatchButton_Click"
@@ -886,7 +967,7 @@
                             AutomationProperties.Name="{Binding Content, RelativeSource={RelativeSource Self}}"/>
 
                     <!-- Apply Patch Button (Red) -->
-                    <Button Grid.Column="3"
+                    <Button Grid.Column="4"
                             Content="🚀 Apply Patch"
                             Background="#FFB71C1C"
                             Foreground="White"
