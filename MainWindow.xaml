@@ -340,7 +340,7 @@
                                         Margin="0,0,0,20">
                                      <Expander IsExpanded="False">
                                         <Expander.Header>
-                                            <TextBlock Text="🎵 Quick Actions" 
+                                            <TextBlock Text="🛠️ Utility Tools" 
                                                        FontSize="16" 
                                                        FontWeight="SemiBold" 
                                                        Foreground="#FF007ACC"/>
@@ -452,7 +452,7 @@
                                         Margin="0,0,0,20">
                                      <Expander IsExpanded="False">
                                         <Expander.Header>
-                                            <TextBlock Text="🎵 Quick Actions" 
+                                            <TextBlock Text="🛠️ Utility Tools" 
                                                        FontSize="16" 
                                                        FontWeight="SemiBold" 
                                                        Foreground="#FF007ACC"/>
@@ -567,7 +567,7 @@
                                         Margin="0,0,0,20">
                                      <Expander IsExpanded="False">
                                         <Expander.Header>
-                                            <TextBlock Text="🎵 Quick Actions" 
+                                            <TextBlock Text="🛠️ Utility Tools" 
                                                        FontSize="16" 
                                                        FontWeight="SemiBold" 
                                                        Foreground="#FF007ACC"/>
@@ -685,7 +685,7 @@
                                         Margin="0,0,0,20">
                                      <Expander IsExpanded="False">
                                         <Expander.Header>
-                                            <TextBlock Text="🎵 Quick Actions" 
+                                            <TextBlock Text="🛠️ Utility Tools" 
                                                        FontSize="16" 
                                                        FontWeight="SemiBold" 
                                                        Foreground="#FF007ACC"/>
@@ -801,7 +801,7 @@
                                         Margin="0,0,0,20">
                                      <Expander IsExpanded="False">
                                         <Expander.Header>
-                                            <TextBlock Text="🎵 Quick Actions" 
+                                            <TextBlock Text="🛠️ Utility Tools" 
                                                        FontSize="16" 
                                                        FontWeight="SemiBold" 
                                                        Foreground="#FF007ACC"/>
@@ -953,6 +953,7 @@
                             Margin="0,0,10,0"
                             ToolTip="Run a quick yt-dlp test download (KH1 tab)"
                             Click="TestYtDlpButton_Click"
+                            Visibility="Collapsed"
                             AutomationProperties.Name="Test yt-dlp"/>
 
                     <!-- Generate Patch Button -->

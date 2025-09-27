@@ -1,14 +1,14 @@
 <Window x:Class="KingdomHeartsMusicPatcher.CreditsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Credits" Height="480" Width="820"
+        Title="Credits and Thanks" Height="480" Width="820"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         Background="#FF252526" Foreground="White"
         FontFamily="Segoe UI">
   <FlowDocumentScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" IsToolBarVisible="False" IsSelectionEnabled="True" FontFamily="Segoe UI">
     <FlowDocument Background="Transparent" Foreground="White" FontFamily="Segoe UI" FontSize="13">
-      <Paragraph FontSize="22" FontWeight="Bold" Foreground="#FF007ACC">Credits &amp; Thanks</Paragraph>
+      <Paragraph FontSize="22" FontWeight="Bold" Foreground="#FF007ACC">Credits</Paragraph>
 
       <Paragraph FontSize="13">
         Kingdom Hearts Music Patcher (KHMP) exists thanks to these tools and the people who developed them:
@@ -56,11 +56,11 @@
         </Hyperlink>.
       </Paragraph>
       <Paragraph FontSize="13" Margin ="30 10 0 0">
-        The “chronological order” referred to in the default option configured in the track ordering combo corresponds to the order in which the songs are listed in these official YouTube playlists (for example,
+        The "chronological order" referred to in the default option configured in the track ordering combo corresponds to the order in which the songs are listed in these official YouTube playlists (for example,
         <Hyperlink NavigateUri="https://www.youtube.com/playlist?list=OLAK5uy_n_kAUk8IBMPh3lx0w9VsWptrA2vK-9WME" RequestNavigate="Hyperlink_RequestNavigate">
           this one for KH1
         </Hyperlink>).
-        This order matches the order in which the songs are first heard while progressing through the game’s story.
+        This order matches the order in which the songs are first heard while progressing through the game's story.
         If you notice that a song is out of place, it is possible, as this order has not been thoroughly reviewed.
       </Paragraph>
 
@@ -135,10 +135,22 @@
         <Run Text=" with the goal of making it really easy for the Kingdom Hearts community to replace original soundtrack tracks and have a fun time unleashing their creativity. Naturally, anyone is welcome to use this application, share it, create content with it, or even develop new versions from it."/>
       </Paragraph>
 
-      <Paragraph FontSize="13" Margin ="30 0 0 0">
+      <!-- Thanks Section -->
+      <Paragraph FontSize="22" FontWeight="Bold" Foreground="#FF007ACC" Margin="0,30,0,0">Thanks 💕</Paragraph>
+
+      <Paragraph FontSize="13">
+        Special thanks to 
+        <Hyperlink NavigateUri="https://www.twitch.tv/sonicshadowsilver2" RequestNavigate="Hyperlink_RequestNavigate">Sonicshadowsilver2</Hyperlink>
+        <Run Text=" for being the first person to test the complete application workflow (from patch generation to actually hearing the music in-game). Thanks for pointing out that loop points weren't being preserved in WAV files, explaining how loop points work, and helping review the track lists, especially the Birth by Sleep tracklist."/>
+      </Paragraph>
+
+      <!-- Future Updates Section -->
+      <Paragraph FontSize="22" FontWeight="Bold" Foreground="#FF007ACC" Margin="0,30,0,0">Future Updates</Paragraph>
+
+      <Paragraph FontSize="13">
         <Run Text="A perhaps ambitious idea for the future of this project could be integrating it with every game listed in this document "/>
         <Hyperlink NavigateUri="https://www.twitch.tv/sonicshadowsilver2" RequestNavigate="Hyperlink_RequestNavigate">Sonicshadowsilver2</Hyperlink>
-        <Run Text="elaborated: "/>
+        <Run Text=" elaborated: "/>
         <Hyperlink NavigateUri="https://docs.google.com/spreadsheets/d/1-NfkF8It6kt6P2ZIppO1FLzLqZye3RMaOJU79_BbAuo/edit?gid=1689200989#gid=1689200989" RequestNavigate="Hyperlink_RequestNavigate">
           KH2FM PC Music Rando - Custom Song Packs
         </Hyperlink>

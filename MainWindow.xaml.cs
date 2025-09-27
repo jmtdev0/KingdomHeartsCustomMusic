@@ -806,6 +806,7 @@ namespace KingdomHeartsMusicPatcher
             string tabHeader = selectedTab?.Header.ToString() ?? "";
 
             if (tabHeader.Equals("Kingdom Hearts I"))
+
             {
                 foreach (var checkbox in _trackCheckboxesKH1.Values) checkbox.IsChecked = false;
             }
@@ -1044,7 +1045,7 @@ namespace KingdomHeartsMusicPatcher
                     var psi = new ProcessStartInfo
                     {
                         FileName = ytDlpPath,
-                        Arguments = $"-x --audio-format mp3 --no-part --newline -o \"{outputTemplate}\"{ffmpegArg} --postprocessor-args \"FFmpegExtractAudio:-filter:a volume=4\" \"{url}\"",
+                        Arguments = $"-x --audio-format mp3 --no-part --newline -o \"{outputTemplate}\"{ffmpegArg} --extractor-args \"youtube:player-client=web_embedded,web,tv\" --postprocessor-args=\"FFmpegExtractAudio:-filter:a volume=4\" \"{url}\"",
                         WorkingDirectory = downloadsDir,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -1572,9 +1573,36 @@ namespace KingdomHeartsMusicPatcher
 
                 string workingDir = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
                 string ytDlpPath = System.IO.Path.Combine(workingDir, "yt-dlp.exe");
+
                 if (!File.Exists(ytDlpPath))
                 {
-                    MessageBox.Show(this, "No se encontró yt-dlp.exe junto al ejecutable.", "Test yt-dlp", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    // Try embedded/extracted tools first (same logic used elsewhere)
+                    try
+                    {
+                        var toolsSetup = EmbeddedResourceManager.SetupTools(Path.Combine(Path.GetTempPath(), "KingdomHeartsCustomMusic_Tools"));
+                        if (toolsSetup.HasYtDlp && File.Exists(toolsSetup.YtDlpPath))
+                        {
+                            ytDlpPath = toolsSetup.YtDlpPath;
+                        }
+                        else
+                        {
+                            // Development fallback: projectRoot/utils/Actually/yt-dlp.exe
+                            var projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", ".."));
+                            var devPath = Path.Combine(projectRoot, "utils", "Actually", "yt-dlp.exe");
+                            if (File.Exists(devPath))
+                                ytDlpPath = devPath;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (!File.Exists(ytDlpPath))
+                {
+                    MessageBox.Show(this,
+                        "No se encontró yt-dlp.exe. Asegúrate de que exista en: \n" +
+                        $"• {System.IO.Path.Combine(workingDir, "yt-dlp.exe")} (junto al .exe)\n" +
+                        "o que esté embebido correctamente en utils/Actually para su extracción en tiempo de ejecución.",
+                        "Test yt-dlp", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -1585,13 +1613,15 @@ namespace KingdomHeartsMusicPatcher
                 var psi = new ProcessStartInfo
                 {
                     FileName = ytDlpPath,
-                    Arguments = "-x --audio-format mp3 https://www.youtube.com/watch?v=-KKLzJu5ck8",
-                    WorkingDirectory = workingDir,
+                    Arguments = "-x --audio-format mp3 https://www.youtube.com/watch?v=-KKLzJu5ck8 --extractor-args \"youtube:player-client=web_embedded,web,tv\"",
+                    WorkingDirectory = Path.GetDirectoryName(ytDlpPath)!,
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     CreateNoWindow = true
                 };
+
+                Logger.Log($"[yt-dlp test] Using binary: {ytDlpPath}");
 
                 var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
                 proc.OutputDataReceived += (s, ev) => { if (ev.Data != null) Logger.Log("[yt-dlp test OUT] " + ev.Data); };
